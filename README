@@ -1,0 +1,60 @@
+================================================================================
+                                     README
+================================================================================
+
+
+
+================================= GENERAL INFO =================================
+
+
+  Project: Static and Dynamic app phone analysis
+  Contributors: MadSquirrel
+  License: GNU General Public License v3.0
+  Version: v1.0
+  Date: 02-16-20
+
+
+  
+
+
+===================================== GOAL =====================================
+
+  Automatized the analysis of an application
+
+
+===================================== USAGE ====================================
+
+usage: analysis.py [-h] [--emulator EMULATOR] [--phone PHONE] [--proxy PROXY]
+                   [--proxy_cert PROXY_CERT]
+                   app
+
+Analysis for smartphone
+
+positional arguments:
+  app                   app target <filename.apk>
+
+optional arguments:
+  -h, --help            show this help message and exit
+
+dynamic:
+  --emulator EMULATOR   path of the emulator if used
+  --phone PHONE         phones target emulator -list-avds
+  --proxy PROXY         setup proxy address <ip>:<port>
+  --proxy_cert PROXY_CERT
+                        setup proxy address <filename>.cer
+
+
+=================================== EXEMPLE ====================================
+
+python3 analysis.py <example>.apk --emulator ~/Android/Sdk/tools/ \
+        --phone Pixel_3a_XL_API_22 --proxy 127.0.0.1:8080 --proxy_cert burp.der
+
+# To list all emulator phone avaible
+emulator -list-avds
+
+=================================== CHANGELOG ==================================
+
+
+  ##FIXME##
+
+
