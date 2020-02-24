@@ -52,6 +52,14 @@ python3 analysis.py <example>.apk --emulator ~/Android/Sdk/tools/ \
 # To list all emulator phone avaible
 emulator -list-avds
 
+===================================== BUG ======================================
+
+```
+  ioctl(KVM_CREATE_VM) failed: 16 Device or resource busy
+  qemu-system-i386: failed to initialize KVM: Device or resource busy
+``̀`
+This appear happend certainly because an other hypervisor is running
+
 =================================== CHANGELOG ==================================
 
 

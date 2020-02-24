@@ -15,6 +15,8 @@ import pyjadx
 CONST_ANDROID = "{http://schemas.android.com/apk/res/android}"
 package=""
 DIR="temp"
+STD_OUTPOUT = subprocess.DEVNULL
+STD_ERR     = subprocess.DEVNULL
 
 def bprint(text):
     size = int(len(text)/2)
@@ -86,9 +88,9 @@ def UserInput(app):
 def static(app):
     bprint("Static Analysis")
     subprocess.call(["apktool", "d", app, "-o", "%s/decompiled_app" % DIR, "-f"],
-            stdout=subprocess.DEVNULL, shell=False)
+            stdout=STD_OUTPOUT, shell=False)
     Manifest()
-    UserInput(app)
+    #UserInput(app)
     subprocess.call(["rm", "-rf", "%s/decompiled_app" % DIR], shell=False)
 
 ################################################################################
@@ -104,7 +106,7 @@ def emulation_f(path, phone, proxy):
     if not proxy == "":
         options.extend(["-http-proxy", proxy])
     print(options)
-    subprocess.call(options, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    subprocess.call(options, stdout=STD_OUTPOUT, stderr=STD_ERR)
 
 def get_user_share(device):
     files = device.shell("ls /data/data/%s/shared_prefs/" % package)
@@ -118,6 +120,7 @@ def get_user_share(device):
 
 def dynamic(args):
     bprint("Dinamic analysis")
+    subprocess.call(["adb", "start-server"])
     if args.emulator:
         emulation = threading.Thread(target=emulation_f, args=(args.emulator,
             args.phone, args.proxy))
@@ -126,6 +129,7 @@ def dynamic(args):
     client = AdbClient(host="127.0.0.1", port=5037)
     print("waiting for connection device...")
     devices = []
+    device = None
     try:
         with timeout(30):
             while devices == []:
@@ -133,6 +137,8 @@ def dynamic(args):
             device = devices[0]
     except:
         print("No devices found after 30s")
+        sys.exit(1)
+    if device == None:
         sys.exit(1)
     while True:
         try:
@@ -168,6 +174,11 @@ if __name__ == '__main__':
         'app',
         type=str,
         help='app target <filename.apk>')
+
+    parser.add_argument(
+        '--verbose',
+        action="store_true",
+        help='active verbose')
     
     
     group = parser.add_argument_group('dynamic')
@@ -195,5 +206,8 @@ if __name__ == '__main__':
     args = parser.parse_args()
     
     os.mkdir("temp")
+    if args.verbose:
+        STD_OUTPOUT = sys.stdout
+        STD_ERR     = sys.stderr
     static(args.app)
-#    dynamic(args)
+    dynamic(args)
