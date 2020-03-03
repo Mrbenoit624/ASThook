@@ -109,6 +109,11 @@ def emulation_f(path, phone, proxy):
     subprocess.call(options, stdout=STD_OUTPOUT, stderr=STD_ERR)
 
 def get_user_share(device):
+    if "False" in device.shell("([ -d /data/data/%s/shared_prefs/ ] && echo 'True') || echo 'False'" % package):
+        print("No shared preference")
+        return
+    test = device.shell("([ -d /data/data/%s/shared_prefs/ ] && echo 'True') || echo 'False'" % package)
+    print(test)
     files = device.shell("ls /data/data/%s/shared_prefs/" % package)
     print(files)
     os.mkdir("%s/user_share" % DIR)
