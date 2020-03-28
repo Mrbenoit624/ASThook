@@ -136,7 +136,7 @@ class DynamicAnalysis:
         self.__frida.attach()
         self.generalinfo()
         self.__frida.load("script_frida/sslpinning.js", "print")
-        self.__frida.load("script_frida/objection.js", "print")
+        self.__frida.load("script_frida/hookfile2.js", "print")
         #self.__frida.load("script_frida/hookfile.js", "print")
         sys.stdin.read()
         self.__frida.detach()
