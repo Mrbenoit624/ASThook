@@ -3,10 +3,13 @@ import subprocess
 import threading
 import time
 import sys
+import os
 
 from myadb import my_adb as AdbClient
 from ppadb import ClearError, InstallError
 
+from git import Repo
+import shutil
 
 from utils import timeout, bprint
 from log import Log
@@ -73,7 +76,43 @@ class DynamicAnalysis:
         print ("\033[36mObb Directory :\033[39m \t\t%s" % infos['obbDir'])
         print ("\033[36mPackage Code path :\033[39m \t\t%s" % infos['packageCodePath'])
 
+    def test(self, file, path):
+        if not os.path.exists("%s/%s" % (path, os.path.dirname(file))):
+            os.makedirs("%s/%s" % (path, os.path.dirname(file)))
+        print("0")
+        self.__device.pull(file, "%s/%s" % (path, file))
+        #print("1")
+        #self.__repo_files.index.add(["./%s" % file])
+        #print("2")
+        #self.__repo_files.index.commit("test")
+        #print("3")
 
+    #@staticmethod
+    def on_message_git_files_update(self, message, data):
+        if message['type'] == 'send':
+            path = "%s/git_files" % self.__tmp_dir
+            print("[++] {0}".format(message['payload']))
+            file = message['payload']
+            threading.Thread(target=self.test, args=(file, path)).start()
+            #if not os.path.exists("%s/%s" % (path, os.path.dirname(file))):
+            #    os.makedirs("%s/%s" % (path, os.path.dirname(file)))
+            #print("0")
+            #self.__device.pull(file, "%s/%s" % (path, file))
+            #print("1")
+            #self.__repo_files.index.add(["./%s" % file])
+            #print("2")
+            #self.__repo_files.index.commit("test")
+            #print("3")
+
+    #@module("files_store", "store all files read or written by ap")
+    def git_files_update(self):
+        path = "%s/git_files" % self.__tmp_dir
+        if os.path.exists(path):
+            shutil.rmtree(path)
+        os.mkdir(path)
+        #self.__repo_files = Repo.init(path)
+        self.__frida.load("script_frida/hookfile2.js", "custom",
+                self.on_message_git_files_update)
 
     def __init__(self, package, args, tmp_dir):
 
@@ -136,10 +175,12 @@ class DynamicAnalysis:
         self.__frida.attach()
         self.generalinfo()
         self.__frida.load("script_frida/sslpinning.js", "print")
-        self.__frida.load("script_frida/hookfile2.js", "print")
-        #self.__frida.load("script_frida/hookfile.js", "print")
+        if args.files_store:
+            # TODO add git versinning for file
+            self.git_files_update()
+        #self.__frida.load("script_frida/socket.js", "print")
         sys.stdin.read()
         self.__frida.detach()
         self.get_user_share()
     
-    
+   

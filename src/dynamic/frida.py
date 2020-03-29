@@ -36,7 +36,7 @@ class Frida:
         print(self.__server)
         self.__session = self.__server.attach(self.__package)
 
-    def load(self, file, option):
+    def load(self, file, option, function = None):
         try:
             f = open(file, "r")
             script = self.__session.create_script(f.read())
@@ -44,6 +44,8 @@ class Frida:
                 script.on('message', self.on_message_print)
             if option == "store":
                 script.on('message', self.on_message_store)
+            if option == "custom":
+                script.on('message', function)
             script.load()
         except frida.InvalidArgumentError as e:
             print(str(e))

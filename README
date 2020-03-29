@@ -42,11 +42,12 @@ dynamic:
   --proxy PROXY         setup proxy address <ip>:<port>
   --proxy_cert PROXY_CERT
                         setup proxy address <filename>.cer
+  --files_store         store all files read or written by application
 
 
 =================================== EXEMPLE ====================================
 
-python3 analysis.py <example>.apk --emulator ~/Android/Sdk/tools/ \
+python3 src/analysis.py <example>.apk --emulator ~/Android/Sdk/tools/ \
         --phone Pixel_3a_XL_API_22 --proxy 127.0.0.1:8080 --proxy_cert burp.der
 
 # To list all emulator phone avaible

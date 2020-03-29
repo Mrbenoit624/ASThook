@@ -46,6 +46,11 @@ if __name__ == '__main__':
             type=str,
             help='setup proxy address <filename>.cer')
 
+    group.add_argument(
+            '--files_store',
+            action="store_true",
+            help='store all files read or written by application')
+
     args = parser.parse_args()
 
     if not os.path.exists(DIR):

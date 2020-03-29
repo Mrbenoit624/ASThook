@@ -299,9 +299,75 @@ function android_pinning(){
       console.log('[-] Boye AbstractVerifier pinner not found');
       //console.log(err):
     }
+
+
+    //try {
+
+    //} catch (err) {
+    //  console.log('[-] Conscrypt CertPinManager pinner not found');
+    //console.log(err);
+    //}
+
+
+
   }, 0);
 
 }
 
 send("Universal SSl pinning enable")
-android_pinning()
+Java.perform(function()
+  {
+
+    var class_not_found = Java.use('java.lang.ClassNotFoundException')
+
+    // Seems to have a bave a backdoor on /data/misc/keychain/pins (put your
+    // certificate here and everythings will be bypass
+    // Conscrypt
+    try
+    {
+      var conscrypt_CertPinManager_Activity = Java.use('com.android.org.conscrypt.CertPinManager');
+      conscrypt_CertPinManager_Activity.isChainValid.overload('java.lang.String', 'java.util.List').implementation = function (str, chain) {
+        send('Bypassing Conscrypt CertPinManager: ' + str);
+        return true;
+      };
+      send('Found: Conscrypt CertPinManager');
+    }
+    catch (e)
+    {
+      //if (!( instanceof class_not_found))
+      //send(e);
+    }
+
+
+    // oKHTTPv3
+    try
+    {
+      var okhttp3_Activity = Java.use('okhttp3.CertificatePinner');
+      okhttp3_Activity.check.overload('java.lang.String', 'java.util.List').implementation = function (str) {
+        console.log('[+] Bypassing OkHTTPv3 {1}: ' + str);
+        return true;
+      };
+      send('Found: OkHTTPv3');
+    }
+    catch (e)
+    {
+      //if ( ! (instanceof class_not_found))
+      //send(e);
+    }
+    
+    
+    try
+    {
+      var OpenSSLSocketImpl = Java.use('com.android.org.conscrypt.OpenSSLSocketImpl');
+      OpenSSLSocketImpl.verifyCertificateChain.implementation = function (certRefs, JavaObject, authMethod) {
+      };
+      send('Found: OpenSSLSocketImpl Conscrypt');
+    }
+    catch (e)
+    {
+      //if ( ! (instanceof class_not_found))
+      //send(e);
+    }
+
+  });
+//android_pinning()
