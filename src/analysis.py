@@ -5,6 +5,7 @@ from utils import bprint
 from static import StaticAnalysis
 from dynamic import DynamicAnalysis
 from log import Log
+from dynamic.module.register import get_dynamic_modules
 
 
 DIR="temp"
@@ -46,10 +47,11 @@ if __name__ == '__main__':
             type=str,
             help='setup proxy address <filename>.cer')
 
-    group.add_argument(
-            '--files_store',
-            action="store_true",
-            help='store all files read or written by application')
+    for name, desc, func in get_dynamic_modules():
+        group.add_argument(
+                "--%s" % name,
+                action="store_true",
+                help=desc)
 
     args = parser.parse_args()
 

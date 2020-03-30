@@ -6,7 +6,9 @@ import os
 
 from git import Repo
 import shutil
+from .register import ModuleDynamicCmd
 
+@ModuleDynamicCmd("files_store", "store all files read or written by application")
 class GitFilesStore:
     def __init__(self, frida, device, tmp_dir, args):
         self.__frida = frida
@@ -14,6 +16,8 @@ class GitFilesStore:
         self.__tmp_dir = tmp_dir
         
         self.__files = []
+        self.__dict_files = []
+        self.__stop = False
         self.load()
 
     def load(self):
@@ -28,20 +32,26 @@ class GitFilesStore:
     
     def on_message_git_files_update(self, message, data):
         if message['type'] == 'send':
-            path = "%s/git_files" % self.__tmp_dir
-            print("[++] {0}".format(message['payload']))
             file = message['payload']
-            self.__files.insert(0, (file, path))
+            self.__files.insert(0, file)
     
     def test(self):
-        while True:
+        path = "%s/git_files" % self.__tmp_dir
+        while self.__stop:
             if len(self.__files) == 0:
                 time.sleep(.1)
                 continue
-            file, path = self.__files.pop()
+            file = self.__files.pop()
+            if not file in self.__dict_files:
+                self.__dict_files.append(file)
+                print("[++] {0}".format(file))
+
             if not os.path.exists("%s/%s" % (path, os.path.dirname(file))):
                 os.makedirs("%s/%s" % (path, os.path.dirname(file)))
-            self.__device.pull(file, "%s/%s" % (path, file))
-            if os.stat("%s/%s" % (path, file)).st_size != 0:
-                self.__repo_files.index.add(["./%s" % file])
-                self.__repo_files.index.commit(file)
+            try:
+                self.__device.pull(file, "%s/%s" % (path, file))
+                if os.stat("%s/%s" % (path, file)).st_size != 0:
+                    self.__repo_files.index.add(["./%s" % file])
+                    self.__repo_files.index.commit(file)
+            except:
+                continue

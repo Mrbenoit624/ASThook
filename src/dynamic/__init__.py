@@ -145,8 +145,6 @@ class DynamicAnalysis:
         
         self.generalinfo()
         
-        self.__frida.load("script_frida/sslpinning.js", "print")
-        
         modules = ModuleDynamic(self.__frida, self.__device, self.__tmp_dir,
                 args)
         
@@ -156,6 +154,5 @@ class DynamicAnalysis:
         self.__emulation.join()
 
         self.__frida.detach()
-        self.get_user_share()
     
    
