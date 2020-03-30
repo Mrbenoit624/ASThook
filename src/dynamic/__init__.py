@@ -15,6 +15,8 @@ from utils import timeout, bprint
 from log import Log
 from dynamic.frida import Frida
 
+from dynamic.module import ModuleDynamic
+
 ################################################################################
 #
 # Dynamic Analysis
@@ -49,6 +51,9 @@ class DynamicAnalysis:
                         "%s/user_share/%s" % (self.tmp_dir, f))
     
     def setup_certificate(self, proxy_cert):
+        if not os.path.exists(proxy_cert):
+            print("[ERROR] %s file not found" % proxy_cert)
+            sys.exit(1)
         os.system("openssl x509 -inform DER -in %s -out %s/cacert.pem" %
                 (proxy_cert, self.__tmp_dir))
         hash_cert = subprocess.check_output(["openssl", "x509", "-inform",
@@ -76,43 +81,6 @@ class DynamicAnalysis:
         print ("\033[36mObb Directory :\033[39m \t\t%s" % infos['obbDir'])
         print ("\033[36mPackage Code path :\033[39m \t\t%s" % infos['packageCodePath'])
 
-    def test(self, file, path):
-        if not os.path.exists("%s/%s" % (path, os.path.dirname(file))):
-            os.makedirs("%s/%s" % (path, os.path.dirname(file)))
-        print("0")
-        self.__device.pull(file, "%s/%s" % (path, file))
-        #print("1")
-        #self.__repo_files.index.add(["./%s" % file])
-        #print("2")
-        #self.__repo_files.index.commit("test")
-        #print("3")
-
-    #@staticmethod
-    def on_message_git_files_update(self, message, data):
-        if message['type'] == 'send':
-            path = "%s/git_files" % self.__tmp_dir
-            print("[++] {0}".format(message['payload']))
-            file = message['payload']
-            threading.Thread(target=self.test, args=(file, path)).start()
-            #if not os.path.exists("%s/%s" % (path, os.path.dirname(file))):
-            #    os.makedirs("%s/%s" % (path, os.path.dirname(file)))
-            #print("0")
-            #self.__device.pull(file, "%s/%s" % (path, file))
-            #print("1")
-            #self.__repo_files.index.add(["./%s" % file])
-            #print("2")
-            #self.__repo_files.index.commit("test")
-            #print("3")
-
-    #@module("files_store", "store all files read or written by ap")
-    def git_files_update(self):
-        path = "%s/git_files" % self.__tmp_dir
-        if os.path.exists(path):
-            shutil.rmtree(path)
-        os.mkdir(path)
-        #self.__repo_files = Repo.init(path)
-        self.__frida.load("script_frida/hookfile2.js", "custom",
-                self.on_message_git_files_update)
 
     def __init__(self, package, args, tmp_dir):
 
@@ -171,15 +139,22 @@ class DynamicAnalysis:
         self.__frida = Frida(self.__device, self.__package)
         print(self.__package)
         self.__device.shell("monkey -p %s -c android.intent.category.LAUNCHER 1" % self.__package)
+        
         time.sleep(1)
         self.__frida.attach()
+        
         self.generalinfo()
+        
         self.__frida.load("script_frida/sslpinning.js", "print")
-        if args.files_store:
-            # TODO add git versinning for file
-            self.git_files_update()
+        
+        modules = ModuleDynamic(self.__frida, self.__device, self.__tmp_dir,
+                args)
+        
         #self.__frida.load("script_frida/socket.js", "print")
-        sys.stdin.read()
+        
+        #sys.stdin.read()
+        self.__emulation.join()
+
         self.__frida.detach()
         self.get_user_share()
     
