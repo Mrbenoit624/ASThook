@@ -24,9 +24,15 @@ from dynamic.module import ModuleDynamic
 ################################################################################
 
 class DynamicAnalysis:
+    """
+    Class to manage all dynamic analysis
+    """
 
     @staticmethod
     def emulation_f(path, phone, proxy, tmp_dir):
+        """
+        Launch the emulator
+        """
         options = ["%s/emulator/emulator" % path, "@%s" % phone, "-selinux",
                 "disabled", "-memory", "3192", "-no-boot-anim", "-no-snapshot", "-tcpdump",
                 "%s/dumpfile.pcap" % tmp_dir, "-wipe-data", "-writable-system"]
@@ -34,7 +40,7 @@ class DynamicAnalysis:
             options.extend(["-http-proxy", proxy])
         print(options)
         subprocess.call(options, stdout=Log.STD_OUTPOUT, stderr=Log.STD_ERR)
-    
+
     def get_user_share(self):
         if "False" in self.__device.shell("([ -d /data/data/%s/shared_prefs/ ] && echo 'True') || echo 'False'" % self.__package):
             print("No shared preference")
@@ -49,8 +55,11 @@ class DynamicAnalysis:
             if not f == "":
                 self.__device.pull("/data/data/%s/shared_prefs/%s" % (self.__package, f),
                         "%s/user_share/%s" % (self.tmp_dir, f))
-    
+
     def setup_certificate(self, proxy_cert):
+        """
+        Install a certificate on the mobile
+        """
         if not os.path.exists(proxy_cert):
             print("[ERROR] %s file not found" % proxy_cert)
             sys.exit(1)
@@ -72,6 +81,9 @@ class DynamicAnalysis:
         self.__device.shell("mount -o ro,remount,ro /system")
     
     def generalinfo(self):
+        """
+        Print some information on the storing informations
+        """
         self.__frida.load("script_frida/generalinfo.js", "store")
         infos = self.__frida.get_store()
         print ("\033[36mFile Directory :\033[39m \t\t%s" % infos['filesDirectory'])

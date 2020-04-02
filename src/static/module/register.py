@@ -2,6 +2,9 @@
 modules = []
 
 class ModuleStaticCmd:
+    """
+    Class decorator to manage module
+    """
     def __init__(self, name, desc):
         self.name = name
         self.desc = desc

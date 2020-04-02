@@ -3,6 +3,9 @@ import signal
 
 
 def bprint(text):
+    """
+    Create a beautiful print
+    """
     size = int(len(text)/2)
     print()
     print("#" * 80)
@@ -11,6 +14,9 @@ def bprint(text):
 
 @contextmanager
 def timeout(time):
+    """
+    Timeout for avoid eternal loop function
+    """
     signal.signal(signal.SIGALRM, raise_timeout)
     signal.alarm(time)
 

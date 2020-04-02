@@ -6,7 +6,10 @@ import sys
 from subprocess import Popen, DEVNULL
 
 class Frida:
-    
+    """
+    Manage all interation with frida
+    """
+
     def on_message_print(self, message, data):
         if message['type'] == 'send':
             print("[*] {0}".format(message['payload']))

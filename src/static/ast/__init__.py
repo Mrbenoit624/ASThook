@@ -3,6 +3,9 @@ from pathlib import Path
 import javalang
 
 class Register:
+    """
+    Class to register Node decorator modules
+    """
     funcs = {}
     
     @classmethod
@@ -19,6 +22,9 @@ class Register:
         return []
 
 class Node:
+    """
+    Decorator Node apply function when th node throwing
+    """
     def __init__(self, node, state):
         self.__node = node
         self.__state = state
@@ -27,6 +33,9 @@ class Node:
         return func
 
 class ast:
+    """
+    Class allow to create the AST of the apk
+    """
     def __init__(self, tmp_dir, app):
         self.__tmp_dir = tmp_dir
         self.__app = app
@@ -115,12 +124,17 @@ class ast:
                 #    for i in elt.body:
                 #        l.append(i)
     def set_infos(self, e):
+        """Set marker to interact between different nodes"""
         self.__infos = e
 
     def get_infos(self):
+        """Get marker to interact between different nodes"""
         return self.__infos
 
     def load(self):
+        """
+        Throwing the AST and apply Nodes modules
+        """
         for elt in self.l:
             self.__elt = elt
             if type(elt) is javalang.tree.ClassDeclaration:

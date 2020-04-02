@@ -3,6 +3,9 @@ from ppadb.client import Client as AdbClient
 import subprocess
 
 class my_adb:
+    """
+    Class to manage adb it's only a wrapper
+    """
 
     client = None
 
