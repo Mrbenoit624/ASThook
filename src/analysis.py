@@ -50,6 +50,11 @@ if __name__ == '__main__':
 
     group = parser.add_argument_group('static')
     
+    group.add_argument(
+            "--tree",
+            action="store_true",
+            help="Active syntaxical analyse")
+    
     for name, desc, func in get_static_modules():
         group.add_argument(
                 "--%s" % name,

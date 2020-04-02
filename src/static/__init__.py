@@ -146,7 +146,8 @@ class StaticAnalysis:
 
         modules = ModuleStatic(self.__app, self.__tmp_dir, args)
         
-        ast(self.__tmp_dir, self.__app)
+        if args.tree:
+            ast(self.__tmp_dir, self.__app)
         #UserInput(app)
         #subprocess.call(["rm", "-rf", "%s/decompiled_app" % DIR], shell=False)
 

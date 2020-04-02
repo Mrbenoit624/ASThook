@@ -6,23 +6,24 @@ class Register:
     funcs = {}
     
     @classmethod
-    def add_node(cls, node, func):
+    def add_node(cls, node, state, func):
         if not node in cls.funcs:
-            cls.funcs[node] = [func]
-        else:
-            cls.funcs[node].append(func)
+            cls.funcs[node] = {"in" : [],
+                               "out" : []}
+        cls.funcs[node][state].append(func)
     
     @classmethod
-    def get_node(cls, node):
+    def get_node(cls, node, state):
         if node in cls.funcs:
-            return cls.funcs[node]
-        return None
+            return cls.funcs[node][state]
+        return []
 
 class Node:
-    def __init__(self, node):
+    def __init__(self, node, state):
         self.__node = node
+        self.__state = state
     def __call__(self, func):
-        Register.add_node(self.__node, func)
+        Register.add_node(self.__node, self.__state, func)
         return func
 
 class ast:
@@ -31,7 +32,7 @@ class ast:
         self.__app = app
         self.__infos = {}
 
-        for i in Register.get_node("Init"):
+        for i in Register.get_node("Init", "in"):
             self.set_infos(i.call(self.get_infos()))
 
         path_app = '%s/decompiled_app/%s' % \
@@ -46,7 +47,7 @@ class ast:
                     continue
                 self.l = tree.types
 
-                for i in Register.get_node("File"):
+                for i in Register.get_node("File", "in"):
                     self.set_infos(i.call(self.get_infos(), path))
 
                 self.load()
@@ -137,7 +138,7 @@ class ast:
         
         @classmethod
         def visit(cls, self):
-            for i in Register.get_node("ClassDeclaration"):
+            for i in Register.get_node("ClassDeclaration", "in"):
                 self.set_infos(i.call(self.get_infos(), self))
             print("", end='')
  
