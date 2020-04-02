@@ -84,6 +84,9 @@ class DynamicAnalysis:
 
     def __init__(self, package, args, tmp_dir):
 
+        if not args.emulator or not args.phone:
+            return
+
         self.__package = package
         self.__tmp_dir = tmp_dir
         self.__args = args

@@ -1,15 +1,14 @@
 
 import xml.etree.ElementTree as ET
 import sys
-import javalang
 import subprocess
 import os
 
-#import sys
-#sys.path.append("..")
-
 from utils import bprint
 from log import Log
+
+from static.module import ModuleStatic
+from static.ast import ast
 
 ################################################################################
 #
@@ -128,8 +127,8 @@ class StaticAnalysis:
     #         if "getString(" in code[i]:
     #            print("l%d: %s" % (i, code[i]))
     
-    def __init__(self, app, tmp_dir):
-        self.__app = app
+    def __init__(self, args, tmp_dir):
+        self.__app = args.app
         self.__tmp_dir = tmp_dir
         self.package = None
 
@@ -143,6 +142,11 @@ class StaticAnalysis:
                 "--java", "-o", "%s/decompiled_app" % self.__tmp_dir],
                 stdout=Log.STD_OUTPOUT, stderr=Log.STD_ERR, shell=False)
         self.Manifest()
+        
+
+        modules = ModuleStatic(self.__app, self.__tmp_dir, args)
+        
+        ast(self.__tmp_dir, self.__app)
         #UserInput(app)
         #subprocess.call(["rm", "-rf", "%s/decompiled_app" % DIR], shell=False)
 

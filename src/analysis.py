@@ -6,6 +6,7 @@ from static import StaticAnalysis
 from dynamic import DynamicAnalysis
 from log import Log
 from dynamic.module.register import get_dynamic_modules
+from static.module.register import get_static_modules
 
 
 DIR="temp"
@@ -24,8 +25,7 @@ if __name__ == '__main__':
             action="store_true",
             help='active verbose')
 
-
-    group = parser.add_argument_group('dynamic')
+    group = parser.add_argument_group('core_dynamic')
 
     group.add_argument(
             '--emulator',
@@ -47,6 +47,16 @@ if __name__ == '__main__':
             type=str,
             help='setup proxy address <filename>.cer')
 
+
+    group = parser.add_argument_group('static')
+    
+    for name, desc, func in get_static_modules():
+        group.add_argument(
+                "--%s" % name,
+                action="store_true",
+                help=desc)
+
+    group = parser.add_argument_group('dynamic')
     for name, desc, func in get_dynamic_modules():
         group.add_argument(
                 "--%s" % name,
@@ -58,5 +68,5 @@ if __name__ == '__main__':
     if not os.path.exists(DIR):
         os.mkdir(DIR)
     Log(args.verbose)
-    st_analysis = StaticAnalysis(args.app, DIR)
+    st_analysis = StaticAnalysis(args, DIR)
     DynamicAnalysis(st_analysis.package, args, DIR)
