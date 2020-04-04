@@ -25,6 +25,26 @@ if __name__ == '__main__':
             action="store_true",
             help='active verbose')
 
+    group = parser.add_argument_group('core_static')
+    
+    group.add_argument(
+            "--tree",
+            action="store_true",
+            help="Active syntaxical analyse")
+    
+    group.add_argument(
+            "--tree_path",
+            type=str,
+            help="Analyse only a portion of apk")
+    
+    group = parser.add_argument_group('static')
+    
+    for name, desc, func in get_static_modules():
+        group.add_argument(
+                "--%s" % name,
+                action="store_true",
+                help=desc)
+
     group = parser.add_argument_group('core_dynamic')
 
     group.add_argument(
@@ -47,19 +67,6 @@ if __name__ == '__main__':
             type=str,
             help='setup proxy address <filename>.cer')
 
-
-    group = parser.add_argument_group('static')
-    
-    group.add_argument(
-            "--tree",
-            action="store_true",
-            help="Active syntaxical analyse")
-    
-    for name, desc, func in get_static_modules():
-        group.add_argument(
-                "--%s" % name,
-                action="store_true",
-                help=desc)
 
     group = parser.add_argument_group('dynamic')
     for name, desc, func in get_dynamic_modules():

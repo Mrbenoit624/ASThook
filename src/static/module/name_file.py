@@ -1,14 +1,13 @@
 
 from .register import ModuleStaticCmd
 
-@ModuleStaticCmd("test", "test")
-class Tree:
+@ModuleStaticCmd("name_file", "store the name of the file to be accessible by Node")
+class NameFile:
     """
     Class Exemple of cresation static module
     """
     def __init__(self, package, tmp_dir, args):
-        if args.test:
-            from . import tree_node
-        #print("test")
+        if args.name_file:
+            from . import name_file_node
         return None
 

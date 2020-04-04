@@ -14,7 +14,7 @@ class GitFilesStore:
         self.__frida = frida
         self.__device = device
         self.__tmp_dir = tmp_dir
-        
+
         self.__files = []
         self.__dict_files = []
         self.__stop = False
@@ -29,15 +29,16 @@ class GitFilesStore:
         self.__frida.load("script_frida/hookfile2.js", "custom",
                 self.on_message_git_files_update)
         threading.Thread(target=self.test).start()
-    
+
     def on_message_git_files_update(self, message, data):
         if message['type'] == 'send':
-            file = message['payload']
-            self.__files.insert(0, file)
-    
+            if 'payload' in message:
+                file = message['payload']
+                self.__files.insert(0, file)
+
     def test(self):
         path = "%s/git_files" % self.__tmp_dir
-        while self.__stop:
+        while not self.__stop:
             if len(self.__files) == 0:
                 time.sleep(.1)
                 continue

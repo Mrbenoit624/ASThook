@@ -121,13 +121,13 @@ class DynamicAnalysis:
         print("waiting for connection device...")
         devices = []
         try:
-            with timeout(45):
+            with timeout(60):
                 while devices == []:
                     devices = self.__client.devices()
                     time.sleep(1)
                 self.__device = devices[0]
         except:
-            print("No devices found after 30s")
+            print("No devices found after 60s")
             sys.exit(1)
         if self.__device == None:
             sys.exit(1)

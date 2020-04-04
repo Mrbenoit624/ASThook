@@ -31,7 +31,9 @@ class Frida:
         self.__device.push("bin/Frida.zip", "/data/local/tmp/Frida.zip")
         self.__device.shell("chmod 700 /data/local/tmp/frida-server")
         null = sys.stdout
+
         os.system('bash -c \'adb shell <<< "dalvikvm -cp /data/local/tmp/Frida.zip Frida;exit"\'')
+        #os.system('bash -c \'adb shell <<< "/data/local/tmp/frida-server&"\';exit')
         
         self.__server = frida.get_usb_device()
     

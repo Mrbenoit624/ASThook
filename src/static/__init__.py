@@ -153,7 +153,7 @@ class StaticAnalysis:
         
         if args.tree:
             bprint("Tree analysis")
-            ast(self.__tmp_dir, self.__app)
+            ast(self.__tmp_dir, self.__app, args)
         #UserInput(app)
         #subprocess.call(["rm", "-rf", "%s/decompiled_app" % DIR], shell=False)
 

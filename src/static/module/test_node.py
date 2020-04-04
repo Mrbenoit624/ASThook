@@ -5,7 +5,7 @@ class Toto:
     @classmethod
     def call(cls, r, self):
         r["toto"] = r["toto"] + 1
-        print("test %d %s" % (r["toto"], r["todo"]))
+        print("%s%s%d\t%s:%s" % (self.elt.name," "*(47-len(self.elt.name)), r["toto"], r["Filename"], self.elt._position))
         return r
 
 @Node("File", "in")
