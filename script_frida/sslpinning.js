@@ -360,6 +360,7 @@ Java.perform(function()
     {
       var OpenSSLSocketImpl = Java.use('com.android.org.conscrypt.OpenSSLSocketImpl');
       OpenSSLSocketImpl.verifyCertificateChain.implementation = function (certRefs, JavaObject, authMethod) {
+        send('Bypassing OpenSSLSocketImpl Conscrypt: ');
       };
       send('Found: OpenSSLSocketImpl Conscrypt');
     }

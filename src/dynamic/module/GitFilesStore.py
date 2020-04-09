@@ -26,9 +26,11 @@ class GitFilesStore:
             shutil.rmtree(path)
         os.mkdir(path)
         self.__repo_files = Repo.init(path)
-        self.__frida.load("script_frida/hookfile2.js", "custom",
+        self.__sc = "script_frida/hookfile2.js"
+        self.__frida.load(self.__sc, "custom",
                 self.on_message_git_files_update)
-        threading.Thread(target=self.test).start()
+        self.to_join = threading.Thread(target=self.test, args =(lambda : self.__stop, )) 
+        self.to_join.start()
 
     def on_message_git_files_update(self, message, data):
         if message['type'] == 'send':
@@ -36,9 +38,9 @@ class GitFilesStore:
                 file = message['payload']
                 self.__files.insert(0, file)
 
-    def test(self):
+    def test(self, stop):
         path = "%s/git_files" % self.__tmp_dir
-        while not self.__stop:
+        while not stop:
             if len(self.__files) == 0:
                 time.sleep(.1)
                 continue
@@ -56,3 +58,9 @@ class GitFilesStore:
                     self.__repo_files.index.commit(file)
             except:
                 continue
+
+    def __del__(self):
+        self.__stop = True
+        self.__frida.unload(self.__sc)
+        self.to_join.join()
+        print("git files store unloaded")

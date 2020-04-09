@@ -10,6 +10,8 @@ class Frida:
     Manage all interation with frida
     """
 
+    List_files_loaded = {}
+
     def on_message_print(self, message, data):
         if message['type'] == 'send':
             print("[*] {0}".format(message['payload']))
@@ -51,10 +53,21 @@ class Frida:
                 script.on('message', self.on_message_store)
             if option == "custom":
                 script.on('message', function)
+            self.unload(file)
             script.load()
+            self.List_files_loaded[file] = script
         except frida.InvalidArgumentError as e:
             print(str(e))
             raise Exception("Your script js sucks!\n")
+
+    def unload(self, file):
+        if file in self.List_files_loaded:
+            self.List_files_loaded[file].unload()
+            del self.List_files_loaded[file]
+
+    def reload(self):
+        for k, v in self.List_files_loaded:
+            self.load(k)
 
     def get_store(self):
         while len(self.__store) == 0:

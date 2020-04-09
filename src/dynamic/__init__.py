@@ -17,6 +17,8 @@ from dynamic.frida import Frida
 
 from dynamic.module import ModuleDynamic
 
+from .cmd import DynCmd
+
 ################################################################################
 #
 # Dynamic Analysis
@@ -154,20 +156,23 @@ class DynamicAnalysis:
         self.__frida = Frida(self.__device, self.__package)
         print(self.__package)
         self.__device.shell("monkey -p %s -c android.intent.category.LAUNCHER 1" % self.__package)
-        
+
         time.sleep(1)
         self.__frida.attach()
-        
+
         self.generalinfo()
-        
+
         modules = ModuleDynamic(self.__frida, self.__device, self.__tmp_dir,
                 args)
-        
+
         #self.__frida.load("script_frida/socket.js", "print")
-        
+
+        cmd = DynCmd(modules)
+        cmd.cmdloop()
+
         #sys.stdin.read()
         self.__emulation.join()
 
         self.__frida.detach()
-    
-   
+
+
