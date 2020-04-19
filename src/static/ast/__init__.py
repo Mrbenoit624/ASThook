@@ -80,69 +80,7 @@ class ast:
 
         for i in Register.get_node("Init", "out"):
             self.set_infos(i.call(self.get_infos()))
-                #while len(l) > 0:
-                #    elt = l.pop()
-                #    #print(type(elt))#.name)#__dict__)
-                #    if type(elt) is javalang.tree.ClassDeclaration:
-                #        print("Class %s" % elt.name)
-                #    elif type(elt) is javalang.tree.MethodDeclaration:
-                #        print("Method %s" % elt.name)
-                #    elif type(elt) is javalang.tree.StatementExpression:
-                #        if type(elt.expression) is javalang.tree.Assignment:
-                #            continue
-                #        if type(elt.expression) is javalang.tree.This:
-                #            continue
-                #        if type(elt.expression) is javalang.tree.SuperConstructorInvocation:
-                #            continue
-                #        if type(elt.expression) is javalang.tree.ExplicitConstructorInvocation:
-                #            continue
-                #        if type(elt.expression) is javalang.tree.ClassCreator:
-                #            continue
-                #        if type(elt.expression) is javalang.tree.Cast:
-                #            continue
-                #        print("FunctionCall %s" % elt.expression.member)
-                #        continue
-                #    elif type(elt) is javalang.tree.LocalVariableDeclaration:
-                #        for i in elt.declarators:
-                #            l.append(i)
-                #        #print(elt.__dict__)
-                #        continue
-                #    elif type(elt) is javalang.tree.VariableDeclarator:
-                #        print("Variable %s" % elt.name)
-                #        continue
-                #    elif type(elt) is javalang.tree.AnnotationMethod:
-                #        continue
-                #    elif type(elt) is javalang.tree.ConstantDeclaration:
-                #        continue
-                #    elif type(elt) is javalang.tree.FieldDeclaration:
-                #        continue
-                #    elif type(elt) is javalang.tree.ReturnStatement:
-                #        continue
-                #    elif type(elt) is javalang.tree.TryStatement:
-                #        continue
-                #    elif type(elt) is javalang.tree.Assignment:
-                #        continue
-                #    elif type(elt) is javalang.tree.IfStatement:
-                #        continue
-                #    elif type(elt) is javalang.tree.SynchronizedStatement:
-                #        continue
-                #    elif type(elt) is javalang.tree.ThrowStatement:
-                #        continue
-                #    elif type(elt) is javalang.tree.BlockStatement:
-                #        continue
-                #    elif type(elt) is javalang.tree.SwitchStatement:
-                #        continue
-                #    elif type(elt) is list:
-                #        for i in elt:
-                #            l.append(i)
-                #        continue
-                #    elif type(elt) is tuple:
-                #        continue
-                #    if elt.body is None:
-                #        continue
-                #    #print("Name %s" % elt.name)
-                #    for i in elt.body:
-                #        l.append(i)
+
     def set_infos(self, e):
         """Set marker to interact between different nodes"""
         self.__infos = e
@@ -215,6 +153,8 @@ class ast:
                     selfp.AnnotationMethod(elt).visit(selfp)
                 elif type(elt) is javalang.tree.AnnotationDeclaration:
                     selfp.AnnotationDeclaration(elt).visit(selfp)
+                elif type(elt) is javalang.tree.ConstantDeclaration:
+                    selfp.ConstantDeclaration(elt).visit(selfp)
                 else:
                     print("%s - %s" % (self.__class__.__name__, type(elt)))
             #print(self.elt.__dict__, end='')
@@ -306,8 +246,11 @@ class ast:
             # No body
             selfp.hook(self, "in")
             #print(self.elt.__dict__)
-            #for elt in self.elt.body:
-            #    print("%s - %s" % (self.__class__.__name__, type(elt)))
+            for elt in self.elt.type:
+                if type(elt) is tuple:
+                    selfp.ASTList(elt).visit(selfp)
+                else:
+                    print("%s - %s" % (self.__class__.__name__, type(elt)))
             #print(self.elt.__dict__, end='')
             selfp.hook(self, "out")
 
@@ -392,8 +335,66 @@ class ast:
                     selfp.MemberReference(elt).visit(selfp)
                 elif type(elt) is javalang.tree.MethodInvocation:
                     selfp.MethodInvocation(elt).visit(selfp)
-                #else:
-                #    print("%s - %s" % (self.__class__.__name__, type(elt)))
+                elif type(elt) is javalang.tree.Assignment:
+                    selfp.Assignment(elt).visit(selfp)
+                elif type(elt) is javalang.tree.Literal:
+                    selfp.Literal(elt).visit(selfp)
+                elif type(elt) is list:
+                    selfp.ASTList(elt).visit(selfp)
+                elif type(elt) is javalang.tree.This:
+                    selfp.This(elt).visit(selfp)
+                elif type(elt) is javalang.tree.ClassCreator:
+                    selfp.ClassCreator(elt).visit(selfp)
+                elif type(elt) is javalang.tree.Cast:
+                    selfp.Cast(elt).visit(selfp)
+                elif type(elt) is javalang.tree.ReferenceType:
+                    selfp.ReferenceType(elt).visit(selfp)
+                elif type(elt) is javalang.tree.ClassReference:
+                    selfp.ClassReference(elt).visit(selfp)
+                elif type(elt) is javalang.tree.SuperMethodInvocation:
+                    selfp.SuperMethodInvocation(elt).visit(selfp)
+                elif type(elt) is javalang.tree.BinaryOperation:
+                    selfp.BinaryOperation(elt).visit(selfp)
+                elif type(elt) is javalang.tree.SuperConstructorInvocation:
+                    selfp.SuperConstructorInvocation(elt).visit(selfp)
+                elif type(elt) is javalang.tree.ExplicitConstructorInvocation:
+                    selfp.ExplicitConstructorInvocation(elt).visit(selfp)
+                elif type(elt) is javalang.tree.TypeArgument:
+                    selfp.TypeArgument(elt).visit(selfp)
+                elif type(elt) is javalang.tree.ArraySelector:
+                    selfp.ArraySelector(elt).visit(selfp)
+                elif type(elt) is javalang.tree.BasicType:
+                    selfp.BasicType(elt).visit(selfp)
+                elif type(elt) is javalang.tree.ArrayInitializer:
+                    selfp.ArrayInitializer(elt).visit(selfp)
+                elif type(elt) is javalang.tree.ArrayCreator:
+                    selfp.ArrayCreator(elt).visit(selfp)
+                elif type(elt) is javalang.tree.ForStatement:
+                    selfp.ForStatement(elt).visit(selfp)
+                elif type(elt) is javalang.tree.ReturnStatement:
+                    selfp.ReturnStatement(elt).visit(selfp)
+                elif type(elt) is javalang.tree.MethodDeclaration:
+                    selfp.MethodDeclaration(elt).visit(selfp)
+                elif type(elt) is javalang.tree.FieldDeclaration:
+                    selfp.FieldDeclaration(elt).visit(selfp)
+                elif type(elt) is javalang.tree.EnumBody:
+                    selfp.EnumBody(elt).visit(selfp)
+                elif type(elt) is javalang.tree.ConstructorDeclaration:
+                    selfp.ConstructorDeclaration(elt).visit(selfp)
+                elif type(elt) is javalang.tree.EnumConstantDeclaration:
+                    selfp.EnumConstantDeclaration(elt).visit(selfp)
+                elif type(elt) is javalang.tree.VariableDeclarator:
+                    selfp.VariableDeclarator(elt).visit(selfp)
+                elif type(elt) is javalang.tree.FormalParameter:
+                    selfp.FormalParameter(elt).visit(selfp)
+                elif type(elt) is javalang.tree.Annotation:
+                    selfp.Annotation(elt).visit(selfp)
+                elif type(elt) is javalang.tree.TernaryExpression:
+                    selfp.TernaryExpression(elt).visit(selfp)
+                elif type(elt) is javalang.tree.ThrowStatement:
+                    selfp.ThrowStatement(elt).visit(selfp)
+                else:
+                    print("%s - %s" % (self.__class__.__name__, type(elt)))
             #print(self.elt.__dict__, end='')
             selfp.hook(self, "out")
     
@@ -416,6 +417,13 @@ class ast:
 
         def visit(self, selfp):
             selfp.hook(self, "in")
+            for elt in self.elt:
+                if type(elt) is tuple:
+                    # TODO: fix segfault
+                    print(end='')
+                    #selfp.ASTList(elt).visit(selfp)
+                else:
+                    print("%s - %s" % (self.__class__.__name__, type(elt)))
             #print(self.elt.__dict__, end='')
             selfp.hook(self, "out")
 
@@ -426,6 +434,8 @@ class ast:
 
         def visit(self, selfp):
             selfp.hook(self, "in")
+            #for elt in self.elt:
+            #    print("%s - %s" % (self.__class__.__name__, type(elt)))
             #print(self.elt.__dict__, end='')
             selfp.hook(self, "out")
 
@@ -548,4 +558,230 @@ class ast:
             selfp.hook(self, "in")
             #print(self.elt.__dict__, end='')
             selfp.hook(self, "out")
+
+    class Assignment:
+
+        def __init__(self, elt):
+            self.elt = elt
+
+        def visit(self, selfp):
+            selfp.hook(self, "in")
+            #print(self.elt.__dict__, end='')
+            selfp.hook(self, "out")
+
+    class Literal:
+
+        def __init__(self, elt):
+            self.elt = elt
+
+        def visit(self, selfp):
+            selfp.hook(self, "in")
+            #print(self.elt.__dict__, end='')
+            selfp.hook(self, "out")
+    
+    class This:
+
+        def __init__(self, elt):
+            self.elt = elt
+
+        def visit(self, selfp):
+            selfp.hook(self, "in")
+            #print(self.elt.__dict__, end='')
+            selfp.hook(self, "out")
+
+    class ClassCreator:
+
+        def __init__(self, elt):
+            self.elt = elt
+
+        def visit(self, selfp):
+            selfp.hook(self, "in")
+            #print(self.elt.__dict__, end='')
+            selfp.hook(self, "out")
+
+    class Cast:
+
+        def __init__(self, elt):
+            self.elt = elt
+
+        def visit(self, selfp):
+            selfp.hook(self, "in")
+            #print(self.elt.__dict__, end='')
+            selfp.hook(self, "out")
+
+    class ReferenceType:
+
+        def __init__(self, elt):
+            self.elt = elt
+
+        def visit(self, selfp):
+            selfp.hook(self, "in")
+            #print(self.elt.__dict__, end='')
+            selfp.hook(self, "out")
+
+    class SuperMethodInvocation:
+
+        def __init__(self, elt):
+            self.elt = elt
+
+        def visit(self, selfp):
+            selfp.hook(self, "in")
+            #print(self.elt.__dict__, end='')
+            selfp.hook(self, "out")
+
+    class ClassReference:
+
+        def __init__(self, elt):
+            self.elt = elt
+
+        def visit(self, selfp):
+            selfp.hook(self, "in")
+            #print(self.elt.__dict__, end='')
+            selfp.hook(self, "out")
+
+    class SuperConstructorInvocation:
+
+        def __init__(self, elt):
+            self.elt = elt
+
+        def visit(self, selfp):
+            selfp.hook(self, "in")
+            #print(self.elt.__dict__, end='')
+            selfp.hook(self, "out")
+
+    class BinaryOperation:
+
+        def __init__(self, elt):
+            self.elt = elt
+
+        def visit(self, selfp):
+            selfp.hook(self, "in")
+            #print(self.elt.__dict__, end='')
+            selfp.hook(self, "out")
+
+    class ExplicitConstructorInvocation:
+
+        def __init__(self, elt):
+            self.elt = elt
+
+        def visit(self, selfp):
+            selfp.hook(self, "in")
+            #print(self.elt.__dict__, end='')
+            selfp.hook(self, "out")
+
+    class TypeArgument:
+
+        def __init__(self, elt):
+            self.elt = elt
+
+        def visit(self, selfp):
+            selfp.hook(self, "in")
+            #print(self.elt.__dict__, end='')
+            selfp.hook(self, "out")
+
+    class BasicType:
+
+        def __init__(self, elt):
+            self.elt = elt
+
+        def visit(self, selfp):
+            selfp.hook(self, "in")
+            #print(self.elt.__dict__, end='')
+            selfp.hook(self, "out")
+
+    class ArrayCreator:
+
+        def __init__(self, elt):
+            self.elt = elt
+
+        def visit(self, selfp):
+            selfp.hook(self, "in")
+            #print(self.elt.__dict__, end='')
+            selfp.hook(self, "out")
+
+    class ArrayInitializer:
+
+        def __init__(self, elt):
+            self.elt = elt
+
+        def visit(self, selfp):
+            selfp.hook(self, "in")
+            #print(self.elt.__dict__, end='')
+            selfp.hook(self, "out")
+
+    class ArraySelector:
+
+        def __init__(self, elt):
+            self.elt = elt
+
+        def visit(self, selfp):
+            selfp.hook(self, "in")
+            #print(self.elt.__dict__, end='')
+            selfp.hook(self, "out")
+
+    class EnumBody:
+
+        def __init__(self, elt):
+            self.elt = elt
+
+        def visit(self, selfp):
+            selfp.hook(self, "in")
+            #print(self.elt.__dict__, end='')
+            selfp.hook(self, "out")
+
+    class VariableDeclarator:
+
+        def __init__(self, elt):
+            self.elt = elt
+
+        def visit(self, selfp):
+            selfp.hook(self, "in")
+            #print(self.elt.__dict__, end='')
+            selfp.hook(self, "out")
+
+
+    class EnumConstantDeclaration:
+
+        def __init__(self, elt):
+            self.elt = elt
+
+        def visit(self, selfp):
+            selfp.hook(self, "in")
+            #print(self.elt.__dict__, end='')
+            selfp.hook(self, "out")
+
+    class Annotation:
+
+        def __init__(self, elt):
+            self.elt = elt
+
+        def visit(self, selfp):
+            selfp.hook(self, "in")
+            #print(self.elt.__dict__, end='')
+            selfp.hook(self, "out")
+
+
+    class FormalParameter:
+
+        def __init__(self, elt):
+            self.elt = elt
+
+        def visit(self, selfp):
+            selfp.hook(self, "in")
+            #print(self.elt.__dict__, end='')
+            selfp.hook(self, "out")
+
+
+    class TernaryExpression:
+
+        def __init__(self, elt):
+            self.elt = elt
+
+        def visit(self, selfp):
+            selfp.hook(self, "in")
+            #print(self.elt.__dict__, end='')
+            selfp.hook(self, "out")
+
+
+
 

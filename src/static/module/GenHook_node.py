@@ -23,7 +23,7 @@ class MethodDeclaration:
                     else:
                         args.append(("", "args%d" % i))
                     i = i + 1
-            if len(args) > 0:
+            if len([over for over, arg in args if over != ""]) > 0:
                 overload += ".overload("
                 overload += ",".join([j for j,k in args if j != ""])
                 overload += ")"
@@ -75,7 +75,7 @@ class File:
 class End:
     @classmethod
     def call(cls, r):
-        if r["gen_hook_out"]:
+        if "gen_hook_out" in r:
             print(info("*" * 32 + " Hook generated " + "*" * 32))
             print(r["gen_hook_out"])
             print(info("*"*80))

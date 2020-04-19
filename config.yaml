@@ -2,10 +2,11 @@ static:
   - tree: true
   - tree_path: "/com"
 
-  - gen_hook: "LoginViewModel.isUserNameValid"
+  - gen_hook: "TraceEvents.nativeDisableProviders"
   - list_funcs: 
-    - '^Login.*'
     - '^.*'
+    - '^.*'
+  - test: false
   
 dynamic:
 # - emulator: "/usr/lib/android-sdk"
@@ -13,7 +14,6 @@ dynamic:
   - proxy: "127.0.0.1:8080"
   - proxy_cert: "misc/burp.der"
 
-  - test: false
   - sslpining: true
 
 
