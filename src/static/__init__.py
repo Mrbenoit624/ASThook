@@ -4,7 +4,7 @@ import sys
 import subprocess
 import os
 
-from utils import bprint
+from utils import *
 from log import Log
 
 from static.module import ModuleStatic
@@ -27,10 +27,6 @@ class StaticAnalysis:
         """
         Analyse the manifest
         """
-        print('%s/%s/%s/AndroidManifest.xml' %
-                (self.__tmp_dir,
-                 "decompiled_app",
-                 self.__app.split('/')[-1]))
         tree = ET.parse('%s/%s/%s/AndroidManifest.xml' %
                 (self.__tmp_dir,
                  "decompiled_app",
@@ -48,11 +44,11 @@ class StaticAnalysis:
     
         # AllowBacup Functionality
         if not root.find('application').get("%sallowBackup" % self.CONST_ANDROID) == 'false':
-            print("allowBackup: allow to backup all sensitive function on the cloud or on a pc")
+            print(error("allowBackup: allow to backup all sensitive function on the cloud or on a pc"))
         
         # debuggable Functionality
         if root.find('application').get("%sdebuggable" % self.CONST_ANDROID) == 'true':
-            print("debuggable: allow to debug the application in user mode")
+            print(error("debuggable: allow to debug the application in user mode"))
     
     #def UserInput(self):
     #    for path in Path('%s/decompiled_app' % self.__tmp_dir).rglob('*.java'):
@@ -159,8 +155,8 @@ class StaticAnalysis:
         
         if args.tree:
             bprint("Tree analysis")
-            print("PATH_SRC%s=\t%s/decompiled_app/%s/src" % \
-                    (" " * 39, self.__tmp_dir, self.__app.split('/')[-1]))
+            print(info("PATH_SRC = %s/decompiled_app/%s/src" % \
+                    (self.__tmp_dir, self.__app.split('/')[-1])))
             ast(self.__tmp_dir, self.__app, args)
         #UserInput(app)
         #subprocess.call(["rm", "-rf", "%s/decompiled_app" % DIR], shell=False)

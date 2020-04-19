@@ -77,6 +77,9 @@ class ast:
                 sys.setrecursionlimit(10**7)
 
                 self.load()
+
+        for i in Register.get_node("Init", "out"):
+            self.set_infos(i.call(self.get_infos()))
                 #while len(l) > 0:
                 #    elt = l.pop()
                 #    #print(type(elt))#.name)#__dict__)

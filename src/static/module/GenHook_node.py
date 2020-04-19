@@ -1,4 +1,5 @@
 from ..ast import Node
+from utils import *
 
 @Node("MethodDeclaration", "in")
 class MethodDeclaration:
@@ -29,7 +30,8 @@ class MethodDeclaration:
             print("%s : %s" % (self.elt.name, params))
             for j, k in args:
                 prints += "%ssend('%s: ' + %s);\n" % (" "*8,k,k)
-            print("Java.perform(function()\n\
+            r["gen_hook_out"] =\
+"Java.perform(function()\n\
 {\n\
     var class_hook = Java.use('%s.%s')\n\
     class_hook.%s%s.implementation = function (%s) {\n\
@@ -40,11 +42,11 @@ class MethodDeclaration:
         return ret\n\
     };\n\
 });" % (
-        r["package"], ClassToHook.get_name(),
-        FuncToHook.get_name(), overload, ",".join(k for j,k in args),
-        ClassToHook.get_name(), FuncToHook.get_name(),
-        prints,
-        FuncToHook.get_name(), ",".join(k for j,k in args)));
+                r["package"], ClassToHook.get_name(),
+                FuncToHook.get_name(), overload, ",".join(k for j,k in args),
+                ClassToHook.get_name(), FuncToHook.get_name(),
+                prints,
+                FuncToHook.get_name(), ",".join(k for j,k in args));
         return r
 
 @Node("ClassDeclaration", "in")
@@ -67,6 +69,16 @@ class File:
     @classmethod
     def call(cls, r, path):
         r["gen_hook_class"] = False
+        return r
+
+@Node("Init", "out")
+class End:
+    @classmethod
+    def call(cls, r):
+        if r["gen_hook_out"]:
+            print(info("*" * 32 + " Hook generated " + "*" * 32))
+            print(r["gen_hook_out"])
+            print(info("*"*80))
         return r
 
 class FuncToHook:
