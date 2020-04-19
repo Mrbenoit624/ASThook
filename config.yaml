@@ -3,9 +3,9 @@ static:
   - tree_path: "/com"
 
   - gen_hook: "TraceEvents.nativeDisableProviders"
-  - list_funcs: 
-    - '^.*'
-    - '^.*'
+#  - list_funcs: 
+#    - '^.*'
+#    - '^.*'
   - test: false
   
 dynamic:

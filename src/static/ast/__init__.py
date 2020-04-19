@@ -306,6 +306,7 @@ class ast:
 
         def visit(self, selfp):
             selfp.hook(self, "in")
+            #print(self.elt.type.name)
             #for elt in self.elt.body:
             #    print("%s - %s" % (self.__class__.__name__, type(elt)))
             #print(self.elt.__dict__, end='')
@@ -393,6 +394,20 @@ class ast:
                     selfp.TernaryExpression(elt).visit(selfp)
                 elif type(elt) is javalang.tree.ThrowStatement:
                     selfp.ThrowStatement(elt).visit(selfp)
+                elif type(elt) is javalang.tree.WhileStatement:
+                    selfp.WhileStatement(elt).visit(selfp)
+                elif type(elt) is javalang.tree.ContinueStatement:
+                    selfp.ContinueStatement(elt).visit(selfp)
+                elif type(elt) is javalang.tree.BreakStatement:
+                    selfp.BreakStatement(elt).visit(selfp)
+                elif type(elt) is javalang.tree.Statement:
+                    selfp.Statement(elt).visit(selfp)
+                elif type(elt) is javalang.tree.SwitchStatement:
+                    selfp.SwitchStatement(elt).visit(selfp)
+                elif type(elt) is javalang.tree.SwitchStatementCase:
+                    selfp.SwitchStatementCase(elt).visit(selfp)
+                elif type(elt) is javalang.tree.ForControl:
+                    selfp.ForControl(elt).visit(selfp)
                 else:
                     print("%s - %s" % (self.__class__.__name__, type(elt)))
             #print(self.elt.__dict__, end='')
@@ -417,11 +432,30 @@ class ast:
 
         def visit(self, selfp):
             selfp.hook(self, "in")
-            for elt in self.elt:
-                if type(elt) is tuple:
-                    # TODO: fix segfault
-                    print(end='')
-                    #selfp.ASTList(elt).visit(selfp)
+            statements = [self.elt.then_statement]
+            if self.elt.else_statement:
+                statements.append(self.elt.else_statement)
+            for elt in statements:
+                if type(elt) is javalang.tree.BlockStatement:
+                    selfp.BlockStatement(elt).visit(selfp)
+                elif type(elt) is javalang.tree.StatementExpression:
+                    selfp.StatementExpression(elt).visit(selfp)
+                elif type(elt) is javalang.tree.ReturnStatement:
+                    selfp.ReturnStatement(elt).visit(selfp)
+                elif type(elt) is javalang.tree.IfStatement:
+                    selfp.IfStatement(elt).visit(selfp)
+                elif type(elt) is javalang.tree.TryStatement:
+                    selfp.TryStatement(elt).visit(selfp)
+                elif type(elt) is javalang.tree.ForStatement:
+                    selfp.ForStatement(elt).visit(selfp)
+                elif type(elt) is javalang.tree.WhileStatement:
+                    selfp.WhileStatement(elt).visit(selfp)
+                elif type(elt) is javalang.tree.ContinueStatement:
+                    selfp.ContinueStatement(elt).visit(selfp)
+                elif type(elt) is javalang.tree.BreakStatement:
+                    selfp.BreakStatement(elt).visit(selfp)
+                elif type(elt) is javalang.tree.ThrowStatement:
+                    selfp.ThrowStatement(elt).visit(selfp)
                 else:
                     print("%s - %s" % (self.__class__.__name__, type(elt)))
             #print(self.elt.__dict__, end='')
@@ -506,6 +540,11 @@ class ast:
 
         def visit(self, selfp):
             selfp.hook(self, "in")
+            for elt in self.elt.body:
+                if type(elt) is tuple:
+                    selfp.ASTList(elt).visit(selfp)
+                else:
+                    print("%s - %s" % (self.__class__.__name__, type(elt)))
             #print(self.elt.__dict__, end='')
             selfp.hook(self, "out")
 
@@ -516,6 +555,11 @@ class ast:
 
         def visit(self, selfp):
             selfp.hook(self, "in")
+            for elt in self.elt.body:
+                if type(elt) is tuple:
+                    selfp.ASTList(elt).visit(selfp)
+                else:
+                    print("%s - %s" % (self.__class__.__name__, type(elt)))
             #print(self.elt.__dict__, end='')
             selfp.hook(self, "out")
 
@@ -546,6 +590,27 @@ class ast:
 
         def visit(self, selfp):
             selfp.hook(self, "in")
+            for elt in self.elt.arguments:
+                if type(elt) is javalang.tree.MemberReference:
+                    selfp.MemberReference(elt).visit(selfp)
+                elif type(elt) is javalang.tree.ClassCreator:
+                    selfp.ClassCreator(elt).visit(selfp)
+                elif type(elt) is javalang.tree.MethodInvocation:
+                    selfp.MethodInvocation(elt).visit(selfp)
+                elif type(elt) is javalang.tree.This:
+                    selfp.This(elt).visit(selfp)
+                elif type(elt) is javalang.tree.Literal:
+                    selfp.Literal(elt).visit(selfp)
+                elif type(elt) is javalang.tree.Cast:
+                    selfp.Cast(elt).visit(selfp)
+                elif type(elt) is javalang.tree.ArrayCreator:
+                    selfp.ArrayCreator(elt).visit(selfp)
+                elif type(elt) is javalang.tree.BinaryOperation:
+                    selfp.BinaryOperation(elt).visit(selfp)
+                elif type(elt) is javalang.tree.ClassReference:
+                    selfp.ClassReference(elt).visit(selfp)
+                else:
+                    print("%s - %s" % (self.__class__.__name__, type(elt)))
             #print(self.elt.__dict__, end='')
             selfp.hook(self, "out")
 
@@ -783,5 +848,54 @@ class ast:
             selfp.hook(self, "out")
 
 
+    class ContinueStatement:
 
+        def __init__(self, elt):
+            self.elt = elt
+
+        def visit(self, selfp):
+            selfp.hook(self, "in")
+            #print(self.elt.__dict__, end='')
+            selfp.hook(self, "out")
+
+    class BreakStatement:
+
+        def __init__(self, elt):
+            self.elt = elt
+
+        def visit(self, selfp):
+            selfp.hook(self, "in")
+            #print(self.elt.__dict__, end='')
+            selfp.hook(self, "out")
+
+
+    class Statement:
+
+        def __init__(self, elt):
+            self.elt = elt
+
+        def visit(self, selfp):
+            selfp.hook(self, "in")
+            #print(self.elt.__dict__, end='')
+            selfp.hook(self, "out")
+
+    class SwitchStatementCase:
+
+        def __init__(self, elt):
+            self.elt = elt
+
+        def visit(self, selfp):
+            selfp.hook(self, "in")
+            #print(self.elt.__dict__, end='')
+            selfp.hook(self, "out")
+
+    class ForControl:
+
+        def __init__(self, elt):
+            self.elt = elt
+
+        def visit(self, selfp):
+            selfp.hook(self, "in")
+            #print(self.elt.__dict__, end='')
+            selfp.hook(self, "out")
 

@@ -57,7 +57,7 @@ def parser():
                         help=desc)
 
 
-                group = parser.add_argument_group('core_dynamic')
+    group = parser.add_argument_group('core_dynamic')
 
     group.add_argument(
             '--emulator',
