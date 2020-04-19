@@ -74,6 +74,10 @@ class Frida:
             time.sleep(.1)
         return self.__store.pop()
 
+    def post(self, script, message):
+        if script in self.List_files_loaded:
+            self.List_files_loaded[script].post(message)
+
 
     def detach(self):
         self.__session.detach()

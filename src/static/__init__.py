@@ -10,6 +10,8 @@ from log import Log
 from static.module import ModuleStatic
 from static.ast import ast
 
+import apk2java
+
 ################################################################################
 #
 # Static Analysis
@@ -25,10 +27,14 @@ class StaticAnalysis:
         """
         Analyse the manifest
         """
+        print('%s/%s/%s/AndroidManifest.xml' %
+                (self.__tmp_dir,
+                 "decompiled_app",
+                 self.__app.split('/')[-1]))
         tree = ET.parse('%s/%s/%s/AndroidManifest.xml' %
                 (self.__tmp_dir,
                  "decompiled_app",
-                 self.__app.split('/')[-1][:-4].lower()))
+                 self.__app.split('/')[-1]))
         root = tree.getroot()
         print(root.get('package'))
         self.package = root.get('package')
@@ -141,18 +147,20 @@ class StaticAnalysis:
 
         bprint("Static Analysis")
         if not os.path.exists("%s/decompiled_app/%s" % (self.__tmp_dir,
-            self.__app.split('/')[-1][:-4].lower())):
-            subprocess.call(["python3", "src/submodule/apk2java-linux/apk2java.py",
-                self.__app,
-                "--java", "-o", "%s/decompiled_app" % self.__tmp_dir],
-                stdout=Log.STD_OUTPOUT, stderr=Log.STD_ERR, shell=False)
+            self.__app.split('/')[-1])):
+            apk2java.decompile(self.__app, "%s/decompiled_app" % self.__tmp_dir)
+            #subprocess.call(["python3", "src/submodule/apk2java-linux/apk2java.py",
+            #    self.__app,
+            #    "--java", "-o", "%s/decompiled_app" % self.__tmp_dir],
+            #    stdout=Log.STD_OUTPOUT, stderr=Log.STD_ERR, shell=False)
         self.Manifest()
         
-
         modules = ModuleStatic(self.__app, self.__tmp_dir, args)
         
         if args.tree:
             bprint("Tree analysis")
+            print("PATH_SRC%s=\t%s/decompiled_app/%s/src" % \
+                    (" " * 39, self.__tmp_dir, self.__app.split('/')[-1]))
             ast(self.__tmp_dir, self.__app, args)
         #UserInput(app)
         #subprocess.call(["rm", "-rf", "%s/decompiled_app" % DIR], shell=False)

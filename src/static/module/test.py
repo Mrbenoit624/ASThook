@@ -1,7 +1,7 @@
 
 from .register import ModuleStaticCmd
 
-@ModuleStaticCmd("test", "test")
+@ModuleStaticCmd("test", "test", "bool")
 class Tree:
     """
     Class Exemple of cresation static module

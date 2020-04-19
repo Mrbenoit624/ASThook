@@ -1,7 +1,7 @@
 
 from .register import ModuleDynamicCmd
 
-@ModuleDynamicCmd("sslpining", "bypass all sslpining")
+@ModuleDynamicCmd("sslpining", "bypass all sslpining", "bool")
 class SSLpinning:
     def __init__(self, frida, device, tmp_dir, args):
         self.__frida = frida

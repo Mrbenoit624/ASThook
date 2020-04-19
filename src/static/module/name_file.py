@@ -1,7 +1,8 @@
 
 from .register import ModuleStaticCmd
 
-@ModuleStaticCmd("name_file", "store the name of the file to be accessible by Node")
+@ModuleStaticCmd("name_file", "store the name of the file to be accessible by Node",
+        "bool")
 class NameFile:
     """
     Class Exemple of cresation static module

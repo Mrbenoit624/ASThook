@@ -8,7 +8,8 @@ from git import Repo
 import shutil
 from .register import ModuleDynamicCmd
 
-@ModuleDynamicCmd("files_store", "store all files read or written by application")
+@ModuleDynamicCmd("files_store", "store all files read or written by application",
+        "bool")
 class GitFilesStore:
     def __init__(self, frida, device, tmp_dir, args):
         self.__frida = frida

@@ -1,6 +1,7 @@
 
 from pathlib import Path
 import javalang
+import sys
 
 class Register:
     """
@@ -32,6 +33,13 @@ class Node:
         Register.add_node(self.__node, self.__state, func)
         return func
 
+def protect_node(fun):
+    def wrapper_protect_node(*args, **kwargs):
+        try:
+            func(args, kwargs)
+        except:
+            print("an error happend")
+
 class ast:
     """
     Class allow to create the AST of the apk
@@ -46,7 +54,7 @@ class ast:
 
         path_app = '%s/decompiled_app/%s/src' % \
                     (self.__tmp_dir,
-                    self.__app.split('/')[-1][:-4].lower())
+                    self.__app.split('/')[-1])
         if args.tree_path:
             path_app += "/" + args.tree_path
         for path in Path(path_app).rglob('*.java'):
@@ -56,10 +64,17 @@ class ast:
                     tree = javalang.parse.parse(file.read())
                 except javalang.parser.JavaSyntaxError:
                     continue
+                except javalang.tokenizer.LexerError:
+                    continue
+                if tree.package == None:
+                    continue
+                self.__infos["package"] = tree.package.name
                 self.l = tree.types
 
                 for i in Register.get_node("File", "in"):
                     self.set_infos(i.call(self.get_infos(), path))
+
+                sys.setrecursionlimit(10**7)
 
                 self.load()
                 #while len(l) > 0:

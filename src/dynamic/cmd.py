@@ -19,7 +19,7 @@ class DynCmd(cmd.Cmd):
 
     def complete_load(self, text, line, begidx, endidx):
         self.modules.load_module()
-        complete = [ name for name, desc, func in get_dynamic_modules() ]
+        complete = [ name for name, desc, func, action in get_dynamic_modules() ]
         if not text:
             completions = complete
         else:

@@ -16,13 +16,13 @@ class ModuleDynamic:
         self.__list_module_loaded = {}
         self.__args = args
 
-        for name, desc, func in get_dynamic_modules():
+        for name, desc, func, action in get_dynamic_modules():
             if args.__dict__[name]:
                 self.__list_module_loaded[name] = func(frida, device, tmp_dir, args)
 
     def load(self, module):
         self.load_module()
-        for name, desc, func in get_dynamic_modules():
+        for name, desc, func, action in get_dynamic_modules():
             if name == module:
                 if module in self.__list_module_loaded:
                     self.unload(module)
