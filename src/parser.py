@@ -23,6 +23,17 @@ def parser():
             type=str,
             help="Load config file")
 
+    parser.add_argument(
+            '--output',
+            type=str,
+            default="none",
+            choices=["none", "json"])
+
+    parser.add_argument(
+            '--output-file',
+            type=str,
+            )
+
     group = parser.add_argument_group('core_static')
 
     group.add_argument(

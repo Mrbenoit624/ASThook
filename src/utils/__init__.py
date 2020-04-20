@@ -2,6 +2,7 @@ from contextlib import contextmanager
 from sty import fg, bg, ef, rs, Style, RgbFg
 import sys
 import signal
+import json
 
 fg.orange = Style(RgbFg(255, 150, 50))
 if not sys.stdout.isatty():
@@ -53,4 +54,53 @@ def timeout(time):
 
 def raise_timeout(signum, frame):
     raise TimeoutError
+
+class Output:
+
+    @classmethod
+    def init(cls):
+        cls.store = {}
+
+    @classmethod
+    def add_st_mod(cls, module, tag, arg):
+        if not module in cls.store:
+            cls.store[module] = {}
+        if not tag in cls.store[module]:
+            cls.store[module][tag] = []
+        cls.store[module][tag].append(arg)
+
+    @classmethod
+    def none_print(cls):
+        ret = ""
+        for modulek, modulev in cls.store.items():
+            for tagk, tagv in modulev.items():
+                for arg in tagv:
+                    if type(arg) is list:
+                        ret += "[ %s ] [ %s ]  " % (
+                            fg.li_cyan + modulek + fg.rs,
+                            fg.li_magenta + tagk + fg.rs)
+                        for i in arg:
+                            ret += i + "\n"
+                    else:
+                        ret += "[ %s ] [ %s ]  %s" % (
+                            fg.li_cyan + modulek + fg.rs,
+                            fg.li_magenta + tagk + fg.rs,
+                            arg) + "\n"
+        return ret
+
+
+    @classmethod
+    def print_static_module(cls):
+        print(cls.none_print())
+
+    @classmethod
+    def dump(cls, mode):
+        if mode == "json":
+            return json.dumps(cls.store, sort_keys=True, indent=4)
+        elif mode == "none":
+            return cls.none_print()
+
+
+
+
 

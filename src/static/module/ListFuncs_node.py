@@ -1,12 +1,13 @@
 from ..ast import Node
 import re
+from utils import Output
 
 @Node("MethodDeclaration", "in")
 class MethodDeclaration:
     @classmethod
     def call(cls, r, self):
         if r["list_funcs_class"] and re.search(Func.get_name(), self.elt.name):
-            print("%s.%s" % (r["list_funcs_class"], self.elt.name))
+            Output.add_st_mod("list_funcs", "func", "%s.%s" % (r["list_funcs_class"], self.elt.name))
         return r
 
 @Node("ClassDeclaration", "in")

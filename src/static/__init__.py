@@ -158,6 +158,10 @@ class StaticAnalysis:
             print(info("PATH_SRC = %s/decompiled_app/%s/src" % \
                     (self.__tmp_dir, self.__app.split('/')[-1])))
             ast(self.__tmp_dir, self.__app, args)
+        Output.print_static_module()
+        if args.output_file:
+            with open(args.output_file, 'w') as f:
+                f.write(Output.dump(args.output))
         #UserInput(app)
         #subprocess.call(["rm", "-rf", "%s/decompiled_app" % DIR], shell=False)
 

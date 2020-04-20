@@ -38,7 +38,7 @@ def protect_node(fun):
         try:
             func(args, kwargs)
         except:
-            print("an error happend")
+            sys.stderr.write("an error happend\n")
 
 class ast:
     """
@@ -136,7 +136,7 @@ class ast:
                 elif type(elt) is javalang.tree.AnnotationDeclaration:
                     selfp.AnnotationDeclaration(elt).visit(selfp)
                 else:
-                    print("%s - %s" % (self.__class__.__name__, type(elt)))
+                    sys.stderr.write("%s - %s\n" % (self.__class__.__name__, type(elt)))
             selfp.hook(self, "out")
  
     class AnnotationDeclaration:
@@ -156,7 +156,7 @@ class ast:
                 elif type(elt) is javalang.tree.ConstantDeclaration:
                     selfp.ConstantDeclaration(elt).visit(selfp)
                 else:
-                    print("%s - %s" % (self.__class__.__name__, type(elt)))
+                    sys.stderr.write("%s - %s\n" % (self.__class__.__name__, type(elt)))
             #print(self.elt.__dict__, end='')
             selfp.hook(self, "out")
  
@@ -171,7 +171,7 @@ class ast:
                 if type(elt) is tuple:
                     selfp.ASTList(elt).visit(selfp)
                 else:
-                    print("%s - %s" % (self.__class__.__name__, type(elt)))
+                    sys.stderr.write("%s - %s\n" % (self.__class__.__name__, type(elt)))
             #print(self.elt.__dict__, end='')
             selfp.hook(self, "out")
 
@@ -194,7 +194,7 @@ class ast:
                 elif type(elt) is javalang.tree.ConstantDeclaration:
                     selfp.ConstantDeclaration(elt).visit(selfp)
                 else:
-                    print("%s - %s" % (self.__class__.__name__, type(elt)))
+                    sys.stderr.write("%s - %s\n" % (self.__class__.__name__, type(elt)))
             #print(self.elt.__dict__, end='')
             selfp.hook(self, "out")
     
@@ -233,7 +233,7 @@ class ast:
                 elif type(elt) is javalang.tree.SwitchStatement:
                     selfp.SwitchStatement(elt).visit(selfp)
                 else:
-                    print("%s - %s" % (self.__class__.__name__, type(elt)))
+                    sys.stderr.write("%s - %s\n" % (self.__class__.__name__, type(elt)))
             #print(self.elt.__dict__, end='')
             selfp.hook(self, "out")
 
@@ -250,7 +250,7 @@ class ast:
                 if type(elt) is tuple:
                     selfp.ASTList(elt).visit(selfp)
                 else:
-                    print("%s - %s" % (self.__class__.__name__, type(elt)))
+                    sys.stderr.write("%s - %s\n" % (self.__class__.__name__, type(elt)))
             #print(self.elt.__dict__, end='')
             selfp.hook(self, "out")
 
@@ -281,7 +281,7 @@ class ast:
                 elif type(elt) is javalang.tree.DoStatement:
                     selfp.DoStatement(elt).visit(selfp)
                 else:
-                    print("%s - %s" % (self.__class__.__name__, type(elt)))
+                    sys.stderr.write("%s - %s\n" % (self.__class__.__name__, type(elt)))
             selfp.hook(self, "out")
 
     class StatementExpression:
@@ -296,7 +296,7 @@ class ast:
                 if type(elt) is tuple:
                     selfp.ASTList(elt).visit(selfp)
                 else:
-                    print("%s - %s" % (self.__class__.__name__, type(elt)))
+                    sys.stderr.write("%s - %s\n" % (self.__class__.__name__, type(elt)))
             selfp.hook(self, "out")
 
     class LocalVariableDeclaration:
@@ -457,7 +457,7 @@ class ast:
                 elif type(elt) is javalang.tree.ThrowStatement:
                     selfp.ThrowStatement(elt).visit(selfp)
                 else:
-                    print("%s - %s" % (self.__class__.__name__, type(elt)))
+                    sys.stderr.write("%s - %s\n" % (self.__class__.__name__, type(elt)))
             #print(self.elt.__dict__, end='')
             selfp.hook(self, "out")
 
@@ -544,7 +544,7 @@ class ast:
                 if type(elt) is tuple:
                     selfp.ASTList(elt).visit(selfp)
                 else:
-                    print("%s - %s" % (self.__class__.__name__, type(elt)))
+                    sys.stderr.write("%s - %s\n" % (self.__class__.__name__, type(elt)))
             #print(self.elt.__dict__, end='')
             selfp.hook(self, "out")
 
@@ -559,7 +559,7 @@ class ast:
                 if type(elt) is tuple:
                     selfp.ASTList(elt).visit(selfp)
                 else:
-                    print("%s - %s" % (self.__class__.__name__, type(elt)))
+                    sys.stderr.write("%s - %s\n" % (self.__class__.__name__, type(elt)))
             #print(self.elt.__dict__, end='')
             selfp.hook(self, "out")
 
@@ -610,7 +610,7 @@ class ast:
                 elif type(elt) is javalang.tree.ClassReference:
                     selfp.ClassReference(elt).visit(selfp)
                 else:
-                    print("%s - %s" % (self.__class__.__name__, type(elt)))
+                    sys.stderr.write("%s - %s\n" % (self.__class__.__name__, type(elt)))
             #print(self.elt.__dict__, end='')
             selfp.hook(self, "out")
 
