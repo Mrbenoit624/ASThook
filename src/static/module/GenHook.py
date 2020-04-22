@@ -1,7 +1,7 @@
 
 from .register import ModuleStaticCmd
 
-@ModuleStaticCmd("gen_hook", "generate hook", "str", "+")
+@ModuleStaticCmd("gen_hook", "generate hook", str, "+")
 class GenHook:
     """
     Class Generate Hook

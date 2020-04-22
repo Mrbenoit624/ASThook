@@ -7,10 +7,12 @@ class LocalVariableDeclaration:
     def call(cls, r, self):
         if self.elt.type.name == "EditText" or \
                 self.elt.type.name == "TextView":
-            print("[+] UserInput: " + warning("%s - %s : %s" % \
-                    (self.elt.declarators[0].name,
-                        r["Filename"],
-                        self.elt._position)))
+                    Output.add_st_mod("user_input",
+                            "EditText/TextView",
+                            warning("%s - %s : %s" % \
+                                    (self.elt.declarators[0].name,
+                                        r["Filename"],
+                                        self.elt._position)))
         return r
 
 @Node("MethodInvocation", "in")

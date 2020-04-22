@@ -1,7 +1,10 @@
 
 from .register import ModuleStaticCmd
 
-@ModuleStaticCmd("list_funcs", "list all funcs", "str", 2)
+@ModuleStaticCmd("list_funcs",
+        "list all funcs with regex as follow: "
+        "--list_funcs <class_regex> <function_regex>",
+        str, 2)
 class ListFuncs:
     """
     Class List functions

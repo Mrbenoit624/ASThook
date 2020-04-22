@@ -45,25 +45,31 @@ def parser():
             "--tree_path",
             type=str,
             help="Analyse only a portion of apk")
+    
+    parser.add_argument(
+            '--decompiler',
+            type=str,
+            default="none",
+            choices=["none", "jd-gui", "cfr", "procyon"])
 
     group = parser.add_argument_group('static')
 
     for name, desc, func, action, nargs in get_static_modules():
-        if action == "bool":
+        if action == bool:
             group.add_argument(
                     "--%s" % name,
                     action="store_true",
                     help=desc)
-        elif action == "str":
+        else:
             if nargs == 1:
                 group.add_argument(
                         "--%s" % name,
-                        type=str,
+                        type=action,
                         help=desc)
             else:
                 group.add_argument(
                         "--%s" % name,
-                        type=str,
+                        type=action,
                         nargs=nargs,
                         help=desc)
 
@@ -89,19 +95,31 @@ def parser():
             '--proxy_cert',
             type=str,
             help='setup proxy address <filename>.cer')
+    
+    group.add_argument(
+            '--no_erase',
+            action="store_true",
+            help='no erase data of phones')
 
 
     group = parser.add_argument_group('dynamic')
-    for name, desc, func, action in get_dynamic_modules():
-        if action == "bool":
+    for name, desc, func, action, nargs in get_dynamic_modules():
+        if action == bool:
             group.add_argument(
                     "--%s" % name,
                     action="store_true",
                     help=desc)
-        elif action == "str":
-            group.add_argument(
-                    "--%s" % name,
-                    type=str,
-                    help=desc)
+        else:
+            if nargs == 1:
+                group.add_argument(
+                        "--%s" % name,
+                        type=action,
+                        help=desc)
+            else:
+                group.add_argument(
+                        "--%s" % name,
+                        type=action,
+                        nargs=nargs,
+                        help=desc)
     return parser
 

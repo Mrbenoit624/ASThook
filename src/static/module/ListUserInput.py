@@ -1,6 +1,6 @@
 from .register import ModuleStaticCmd
 
-@ModuleStaticCmd("user_input", "list all users input", "bool")
+@ModuleStaticCmd("user_input", "list all users input", bool)
 class ListUserInput:
     """
     Class List all user Input

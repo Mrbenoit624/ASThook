@@ -3,6 +3,7 @@ from sty import fg, bg, ef, rs, Style, RgbFg
 import sys
 import signal
 import json
+import re
 
 fg.orange = Style(RgbFg(255, 150, 50))
 if not sys.stdout.isatty():
@@ -60,14 +61,27 @@ class Output:
     @classmethod
     def init(cls):
         cls.store = {}
+        cls.store_td = {}
 
     @classmethod
     def add_st_mod(cls, module, tag, arg):
         if not module in cls.store:
             cls.store[module] = {}
+            cls.store_td[module] = {}
         if not tag in cls.store[module]:
             cls.store[module][tag] = []
+            cls.store_td[module][tag] = []
         cls.store[module][tag].append(arg)
+        if not type(arg) is list:
+            cls.store_td[module][tag].append(re.sub("\\u001b\[.*?m", "", arg))
+        else:
+            cls.store_td[module][tag].append([re.sub("\\u001b\[.*?m", "", e)
+                for e in arg])
+
+
+    @classmethod
+    def get_store(cls):
+        return cls.store_td
 
     @classmethod
     def none_print(cls):
@@ -96,7 +110,7 @@ class Output:
     @classmethod
     def dump(cls, mode):
         if mode == "json":
-            return json.dumps(cls.store, sort_keys=True, indent=4)
+            return json.dumps(cls.store_td, sort_keys=True, indent=4)
         elif mode == "none":
             return cls.none_print()
 

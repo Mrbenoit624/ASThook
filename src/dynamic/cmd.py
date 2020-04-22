@@ -2,6 +2,7 @@ import cmd
 
 from dynamic.frida import Frida
 from .module.register import get_dynamic_modules
+import os
 
 class DynCmd(cmd.Cmd):
     prompt = "frida >"
@@ -17,9 +18,13 @@ class DynCmd(cmd.Cmd):
     def do_EOF(self, arg):
         return self.do_exit(arg)
 
+#TODO fix complete
     def complete_load(self, text, line, begidx, endidx):
         self.modules.load_module()
-        complete = [ name for name, desc, func, action in get_dynamic_modules() ]
+        complete = [ name for name, desc, func, action, nargs in get_dynamic_modules() ]
+        if (len(line.split()) > 2):
+            print(os.listdir(text))
+            return os.listdir(text)
         if not text:
             completions = complete
         else:
@@ -30,7 +35,11 @@ class DynCmd(cmd.Cmd):
         return completions
 
     def do_load(self, arg):
-        self.modules.load(arg)
+        args = arg.split()
+        if len(args) > 0:
+            self.modules.load(args[0], args[1:])
+        else:
+            self.modules.load(arg)
 
     def do_reload(self, arg):
         self.modules.reload()

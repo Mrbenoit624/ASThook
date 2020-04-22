@@ -3,7 +3,7 @@ from .register import ModuleDynamicCmd
 
 import os
 
-@ModuleDynamicCmd("files_del", "prevent all files deleted", "bool")
+@ModuleDynamicCmd("files_del", "prevent all files deleted", bool)
 class PreventFileDeleted:
     def __init__(self, frida, device, tmp_dir, args):
         self.__frida = frida

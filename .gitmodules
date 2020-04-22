@@ -1,3 +1,3 @@
-[submodule "src/submodule/apk2java-linux"]
-	path = src/submodule/apk2java-linux
-	url = git@github.com:TheZ3ro/apk2java-linux.git
+[submodule "src/submodule/apkx"]
+	path = src/submodule/apkx
+	url = git@github.com:b-mueller/apkx.git

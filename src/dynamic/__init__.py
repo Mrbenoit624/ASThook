@@ -31,15 +31,17 @@ class DynamicAnalysis:
     """
 
     @staticmethod
-    def emulation_f(path, phone, proxy, tmp_dir):
+    def emulation_f(path, phone, proxy, tmp_dir, no_erase):
         """
         Launch the emulator
         """
         options = ["%s/emulator/emulator" % path, "@%s" % phone, "-selinux",
                 "disabled", "-memory", "3192", "-no-boot-anim", "-no-snapshot", "-tcpdump",
-                "%s/dumpfile.pcap" % tmp_dir, "-wipe-data", "-writable-system"]
+                "%s/dumpfile.pcap" % tmp_dir, "-writable-system"]
         if not proxy == None:
             options.extend(["-http-proxy", proxy])
+        if not no_erase:
+            options.extend(["-wipe-data"])
         print(options)
         subprocess.call(options, stdout=Log.STD_OUTPOUT, stderr=Log.STD_ERR)
 
@@ -116,7 +118,8 @@ class DynamicAnalysis:
                     args=(args.emulator, 
                           args.phone,
                           args.proxy,
-                          self.__tmp_dir))
+                          self.__tmp_dir,
+                          args.no_erase))
             self.__emulation.daemon = True
             self.__emulation.start()
         

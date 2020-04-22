@@ -409,7 +409,7 @@ class ast:
                 elif type(elt) is javalang.tree.ForControl:
                     selfp.ForControl(elt).visit(selfp)
                 else:
-                    print("%s - %s" % (self.__class__.__name__, type(elt)))
+                    sys.stderr.write("%s - %s\n" % (self.__class__.__name__, type(elt)))
             #print(self.elt.__dict__, end='')
             selfp.hook(self, "out")
     
