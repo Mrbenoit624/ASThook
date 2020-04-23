@@ -1,5 +1,6 @@
 import os
 import subprocess
+import apk2java
 
 class Decompiler:
     def __init__(self, app, tmp_dir, args):
@@ -10,6 +11,8 @@ class Decompiler:
             os.path.exists("%s/decompiled_app/%s" % (self.__tmp_dir,
                 self.__app.split('/')[-1])):
             return
+        subprocess.call(["rm", "-rf", "%s/decompiled_app/%s" % (self.__tmp_dir,
+                self.__app.split('/')[-1])])
         if self.__args.decompiler == 'cfr' or self.__args.decompiler == 'procyon':
            subprocess.call(["src/submodule/apkx/apkx", self.__app, "-d",
                self.__args.decompiler])

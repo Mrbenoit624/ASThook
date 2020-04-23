@@ -1,5 +1,4 @@
 
-import xml.etree.ElementTree as ET
 import sys
 import subprocess
 import os
@@ -10,8 +9,8 @@ from log import Log
 from static.module import ModuleStatic
 from static.ast import ast
 from static.decompiler import Decompiler
+from static.manifest import Manifest
 
-import apk2java
 
 ################################################################################
 #
@@ -22,54 +21,21 @@ class StaticAnalysis:
     """
     Main Class to manage all static analysis
     """
-    CONST_ANDROID = "{http://schemas.android.com/apk/res/android}"
-
-    def list_activities(self):
-        app = self.root.find( 'application' )
-        t_all = app.findall('activity')
-        t_all = t_all + app.findall('activity-alias')
-        for obj in t_all:
-            print(obj.attrib['%sname' % self.CONST_ANDROID])
-
-    def Manifest(self):
-        """
-        Analyse the manifest
-        """
-        tree = ET.parse('%s/%s/%s/AndroidManifest.xml' %
-                (self.__tmp_dir,
-                 "decompiled_app",
-                 self.__app.split('/')[-1]))
-        self.root = tree.getroot()
-        print(self.root.get('package'))
-        self.package = self.root.get('package')
-        bprint("Permission")
-        for permissions in self.root.findall('uses-permission'):
-            #print(permissions.attrib[0])
-            name = permissions.get('%sname' % self.CONST_ANDROID)
-            print(name)
-        bprint("Dangerous functionnality")
-        #print(root.find('application').attrib)
-    
-        # AllowBacup Functionality
-        if not self.root.find('application').get("%sallowBackup" % self.CONST_ANDROID) == 'false':
-            print(error("allowBackup: allow to backup all sensitive function on the cloud or on a pc"))
-        
-        # debuggable Functionality
-        if self.root.find('application').get("%sdebuggable" % self.CONST_ANDROID) == 'true':
-            print(error("debuggable: allow to debug the application in user mode"))
-        self.list_activities()
-    
+   
     
     def __init__(self, args, tmp_dir):
         self.__app = args.app
         self.__tmp_dir = tmp_dir
-        self.package = None
+        self.manifest = None
 
 
         bprint("Static Analysis")
         Decompiler(self.__app, self.__tmp_dir, args)
         
-        self.Manifest()
+        self.manifest = Manifest('%s/%s/%s/AndroidManifest.xml' %
+                (self.__tmp_dir,
+                 "decompiled_app",
+                 self.__app.split('/')[-1]))
         
         modules = ModuleStatic(self.__app, self.__tmp_dir, args)
         

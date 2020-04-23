@@ -40,7 +40,7 @@ class MethodDeclaration:
             for j, k in args:
                 prints += "%ssend('%s: ' + %s);\n" % (" "*8,k,k)
             #r["gen_hook_out"].append(\
-            Output.add_st_mod("gen_hook", "hook", ["%s.%s" % (func_name,class_name),
+            Output.add_tree_mod("gen_hook", "hook", ["%s.%s" % (func_name,class_name),
 "Java.perform(function()\n\
 {\n\
     var class_hook = Java.use('%s.%s')\n\
@@ -98,7 +98,7 @@ class End:
     @classmethod
     def call(cls, r):
         #if len(r["gen_hook_out"]) > 0:
-        #    Output.add_st_mod("gen_hook", "hook",
+        #    Output.add_tree_mod("gen_hook", "hook",
         #        "\n"+info("*" * 32 + " Hook generated " + "*" * 32) + "\n" +
         #        "\n\n".join(r["gen_hook_out"]) +
         #        info("\n" + "*"*80))

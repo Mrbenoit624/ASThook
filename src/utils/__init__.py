@@ -6,6 +6,8 @@ import json
 import re
 
 fg.orange = Style(RgbFg(255, 150, 50))
+fg.blue = Style(RgbFg(54,154,205))
+fg.h2 = Style(RgbFg(30,196,220))
 if not sys.stdout.isatty():
     fg.orange = ""
     fg.li_blue = ""
@@ -23,6 +25,16 @@ def bprint(text):
     print(fg.li_blue + "#" * 80 + fg.rs)
     print("%s%s" % (" " * (40 - size), text))
     print(fg.li_blue + "#" * 80 + fg.rs, end='\n\n')
+
+def h2(text):
+    """
+    Create a beautiful print
+    """
+    size = int(len(text)/2)
+    print()
+    print("%s %s %s\n" % (fg.blue + "*" * (39 - size) + fg.rs,
+        fg.h2 + text,
+        fg.blue + "*" * (39 - size) + fg.rs))
 
 def warning(elt):
     return fg.orange + elt + fg.rs
@@ -62,21 +74,31 @@ class Output:
     def init(cls):
         cls.store = {}
         cls.store_td = {}
+        cls.store["manifest"] = {}
+        cls.store["tree"] = {}
+        #cls.store["dynamic"] = {}
+        cls.store_td["manifest"] = {}
+        cls.store_td["tree"] = {}
+        #cls.store_td["dynamic"] = {}
+    
+    @classmethod
+    def add_to_store(cls, category, module, tag, arg):
+        if not module in cls.store[category]:
+            cls.store[category][module] = {}
+            cls.store_td[category][module] = {}
+        if not tag in cls.store[category][module]:
+            cls.store[category][module][tag] = []
+            cls.store_td[category][module][tag] = []
+        cls.store[category][module][tag].append(arg)
+        if not type(arg) is list:
+            cls.store_td[category][module][tag].append(re.sub("\\u001b\[.*?m", "", arg))
+        else:
+            cls.store_td[category][module][tag].append([re.sub("\\u001b\[.*?m", "", e)
+                for e in arg])
 
     @classmethod
-    def add_st_mod(cls, module, tag, arg):
-        if not module in cls.store:
-            cls.store[module] = {}
-            cls.store_td[module] = {}
-        if not tag in cls.store[module]:
-            cls.store[module][tag] = []
-            cls.store_td[module][tag] = []
-        cls.store[module][tag].append(arg)
-        if not type(arg) is list:
-            cls.store_td[module][tag].append(re.sub("\\u001b\[.*?m", "", arg))
-        else:
-            cls.store_td[module][tag].append([re.sub("\\u001b\[.*?m", "", e)
-                for e in arg])
+    def add_tree_mod(cls, module, tag, arg):
+        cls.add_to_store("tree", module, tag, arg)
 
 
     @classmethod
@@ -86,7 +108,7 @@ class Output:
     @classmethod
     def none_print(cls):
         ret = ""
-        for modulek, modulev in cls.store.items():
+        for modulek, modulev in cls.store["tree"].items():
             for tagk, tagv in modulev.items():
                 for arg in tagv:
                     if type(arg) is list:

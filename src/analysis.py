@@ -23,4 +23,4 @@ if __name__ == '__main__':
     Log(args.verbose)
     Output.init()
     st_analysis = StaticAnalysis(args, DIR)
-    DynamicAnalysis(st_analysis.package, args, DIR)
+    DynamicAnalysis(st_analysis.manifest.package, args, DIR)

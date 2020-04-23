@@ -2,6 +2,9 @@
 from pathlib import Path
 import javalang
 import sys
+from utils import *
+import re
+
 
 class Register:
     """
@@ -57,6 +60,10 @@ class ast:
                     self.__app.split('/')[-1])
         if args.tree_path:
             path_app += "/" + args.tree_path
+        for action in Output.get_store()["manifest"]["activity"]["actions"]:
+            if len(action) > 1 and action[1] == "android.intent.action.MAIN":
+                self.main = action[0]
+        print("/".join(self.main.split(".")))
         for path in Path(path_app).rglob('*.java'):
             #print(path)
             with open(path, 'r') as file:
@@ -93,6 +100,7 @@ class ast:
         """
         Throwing the AST and apply Nodes modules
         """
+        #import pdb; pdb.set_trace()
         for elt in self.l:
             self.elt = elt
             if type(elt) is javalang.tree.ClassDeclaration:
@@ -292,11 +300,17 @@ class ast:
         def visit(self, selfp):
             selfp.hook(self, "in")
             #print(self.elt.__dict__)
-            for elt in self.elt.expression:
-                if type(elt) is tuple:
-                    selfp.ASTList(elt).visit(selfp)
-                else:
-                    sys.stderr.write("%s - %s\n" % (self.__class__.__name__, type(elt)))
+            elt = self.elt.expression
+            if type(elt) is javalang.tree.MethodInvocation:
+                selfp.MethodInvocation(elt).visit(selfp)
+            elif type(elt) is javalang.tree.SuperMethodInvocation:
+                selfp.SuperMethodInvocation(elt).visit(selfp)
+            elif type(elt) is javalang.tree.Assignment:
+                selfp.Assignment(elt).visit(selfp)
+            elif type(elt) is javalang.tree.This:
+                selfp.This(elt).visit(selfp)
+            else:
+                sys.stderr.write("%s - %s\n" % (self.__class__.__name__, type(elt)))
             selfp.hook(self, "out")
 
     class LocalVariableDeclaration:
@@ -307,8 +321,11 @@ class ast:
         def visit(self, selfp):
             selfp.hook(self, "in")
             #print(self.elt.type.name)
-            #for elt in self.elt.body:
-            #    print("%s - %s" % (self.__class__.__name__, type(elt)))
+            for elt in self.elt.declarators:
+                if type(elt) is javalang.tree.VariableDeclarator:
+                    selfp.VariableDeclarator(elt).visit(selfp)
+                else:
+                    sys.stderr.write("%s - %s\n" % (self.__class__.__name__, type(elt)))
             #print(self.elt.__dict__, end='')
             selfp.hook(self, "out")
 
@@ -319,6 +336,8 @@ class ast:
 
         def visit(self, selfp):
             selfp.hook(self, "in")
+            #print(self.elt)
+            #traceback.print_stack()
             for elt in self.elt:
                 if type(elt) is javalang.tree.StatementExpression:
                     selfp.StatementExpression(elt).visit(selfp)
@@ -641,6 +660,8 @@ class ast:
 
         def visit(self, selfp):
             selfp.hook(self, "in")
+            if re.search("\".*\"", self.elt.value):
+                print(self.elt.value)
             #print(self.elt.__dict__, end='')
             selfp.hook(self, "out")
     
@@ -800,7 +821,20 @@ class ast:
             self.elt = elt
 
         def visit(self, selfp):
+            if self.elt.initializer == None:
+                return
             selfp.hook(self, "in")
+            elt = self.elt.initializer
+            if type(elt) is javalang.tree.Cast:
+                selfp.Cast(elt).visit(selfp)
+            elif type(elt) is javalang.tree.MethodInvocation:
+                selfp.MethodInvocation(elt).visit(selfp)
+            elif type(elt) is javalang.tree.ClassCreator:
+                selfp.ClassCreator(elt).visit(selfp)
+            elif type(elt) is javalang.tree.MemberReference:
+                selfp.MemberReference(elt).visit(selfp)
+            else:
+                sys.stderr.write("%s - %s\n" % (self.__class__.__name__, type(elt)))
             #print(self.elt.__dict__, end='')
             selfp.hook(self, "out")
 

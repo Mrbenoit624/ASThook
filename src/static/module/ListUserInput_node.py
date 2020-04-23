@@ -7,7 +7,7 @@ class LocalVariableDeclaration:
     def call(cls, r, self):
         if self.elt.type.name == "EditText" or \
                 self.elt.type.name == "TextView":
-                    Output.add_st_mod("user_input",
+                    Output.add_tree_mod("user_input",
                             "EditText/TextView",
                             warning("%s - %s : %s" % \
                                     (self.elt.declarators[0].name,
