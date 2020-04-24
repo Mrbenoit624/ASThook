@@ -1,6 +1,10 @@
 
 from pathlib import Path
 
+for i in [x for x in Path(__file__).parent.absolute().iterdir() if x.is_dir()]:
+    __import__("static.module.%s" % i.stem)
+
+
 for i in Path(__file__).parent.absolute().glob('*.py'):
     if i.name != "register.py" and i.name != "__init__.py" and \
     not str(i).endswith("node.py"):

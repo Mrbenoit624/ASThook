@@ -1,4 +1,4 @@
-from ..ast import Node
+from static.ast import Node
 
 @Node("ClassDeclaration", "in")
 class Toto:

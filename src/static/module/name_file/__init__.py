@@ -1,5 +1,5 @@
 
-from .register import ModuleStaticCmd
+from static.module.register import ModuleStaticCmd
 
 @ModuleStaticCmd("name_file", "store the name of the file to be accessible by Node",
         bool)

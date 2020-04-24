@@ -1,5 +1,5 @@
 
-from .register import ModuleStaticCmd
+from static.module.register import ModuleStaticCmd
 
 @ModuleStaticCmd("gen_hook", "generate hook", str, "+")
 class GenHook:

@@ -1,4 +1,4 @@
-from ..ast import Node
+from static.ast import Node
 from utils import *
 
 @Node("LocalVariableDeclaration", "in")

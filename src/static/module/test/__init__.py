@@ -1,5 +1,5 @@
 
-from .register import ModuleStaticCmd
+from static.module.register import ModuleStaticCmd
 
 @ModuleStaticCmd("test", "test", bool)
 class Tree:
@@ -8,7 +8,7 @@ class Tree:
     """
     def __init__(self, package, tmp_dir, args):
         if args.test:
-            from . import name_file_node # dependance
+            from ..name_file import name_file_node # dependance
             from . import test_node
         #print("test")
         return None

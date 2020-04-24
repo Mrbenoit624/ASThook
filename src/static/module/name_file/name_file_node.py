@@ -1,4 +1,4 @@
-from ..ast import Node
+from static.ast import Node
 
 @Node("File", "in")
 class File:

@@ -1,5 +1,5 @@
 
-from .register import ModuleStaticCmd
+from static.module.register import ModuleStaticCmd
 
 @ModuleStaticCmd("list_funcs",
         "list all funcs with regex as follow: "
