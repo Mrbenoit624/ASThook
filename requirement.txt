@@ -2,3 +2,4 @@
 adb_shell
 pyyaml
 sty
+graphviz

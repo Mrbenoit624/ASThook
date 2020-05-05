@@ -5,6 +5,8 @@ import sys
 from utils import *
 import re
 
+from graphviz import Digraph
+
 
 class Register:
     """
@@ -68,7 +70,8 @@ class ast:
             #print(path)
             with open(path, 'r') as file:
                 try:
-                    tree = javalang.parse.parse(file.read())
+                    content = file.read()
+                    tree = javalang.parse.parse(content)
                 except javalang.parser.JavaSyntaxError:
                     continue
                 except javalang.tokenizer.LexerError:
@@ -83,7 +86,21 @@ class ast:
 
                 sys.setrecursionlimit(10**7)
 
+                self.dot = Digraph(comment=self.__infos["package"] + "." +
+                        path.name)
+                self.dot.attr('node', shape='box')
+                self.dot.attr('graph', splines='ortho')
+
+                self.count_node = 0
                 self.load()
+
+                #print(self.dot.source)
+                try:
+                    with timeout(3):
+                        self.dot.render('dot/%s.%s' % (self.__infos["package"],
+                            path.name), view=False)
+                except:
+                    pass
 
         for i in Register.get_node("Init", "out"):
             self.set_infos(i.call(self.get_infos()))
@@ -118,319 +135,321 @@ class ast:
         for i in Register.get_node(selfc.__class__.__name__, state):
             self.set_infos(i.call(self.get_infos(), selfc))
 
+    class BaseNode:
 
-    class ClassDeclaration:
-        
-        def __init__(self, elt):
+        def __init__(self, elt, parent=None):
             self.elt = elt
+            self.parent = parent
+
+        def getName(self):
+            #print(self.elt)
+            return self.__class__.__name__
+        
+        def NameFormat(self, name):
+            return str(self.id) + name.replace(" ", "_").replace(":", "_")
+
         def visit(self, selfp):
+            self.id = selfp.count_node
+            if selfp.count_node < 560:
+                selfp.count_node = selfp.count_node + 1
+
+            name = self.getName()
+            selfp.dot.node(self.NameFormat(name), name)
+            if self.parent:
+                selfp.dot.edge(self.parent.NameFormat(self.parent.getName()),
+                    self.NameFormat(self.getName()), constraint='true')
+
             selfp.hook(self, "in")
-            #print(self.elt.__dict__, end='')
+            self.apply(selfp)
+            selfp.hook(self, "out")
+        
+        def apply(self, selfp):
+            raise NotImplementedError()
+    
+    class ClassDeclaration(BaseNode):
+        
+        def getName(self):
+            return self.__class__.__name__ + " : " +self.elt.name
+
+        def apply(self, selfp):
             for elt in self.elt.body:
                 if type(elt) is javalang.tree.MethodDeclaration:
-                    selfp.MethodDeclaration(elt).visit(selfp)
+                    selfp.MethodDeclaration(elt, self).visit(selfp)
                 elif type(elt) is javalang.tree.FieldDeclaration:
-                    selfp.FieldDeclaration(elt).visit(selfp)
+                    selfp.FieldDeclaration(elt, self).visit(selfp)
                 elif type(elt) is javalang.tree.ConstructorDeclaration:
-                    selfp.ConstructorDeclaration(elt).visit(selfp)
+                    selfp.ConstructorDeclaration(elt, self).visit(selfp)
                 elif type(elt) is list:
-                    selfp.ASTList(elt).visit(selfp)
+                    selfp.ASTList(elt, self).visit(selfp)
                 elif type(elt) is javalang.tree.ClassDeclaration:
-                    selfp.ClassDeclaration(elt).visit(selfp)
+                    selfp.ClassDeclaration(elt, self).visit(selfp)
                 elif type(elt) is javalang.tree.InterfaceDeclaration:
-                    selfp.InterfaceDeclaration(elt).visit(selfp)
+                    selfp.InterfaceDeclaration(elt, self).visit(selfp)
                 elif type(elt) is javalang.tree.EnumDeclaration:
-                    selfp.EnumDeclaration(elt).visit(selfp)
+                    selfp.EnumDeclaration(elt, self).visit(selfp)
                 elif type(elt) is javalang.tree.AnnotationDeclaration:
-                    selfp.AnnotationDeclaration(elt).visit(selfp)
+                    selfp.AnnotationDeclaration(elt, self).visit(selfp)
                 else:
                     sys.stderr.write("%s - %s\n" % (self.__class__.__name__, type(elt)))
-            selfp.hook(self, "out")
+
  
-    class AnnotationDeclaration:
-
-        def __init__(self, elt):
-            self.elt = elt
-
-        def visit(self, selfp):
-            selfp.hook(self, "in")
+    class AnnotationDeclaration(BaseNode):
+        
+        def apply(self, selfp):
             for elt in self.elt.body:
                 if type(elt) is javalang.tree.EnumDeclaration:
-                    selfp.EnumDeclaration(elt).visit(selfp)
+                    selfp.EnumDeclaration(elt, self).visit(selfp)
                 elif type(elt) is javalang.tree.AnnotationMethod:
-                    selfp.AnnotationMethod(elt).visit(selfp)
+                    selfp.AnnotationMethod(elt, self).visit(selfp)
                 elif type(elt) is javalang.tree.AnnotationDeclaration:
-                    selfp.AnnotationDeclaration(elt).visit(selfp)
+                    selfp.AnnotationDeclaration(elt, self).visit(selfp)
                 elif type(elt) is javalang.tree.ConstantDeclaration:
-                    selfp.ConstantDeclaration(elt).visit(selfp)
+                    selfp.ConstantDeclaration(elt, self).visit(selfp)
                 else:
                     sys.stderr.write("%s - %s\n" % (self.__class__.__name__, type(elt)))
             #print(self.elt.__dict__, end='')
-            selfp.hook(self, "out")
  
-    class EnumDeclaration:
+    class EnumDeclaration(BaseNode):
 
-        def __init__(self, elt):
-            self.elt = elt
-
-        def visit(self, selfp):
-            selfp.hook(self, "in")
+        def apply(self, selfp):
             for elt in self.elt.body:
                 if type(elt) is tuple:
-                    selfp.ASTList(elt).visit(selfp)
+                    selfp.ASTList(elt, self).visit(selfp)
                 else:
                     sys.stderr.write("%s - %s\n" % (self.__class__.__name__, type(elt)))
             #print(self.elt.__dict__, end='')
-            selfp.hook(self, "out")
 
-    class InterfaceDeclaration:
+    class InterfaceDeclaration(BaseNode):
 
-        def __init__(self, elt):
-            self.elt = elt
-
-        def visit(self, selfp):
-            selfp.hook(self, "in")
+        def apply(self, selfp):
             for elt in self.elt.body:
                 if type(elt) is javalang.tree.MethodDeclaration:
-                    selfp.MethodDeclaration(elt).visit(selfp)
+                    selfp.MethodDeclaration(elt, self).visit(selfp)
                 elif type(elt) is javalang.tree.ClassDeclaration:
-                    selfp.ClassDeclaration(elt).visit(selfp)
+                    selfp.ClassDeclaration(elt, self).visit(selfp)
                 elif type(elt) is javalang.tree.InterfaceDeclaration:
-                    selfp.InterfaceDeclaration(elt).visit(selfp)
+                    selfp.InterfaceDeclaration(elt, self).visit(selfp)
                 elif type(elt) is javalang.tree.EnumDeclaration:
-                    selfp.EnumDeclaration(elt).visit(selfp)
+                    selfp.EnumDeclaration(elt, self).visit(selfp)
                 elif type(elt) is javalang.tree.ConstantDeclaration:
-                    selfp.ConstantDeclaration(elt).visit(selfp)
+                    selfp.ConstantDeclaration(elt, self).visit(selfp)
                 else:
                     sys.stderr.write("%s - %s\n" % (self.__class__.__name__, type(elt)))
             #print(self.elt.__dict__, end='')
-            selfp.hook(self, "out")
     
-    class MethodDeclaration:
+    class MethodDeclaration(BaseNode):
+        
+        def getName(self):
+            return self.__class__.__name__ + " : " +self.elt.name
 
-        def __init__(self, elt):
-            self.elt = elt
-
-        def visit(self, selfp):
-            selfp.hook(self, "in")
+        def apply(self, selfp):
             if self.elt.body == None:
                 return # TODO: Fix bug None
             for elt in self.elt.body:
                 if type(elt) is javalang.tree.ReturnStatement:
-                    selfp.ReturnStatement(elt).visit(selfp)
+                    selfp.ReturnStatement(elt, self).visit(selfp)
                 elif type(elt) is javalang.tree.StatementExpression:
-                    selfp.StatementExpression(elt).visit(selfp)
+                    selfp.StatementExpression(elt, self).visit(selfp)
                 elif type(elt) is javalang.tree.IfStatement:
-                    selfp.IfStatement(elt).visit(selfp)
+                    selfp.IfStatement(elt, self).visit(selfp)
                 elif type(elt) is javalang.tree.LocalVariableDeclaration:
-                    selfp.LocalVariableDeclaration(elt).visit(selfp)
+                    selfp.LocalVariableDeclaration(elt, self).visit(selfp)
                 elif type(elt) is javalang.tree.SynchronizedStatement:
-                    selfp.SynchronizedStatement(elt).visit(selfp)
+                    selfp.SynchronizedStatement(elt, self).visit(selfp)
                 elif type(elt) is javalang.tree.TryStatement:
-                    selfp.TryStatement(elt).visit(selfp)
+                    selfp.TryStatement(elt, self).visit(selfp)
                 elif type(elt) is javalang.tree.ThrowStatement:
-                    selfp.ThrowStatement(elt).visit(selfp)
+                    selfp.ThrowStatement(elt, self).visit(selfp)
                 elif type(elt) is javalang.tree.WhileStatement:
-                    selfp.WhileStatement(elt).visit(selfp)
+                    selfp.WhileStatement(elt, self).visit(selfp)
                 elif type(elt) is javalang.tree.BlockStatement:
-                    selfp.BlockStatement(elt).visit(selfp)
+                    selfp.BlockStatement(elt, self).visit(selfp)
                 elif type(elt) is javalang.tree.ForStatement:
-                    selfp.ForStatement(elt).visit(selfp)
+                    selfp.ForStatement(elt, self).visit(selfp)
                 elif type(elt) is javalang.tree.DoStatement:
-                    selfp.DoStatement(elt).visit(selfp)
+                    selfp.DoStatement(elt, self).visit(selfp)
                 elif type(elt) is javalang.tree.SwitchStatement:
-                    selfp.SwitchStatement(elt).visit(selfp)
+                    selfp.SwitchStatement(elt, self).visit(selfp)
                 else:
                     sys.stderr.write("%s - %s\n" % (self.__class__.__name__, type(elt)))
             #print(self.elt.__dict__, end='')
-            selfp.hook(self, "out")
 
-    class FieldDeclaration:
+    class FieldDeclaration(BaseNode):
+        
+        def getName(self):
+            return self.__class__.__name__
 
-        def __init__(self, elt):
-            self.elt = elt
-
-        def visit(self, selfp):
+        def apply(self, selfp):
             # No body
-            selfp.hook(self, "in")
             #print(self.elt.__dict__)
             for elt in self.elt.type:
                 if type(elt) is tuple:
-                    selfp.ASTList(elt).visit(selfp)
+                    selfp.ASTList(elt, self).visit(selfp)
                 else:
                     sys.stderr.write("%s - %s\n" % (self.__class__.__name__, type(elt)))
             #print(self.elt.__dict__, end='')
-            selfp.hook(self, "out")
 
-    class ConstructorDeclaration:
+    class ConstructorDeclaration(BaseNode):
 
-        def __init__(self, elt):
-            self.elt = elt
-
-        def visit(self, selfp):
-            selfp.hook(self, "in")
+        def apply(self, selfp):
             for elt in self.elt.body:
                 if type(elt) is javalang.tree.StatementExpression:
-                    selfp.StatementExpression(elt).visit(selfp)
+                    selfp.StatementExpression(elt, self).visit(selfp)
                 elif type(elt) is javalang.tree.IfStatement:
-                    selfp.IfStatement(elt).visit(selfp)
+                    selfp.IfStatement(elt, self).visit(selfp)
                 elif type(elt) is javalang.tree.LocalVariableDeclaration:
-                    selfp.LocalVariableDeclaration(elt).visit(selfp)
+                    selfp.LocalVariableDeclaration(elt, self).visit(selfp)
                 elif type(elt) is javalang.tree.ThrowStatement:
-                    selfp.ThrowStatement(elt).visit(selfp)
+                    selfp.ThrowStatement(elt, self).visit(selfp)
                 elif type(elt) is javalang.tree.BlockStatement:
-                    selfp.BlockStatement(elt).visit(selfp)
+                    selfp.BlockStatement(elt, self).visit(selfp)
                 elif type(elt) is javalang.tree.ForStatement:
-                    selfp.ForStatement(elt).visit(selfp)
+                    selfp.ForStatement(elt, self).visit(selfp)
                 elif type(elt) is javalang.tree.TryStatement:
-                    selfp.TryStatement(elt).visit(selfp)
+                    selfp.TryStatement(elt, self).visit(selfp)
                 elif type(elt) is javalang.tree.WhileStatement:
-                    selfp.WhileStatement(elt).visit(selfp)
+                    selfp.WhileStatement(elt, self).visit(selfp)
                 elif type(elt) is javalang.tree.DoStatement:
-                    selfp.DoStatement(elt).visit(selfp)
+                    selfp.DoStatement(elt, self).visit(selfp)
                 else:
                     sys.stderr.write("%s - %s\n" % (self.__class__.__name__, type(elt)))
-            selfp.hook(self, "out")
 
-    class StatementExpression:
+    class StatementExpression(BaseNode):
+        
+        def getName(self):
+            name = " : " + self.elt.label if self.elt.label else ""
+            return self.__class__.__name__ + name
 
-        def __init__(self, elt):
-            self.elt = elt
-
-        def visit(self, selfp):
-            selfp.hook(self, "in")
+        def apply(self, selfp):
             #print(self.elt.__dict__)
             elt = self.elt.expression
             if type(elt) is javalang.tree.MethodInvocation:
-                selfp.MethodInvocation(elt).visit(selfp)
+                selfp.MethodInvocation(elt, self).visit(selfp)
             elif type(elt) is javalang.tree.SuperMethodInvocation:
-                selfp.SuperMethodInvocation(elt).visit(selfp)
+                selfp.SuperMethodInvocation(elt, self).visit(selfp)
             elif type(elt) is javalang.tree.Assignment:
-                selfp.Assignment(elt).visit(selfp)
+                selfp.Assignment(elt, self).visit(selfp)
             elif type(elt) is javalang.tree.This:
-                selfp.This(elt).visit(selfp)
+                selfp.This(elt, self).visit(selfp)
+            elif type(elt) is javalang.tree.Cast:
+                selfp.Cast(elt, self).visit(selfp)
+            elif type(elt) is javalang.tree.ClassCreator:
+                selfp.ClassCreator(elt, self).visit(selfp)
             else:
                 sys.stderr.write("%s - %s\n" % (self.__class__.__name__, type(elt)))
-            selfp.hook(self, "out")
 
-    class LocalVariableDeclaration:
+    class LocalVariableDeclaration(BaseNode):
 
-        def __init__(self, elt):
-            self.elt = elt
-
-        def visit(self, selfp):
-            selfp.hook(self, "in")
+        def apply(self, selfp):
             #print(self.elt.type.name)
             for elt in self.elt.declarators:
                 if type(elt) is javalang.tree.VariableDeclarator:
-                    selfp.VariableDeclarator(elt).visit(selfp)
+                    selfp.VariableDeclarator(elt, self).visit(selfp)
                 else:
                     sys.stderr.write("%s - %s\n" % (self.__class__.__name__, type(elt)))
             #print(self.elt.__dict__, end='')
-            selfp.hook(self, "out")
 
-    class ASTList:
+    class ASTList(BaseNode):
 
-        def __init__(self, elt):
-            self.elt = elt
+        def getName(self):
+            #print(self.elt)
+            return self.__class__.__name__
 
-        def visit(self, selfp):
-            selfp.hook(self, "in")
+        def apply(self, selfp):
             #print(self.elt)
             #traceback.print_stack()
             for elt in self.elt:
                 if type(elt) is javalang.tree.StatementExpression:
-                    selfp.StatementExpression(elt).visit(selfp)
+                    selfp.StatementExpression(elt, self).visit(selfp)
                 elif type(elt) is javalang.tree.LocalVariableDeclaration:
-                    selfp.LocalVariableDeclaration(elt).visit(selfp)
+                    selfp.LocalVariableDeclaration(elt, self).visit(selfp)
                 elif type(elt) is javalang.tree.BlockStatement:
-                    selfp.BlockStatement(elt).visit(selfp)
+                    selfp.BlockStatement(elt, self).visit(selfp)
                 elif type(elt) is javalang.tree.IfStatement:
-                    selfp.IfStatement(elt).visit(selfp)
+                    selfp.IfStatement(elt, self).visit(selfp)
                 elif type(elt) is javalang.tree.TryStatement:
-                    selfp.TryStatement(elt).visit(selfp)
-                elif type(elt) is tuple:
-                    selfp.ASTList(elt).visit(selfp)
+                    selfp.TryStatement(elt, self).visit(selfp)
+                #elif type(elt) is tuple:
+                #    selfp.ASTList(elt, self).visit(selfp)
                 elif type(elt) is javalang.tree.MemberReference:
-                    selfp.MemberReference(elt).visit(selfp)
+                    selfp.MemberReference(elt, self).visit(selfp)
                 elif type(elt) is javalang.tree.MethodInvocation:
-                    selfp.MethodInvocation(elt).visit(selfp)
+                    selfp.MethodInvocation(elt, self).visit(selfp)
                 elif type(elt) is javalang.tree.Assignment:
-                    selfp.Assignment(elt).visit(selfp)
+                    selfp.Assignment(elt, self).visit(selfp)
                 elif type(elt) is javalang.tree.Literal:
-                    selfp.Literal(elt).visit(selfp)
+                    selfp.Literal(elt, self).visit(selfp)
                 elif type(elt) is list:
-                    selfp.ASTList(elt).visit(selfp)
+                    selfp.ASTList(elt, self).visit(selfp)
                 elif type(elt) is javalang.tree.This:
-                    selfp.This(elt).visit(selfp)
+                    selfp.This(elt, self).visit(selfp)
                 elif type(elt) is javalang.tree.ClassCreator:
-                    selfp.ClassCreator(elt).visit(selfp)
+                    selfp.ClassCreator(elt, self).visit(selfp)
                 elif type(elt) is javalang.tree.Cast:
-                    selfp.Cast(elt).visit(selfp)
+                    selfp.Cast(elt, self).visit(selfp)
                 elif type(elt) is javalang.tree.ReferenceType:
-                    selfp.ReferenceType(elt).visit(selfp)
+                    selfp.ReferenceType(elt, self).visit(selfp)
                 elif type(elt) is javalang.tree.ClassReference:
-                    selfp.ClassReference(elt).visit(selfp)
+                    selfp.ClassReference(elt, self).visit(selfp)
                 elif type(elt) is javalang.tree.SuperMethodInvocation:
-                    selfp.SuperMethodInvocation(elt).visit(selfp)
+                    selfp.SuperMethodInvocation(elt, self).visit(selfp)
                 elif type(elt) is javalang.tree.BinaryOperation:
-                    selfp.BinaryOperation(elt).visit(selfp)
+                    selfp.BinaryOperation(elt, self).visit(selfp)
                 elif type(elt) is javalang.tree.SuperConstructorInvocation:
-                    selfp.SuperConstructorInvocation(elt).visit(selfp)
+                    selfp.SuperConstructorInvocation(elt, self).visit(selfp)
                 elif type(elt) is javalang.tree.ExplicitConstructorInvocation:
-                    selfp.ExplicitConstructorInvocation(elt).visit(selfp)
+                    selfp.ExplicitConstructorInvocation(elt, self).visit(selfp)
                 elif type(elt) is javalang.tree.TypeArgument:
-                    selfp.TypeArgument(elt).visit(selfp)
+                    selfp.TypeArgument(elt, self).visit(selfp)
                 elif type(elt) is javalang.tree.ArraySelector:
-                    selfp.ArraySelector(elt).visit(selfp)
+                    selfp.ArraySelector(elt, self).visit(selfp)
                 elif type(elt) is javalang.tree.BasicType:
-                    selfp.BasicType(elt).visit(selfp)
+                    selfp.BasicType(elt, self).visit(selfp)
                 elif type(elt) is javalang.tree.ArrayInitializer:
-                    selfp.ArrayInitializer(elt).visit(selfp)
+                    selfp.ArrayInitializer(elt, self).visit(selfp)
                 elif type(elt) is javalang.tree.ArrayCreator:
-                    selfp.ArrayCreator(elt).visit(selfp)
+                    selfp.ArrayCreator(elt, self).visit(selfp)
                 elif type(elt) is javalang.tree.ForStatement:
-                    selfp.ForStatement(elt).visit(selfp)
+                    selfp.ForStatement(elt, self).visit(selfp)
                 elif type(elt) is javalang.tree.ReturnStatement:
-                    selfp.ReturnStatement(elt).visit(selfp)
+                    selfp.ReturnStatement(elt, self).visit(selfp)
                 elif type(elt) is javalang.tree.MethodDeclaration:
-                    selfp.MethodDeclaration(elt).visit(selfp)
-                elif type(elt) is javalang.tree.FieldDeclaration:
-                    selfp.FieldDeclaration(elt).visit(selfp)
+                    selfp.MethodDeclaration(elt, self).visit(selfp)
+                #elif type(elt) is javalang.tree.FieldDeclaration:
+                #    selfp.FieldDeclaration(elt, self).visit(selfp)
                 elif type(elt) is javalang.tree.EnumBody:
-                    selfp.EnumBody(elt).visit(selfp)
+                    selfp.EnumBody(elt, self).visit(selfp)
                 elif type(elt) is javalang.tree.ConstructorDeclaration:
-                    selfp.ConstructorDeclaration(elt).visit(selfp)
+                    selfp.ConstructorDeclaration(elt, self).visit(selfp)
                 elif type(elt) is javalang.tree.EnumConstantDeclaration:
-                    selfp.EnumConstantDeclaration(elt).visit(selfp)
+                    selfp.EnumConstantDeclaration(elt, self).visit(selfp)
                 elif type(elt) is javalang.tree.VariableDeclarator:
-                    selfp.VariableDeclarator(elt).visit(selfp)
+                    selfp.VariableDeclarator(elt, self).visit(selfp)
                 elif type(elt) is javalang.tree.FormalParameter:
-                    selfp.FormalParameter(elt).visit(selfp)
+                    selfp.FormalParameter(elt, self).visit(selfp)
                 elif type(elt) is javalang.tree.Annotation:
-                    selfp.Annotation(elt).visit(selfp)
+                    selfp.Annotation(elt, self).visit(selfp)
                 elif type(elt) is javalang.tree.TernaryExpression:
-                    selfp.TernaryExpression(elt).visit(selfp)
+                    selfp.TernaryExpression(elt, self).visit(selfp)
                 elif type(elt) is javalang.tree.ThrowStatement:
-                    selfp.ThrowStatement(elt).visit(selfp)
+                    selfp.ThrowStatement(elt, self).visit(selfp)
                 elif type(elt) is javalang.tree.WhileStatement:
-                    selfp.WhileStatement(elt).visit(selfp)
+                    selfp.WhileStatement(elt, self).visit(selfp)
                 elif type(elt) is javalang.tree.ContinueStatement:
-                    selfp.ContinueStatement(elt).visit(selfp)
+                    selfp.ContinueStatement(elt, self).visit(selfp)
                 elif type(elt) is javalang.tree.BreakStatement:
-                    selfp.BreakStatement(elt).visit(selfp)
+                    selfp.BreakStatement(elt, self).visit(selfp)
                 elif type(elt) is javalang.tree.Statement:
-                    selfp.Statement(elt).visit(selfp)
+                    selfp.Statement(elt, self).visit(selfp)
                 elif type(elt) is javalang.tree.SwitchStatement:
-                    selfp.SwitchStatement(elt).visit(selfp)
+                    selfp.SwitchStatement(elt, self).visit(selfp)
                 elif type(elt) is javalang.tree.SwitchStatementCase:
-                    selfp.SwitchStatementCase(elt).visit(selfp)
+                    selfp.SwitchStatementCase(elt, self).visit(selfp)
                 elif type(elt) is javalang.tree.ForControl:
-                    selfp.ForControl(elt).visit(selfp)
-                else:
-                    sys.stderr.write("%s - %s\n" % (self.__class__.__name__, type(elt)))
+                    selfp.ForControl(elt, self).visit(selfp)
+                #else:
+                #    sys.stderr.write("%s - %s\n" % (self.__class__.__name__, type(elt)))
             #print(self.elt.__dict__, end='')
-            selfp.hook(self, "out")
     
     #class ASTTuple:
 
@@ -444,492 +463,395 @@ class ast:
     #        #print(self.elt.__dict__, end='')
     #        selfp.hook(self, "out")
 
-    class IfStatement:
+    class IfStatement(BaseNode):
+        
+        def getName(self):
+            #print(self.elt)
+            return self.__class__.__name__
 
-        def __init__(self, elt):
-            self.elt = elt
-
-        def visit(self, selfp):
-            selfp.hook(self, "in")
-            statements = [self.elt.then_statement]
+        def apply(self, selfp):
+            statements = [self.elt.condition, self.elt.then_statement]
             if self.elt.else_statement:
                 statements.append(self.elt.else_statement)
             for elt in statements:
                 if type(elt) is javalang.tree.BlockStatement:
-                    selfp.BlockStatement(elt).visit(selfp)
+                    selfp.BlockStatement(elt, self).visit(selfp)
                 elif type(elt) is javalang.tree.StatementExpression:
-                    selfp.StatementExpression(elt).visit(selfp)
+                    selfp.StatementExpression(elt, self).visit(selfp)
                 elif type(elt) is javalang.tree.ReturnStatement:
-                    selfp.ReturnStatement(elt).visit(selfp)
+                    selfp.ReturnStatement(elt, self).visit(selfp)
                 elif type(elt) is javalang.tree.IfStatement:
-                    selfp.IfStatement(elt).visit(selfp)
+                    selfp.IfStatement(elt, self).visit(selfp)
                 elif type(elt) is javalang.tree.TryStatement:
-                    selfp.TryStatement(elt).visit(selfp)
+                    selfp.TryStatement(elt, self).visit(selfp)
                 elif type(elt) is javalang.tree.ForStatement:
-                    selfp.ForStatement(elt).visit(selfp)
+                    selfp.ForStatement(elt, self).visit(selfp)
                 elif type(elt) is javalang.tree.WhileStatement:
-                    selfp.WhileStatement(elt).visit(selfp)
+                    selfp.WhileStatement(elt, self).visit(selfp)
                 elif type(elt) is javalang.tree.ContinueStatement:
-                    selfp.ContinueStatement(elt).visit(selfp)
+                    selfp.ContinueStatement(elt, self).visit(selfp)
                 elif type(elt) is javalang.tree.BreakStatement:
-                    selfp.BreakStatement(elt).visit(selfp)
+                    selfp.BreakStatement(elt, self).visit(selfp)
                 elif type(elt) is javalang.tree.ThrowStatement:
-                    selfp.ThrowStatement(elt).visit(selfp)
+                    selfp.ThrowStatement(elt, self).visit(selfp)
+                elif type(elt) is javalang.tree.This:
+                    selfp.This(elt, self).visit(selfp)
+                elif type(elt) is javalang.tree.MethodInvocation:
+                    selfp.MethodInvocation(elt, self).visit(selfp)
                 else:
                     sys.stderr.write("%s - %s\n" % (self.__class__.__name__, type(elt)))
             #print(self.elt.__dict__, end='')
-            selfp.hook(self, "out")
 
-    class TryStatement:
+    class TryStatement(BaseNode):
 
-        def __init__(self, elt):
-            self.elt = elt
-
-        def visit(self, selfp):
-            selfp.hook(self, "in")
+        def apply(self, selfp):
+            self = self
             #for elt in self.elt:
             #    print("%s - %s" % (self.__class__.__name__, type(elt)))
             #print(self.elt.__dict__, end='')
-            selfp.hook(self, "out")
 
-    class BlockStatement:
+    class BlockStatement(BaseNode):
 
-        def __init__(self, elt):
-            self.elt = elt
-
-        def visit(self, selfp):
-            selfp.hook(self, "in")
-            #print(self.elt.__dict__, end='')
-            selfp.hook(self, "out")
-
-    class AnnotationMethod:
-
-        def __init__(self, elt):
-            self.elt = elt
-
-        def visit(self, selfp):
-            selfp.hook(self, "in")
-            #print(self.elt.__dict__, end='')
-            selfp.hook(self, "out")
-
-    class ConstantDeclaration:
-
-        def __init__(self, elt):
-            self.elt = elt
-
-        def visit(self, selfp):
-            selfp.hook(self, "in")
-            #print(self.elt.__dict__, end='')
-            selfp.hook(self, "out")
-
-    class ReturnStatement:
-
-        def __init__(self, elt):
-            self.elt = elt
-
-        def visit(self, selfp):
-            selfp.hook(self, "in")
-            #print(self.elt.__dict__, end='')
-            selfp.hook(self, "out")
-
-    class ThrowStatement:
-
-        def __init__(self, elt):
-            self.elt = elt
-
-        def visit(self, selfp):
-            selfp.hook(self, "in")
-            #print(self.elt.__dict__, end='')
-            selfp.hook(self, "out")
-
-    class SynchronizedStatement:
-
-        def __init__(self, elt):
-            self.elt = elt
-
-        def visit(self, selfp):
-            selfp.hook(self, "in")
-            #print(self.elt.__dict__, end='')
-            selfp.hook(self, "out")
-
-    class ForStatement:
-
-        def __init__(self, elt):
-            self.elt = elt
-
-        def visit(self, selfp):
-            selfp.hook(self, "in")
-            for elt in self.elt.body:
-                if type(elt) is tuple:
-                    selfp.ASTList(elt).visit(selfp)
+        def apply(self, selfp):
+            for elt in self.elt.statements:
+                if type(elt) is javalang.tree.StatementExpression:
+                    selfp.StatementExpression(elt, self).visit(selfp)
                 else:
                     sys.stderr.write("%s - %s\n" % (self.__class__.__name__, type(elt)))
             #print(self.elt.__dict__, end='')
-            selfp.hook(self, "out")
 
-    class WhileStatement:
+    class AnnotationMethod(BaseNode):
 
-        def __init__(self, elt):
-            self.elt = elt
+        def apply(self, selfp):
+            self = self
+            #print(self.elt.__dict__, end='')
 
-        def visit(self, selfp):
-            selfp.hook(self, "in")
+    class ConstantDeclaration(BaseNode):
+
+        def apply(self, selfp):
+            self = self
+            #print(self.elt.__dict__, end='')
+
+    class ReturnStatement(BaseNode):
+
+        def apply(self, selfp):
+            self = self
+            #print(self.elt.__dict__, end='')
+
+    class ThrowStatement(BaseNode):
+
+        def apply(self, selfp):
+            self = self
+            #print(self.elt.__dict__, end='')
+
+    class SynchronizedStatement(BaseNode):
+
+        def apply(self, selfp):
+            self = self
+            #print(self.elt.__dict__, end='')
+
+    class ForStatement(BaseNode):
+
+        def apply(self, selfp):
             for elt in self.elt.body:
                 if type(elt) is tuple:
-                    selfp.ASTList(elt).visit(selfp)
+                    selfp.ASTList(elt, self).visit(selfp)
                 else:
                     sys.stderr.write("%s - %s\n" % (self.__class__.__name__, type(elt)))
             #print(self.elt.__dict__, end='')
-            selfp.hook(self, "out")
 
-    class SwitchStatement:
+    class WhileStatement(BaseNode):
 
-        def __init__(self, elt):
-            self.elt = elt
+        def apply(self, selfp):
+            for elt in self.elt.body:
+                if type(elt) is tuple:
+                    selfp.ASTList(elt, self).visit(selfp)
+                else:
+                    sys.stderr.write("%s - %s\n" % (self.__class__.__name__, type(elt)))
 
-        def visit(self, selfp):
-            selfp.hook(self, "in")
+    class SwitchStatement(BaseNode):
+
+        def apply(self, selfp):
+            self = self
             #print(self.elt.__dict__, end='')
-            selfp.hook(self, "out")
 
-    class DoStatement:
+    class DoStatement(BaseNode):
 
-        def __init__(self, elt):
-            self.elt = elt
-
-        def visit(self, selfp):
-            selfp.hook(self, "in")
+        def apply(self, selfp):
+            self = self
             #print(self.elt.__dict__, end='')
-            selfp.hook(self, "out")
 
-    class MethodInvocation:
+    class MethodInvocation(BaseNode):
 
-        def __init__(self, elt):
-            self.elt = elt
+        def getName(self):
+            qualifier = self.elt.qualifier + "." if self.elt.qualifier else ""
+            return self.__class__.__name__ + " : " + qualifier + self.elt.member
 
-        def visit(self, selfp):
-            selfp.hook(self, "in")
+        def apply(self, selfp):
             for elt in self.elt.arguments:
                 if type(elt) is javalang.tree.MemberReference:
-                    selfp.MemberReference(elt).visit(selfp)
+                    selfp.MemberReference(elt, self).visit(selfp)
                 elif type(elt) is javalang.tree.ClassCreator:
-                    selfp.ClassCreator(elt).visit(selfp)
+                    selfp.ClassCreator(elt, self).visit(selfp)
                 elif type(elt) is javalang.tree.MethodInvocation:
-                    selfp.MethodInvocation(elt).visit(selfp)
+                    selfp.MethodInvocation(elt, self).visit(selfp)
                 elif type(elt) is javalang.tree.This:
-                    selfp.This(elt).visit(selfp)
+                    selfp.This(elt, self).visit(selfp)
                 elif type(elt) is javalang.tree.Literal:
-                    selfp.Literal(elt).visit(selfp)
+                    selfp.Literal(elt, self).visit(selfp)
                 elif type(elt) is javalang.tree.Cast:
-                    selfp.Cast(elt).visit(selfp)
+                    selfp.Cast(elt, self).visit(selfp)
                 elif type(elt) is javalang.tree.ArrayCreator:
-                    selfp.ArrayCreator(elt).visit(selfp)
+                    selfp.ArrayCreator(elt, self).visit(selfp)
                 elif type(elt) is javalang.tree.BinaryOperation:
-                    selfp.BinaryOperation(elt).visit(selfp)
+                    selfp.BinaryOperation(elt, self).visit(selfp)
                 elif type(elt) is javalang.tree.ClassReference:
-                    selfp.ClassReference(elt).visit(selfp)
+                    selfp.ClassReference(elt, self).visit(selfp)
                 else:
                     sys.stderr.write("%s - %s\n" % (self.__class__.__name__, type(elt)))
             #print(self.elt.__dict__, end='')
-            selfp.hook(self, "out")
 
-    class MemberReference:
+    class MemberReference(BaseNode):
 
-        def __init__(self, elt):
-            self.elt = elt
+        def apply(self, selfp):
+            self = self
 
-        def visit(self, selfp):
-            selfp.hook(self, "in")
-            #print(self.elt.__dict__, end='')
-            selfp.hook(self, "out")
+    class Assignment(BaseNode):
+        
+        #def getName(self):
+        #    return self.__class__.__name__ + " : " +self.elt.expressionl.member
 
-    class Assignment:
-
-        def __init__(self, elt):
-            self.elt = elt
-
-        def visit(self, selfp):
-            selfp.hook(self, "in")
-            #print(self.elt.__dict__, end='')
-            selfp.hook(self, "out")
-
-    class Literal:
-
-        def __init__(self, elt):
-            self.elt = elt
-
-        def visit(self, selfp):
-            selfp.hook(self, "in")
-            if re.search("\".*\"", self.elt.value):
-                print(self.elt.value)
-            #print(self.elt.__dict__, end='')
-            selfp.hook(self, "out")
+        def apply(self, selfp):
+            elt = [self.elt.expressionl, self.elt.value]
+            for elt in elt:
+                if type(elt) is javalang.tree.Cast:
+                    selfp.Cast(elt, self).visit(selfp)
+                elif type(elt) is javalang.tree.ClassCreator:
+                    selfp.ClassCreator(elt, self).visit(selfp)
+                else:
+                    sys.stderr.write("%s - %s\n" % (self.__class__.__name__, type(elt)))
     
-    class This:
+    #final node
+    class Literal(BaseNode):
+        
+        def getName(self):
+            return self.__class__.__name__ + " : " +self.elt.value
 
-        def __init__(self, elt):
-            self.elt = elt
+        def apply(self, selfp):
+            pass
+    
+    class This(BaseNode):
 
-        def visit(self, selfp):
-            selfp.hook(self, "in")
+        def apply(self, selfp):
+            for elt in self.elt.selectors:
+                if type(elt) is javalang.tree.MethodInvocation:
+                    selfp.MethodInvocation(elt, self).visit(selfp)
+                else:
+                    sys.stderr.write("%s - %s\n" % (self.__class__.__name__, type(elt)))
+            pass
+
+    class ClassCreator(BaseNode):
+
+        def getName(self):
+            return self.__class__.__name__ + " : " +self.elt.type.name
+
+        def apply(self, selfp):
+            if self.elt.body == None:
+                return # TODO: Fix bug None
+            for elt in self.elt.body:
+                if type(elt) is javalang.tree.MethodDeclaration:
+                    selfp.MethodDeclaration(elt, self).visit(selfp)
+                else:
+                    sys.stderr.write("%s - %s\n" % (self.__class__.__name__, type(elt)))
+
+    class SwitchStatement(BaseNode):
+
+        def apply(self, selfp):
+            self = self
             #print(self.elt.__dict__, end='')
-            selfp.hook(self, "out")
 
-    class ClassCreator:
+    class DoStatement(BaseNode):
 
-        def __init__(self, elt):
-            self.elt = elt
-
-        def visit(self, selfp):
-            selfp.hook(self, "in")
+        def apply(self, selfp):
+            self = self
             #print(self.elt.__dict__, end='')
-            selfp.hook(self, "out")
 
-    class Cast:
 
-        def __init__(self, elt):
-            self.elt = elt
+    class MemberReference(BaseNode):
 
-        def visit(self, selfp):
-            selfp.hook(self, "in")
-            #print(self.elt.__dict__, end='')
-            selfp.hook(self, "out")
+        def apply(self, selfp):
+            self = self
 
-    class ReferenceType:
+    #final node
+    class Literal(BaseNode):
+        
+        def getName(self):
+            return self.__class__.__name__ + " : " +self.elt.value
 
-        def __init__(self, elt):
-            self.elt = elt
+        def apply(self, selfp):
+            pass
+    
+    class This(BaseNode):
 
-        def visit(self, selfp):
-            selfp.hook(self, "in")
-            #print(self.elt.__dict__, end='')
-            selfp.hook(self, "out")
+        def apply(self, selfp):
+            for elt in self.elt.selectors:
+                if type(elt) is javalang.tree.MethodInvocation:
+                    selfp.MethodInvocation(elt, self).visit(selfp)
+                else:
+                    sys.stderr.write("%s - %s\n" % (self.__class__.__name__, type(elt)))
+            pass
 
-    class SuperMethodInvocation:
+    class Cast(BaseNode):
+        
+        def getName(self):
+            return self.__class__.__name__ + " : " +self.elt.type.name
 
-        def __init__(self, elt):
-            self.elt = elt
+        def apply(self, selfp):
+            elt = [self.elt.expression]
+            if "selectors" in self.elt.__dict__:
+                elt.extend(self.elt.selectors)
+            for elt in elt:
+                if type(elt) is javalang.tree.MethodInvocation:
+                    selfp.MethodInvocation(elt, self).visit(selfp)
+                elif type(elt) is javalang.tree.SuperMethodInvocation:
+                    selfp.SuperMethodInvocation(elt, self).visit(selfp)
+                elif type(elt) is javalang.tree.Assignment:
+                    selfp.Assignment(elt, self).visit(selfp)
+                elif type(elt) is javalang.tree.This:
+                    selfp.This(elt, self).visit(selfp)
+                elif type(elt) is javalang.tree.Cast:
+                    selfp.Cast(elt, self).visit(selfp)
+                elif type(elt) is javalang.tree.Literal:
+                    selfp.Literal(elt, self).visit(selfp)
+                elif type(elt) is javalang.tree.MemberReference:
+                    selfp.MemberReference(elt, self).visit(selfp)
+                else:
+                    sys.stderr.write("%s - %s\n" % (self.__class__.__name__, type(elt)))
 
-        def visit(self, selfp):
-            selfp.hook(self, "in")
-            #print(self.elt.__dict__, end='')
-            selfp.hook(self, "out")
+    class ReferenceType(BaseNode):
 
-    class ClassReference:
+        def apply(self, selfp):
+            pass
 
-        def __init__(self, elt):
-            self.elt = elt
+    class SuperMethodInvocation(BaseNode):
 
-        def visit(self, selfp):
-            selfp.hook(self, "in")
-            #print(self.elt.__dict__, end='')
-            selfp.hook(self, "out")
+        def apply(self, selfp):
+            pass
 
-    class SuperConstructorInvocation:
+    
+            pass
 
-        def __init__(self, elt):
-            self.elt = elt
+    class ClassReference(BaseNode):
 
-        def visit(self, selfp):
-            selfp.hook(self, "in")
-            #print(self.elt.__dict__, end='')
-            selfp.hook(self, "out")
+        def apply(self, selfp):
+            pass
 
-    class BinaryOperation:
+    class SuperConstructorInvocation(BaseNode):
 
-        def __init__(self, elt):
-            self.elt = elt
+        def apply(self, selfp):
+            pass
 
-        def visit(self, selfp):
-            selfp.hook(self, "in")
-            #print(self.elt.__dict__, end='')
-            selfp.hook(self, "out")
+    class BinaryOperation(BaseNode):
 
-    class ExplicitConstructorInvocation:
+        def apply(self, selfp):
+            pass
 
-        def __init__(self, elt):
-            self.elt = elt
+    class ExplicitConstructorInvocation(BaseNode):
 
-        def visit(self, selfp):
-            selfp.hook(self, "in")
-            #print(self.elt.__dict__, end='')
-            selfp.hook(self, "out")
+        def apply(self, selfp):
+            pass
 
-    class TypeArgument:
+    class TypeArgument(BaseNode):
 
-        def __init__(self, elt):
-            self.elt = elt
+        def apply(self, selfp):
+            pass
 
-        def visit(self, selfp):
-            selfp.hook(self, "in")
-            #print(self.elt.__dict__, end='')
-            selfp.hook(self, "out")
+    class BasicType(BaseNode):
 
-    class BasicType:
+        def apply(self, selfp):
+            pass
 
-        def __init__(self, elt):
-            self.elt = elt
+    class ArrayCreator(BaseNode):
 
-        def visit(self, selfp):
-            selfp.hook(self, "in")
-            #print(self.elt.__dict__, end='')
-            selfp.hook(self, "out")
+        def apply(self, selfp):
+            pass
 
-    class ArrayCreator:
+    class ArrayInitializer(BaseNode):
 
-        def __init__(self, elt):
-            self.elt = elt
+        def apply(self, selfp):
+            pass
 
-        def visit(self, selfp):
-            selfp.hook(self, "in")
-            #print(self.elt.__dict__, end='')
-            selfp.hook(self, "out")
+    class ArraySelector(BaseNode):
 
-    class ArrayInitializer:
+        def apply(self, selfp):
+            pass
 
-        def __init__(self, elt):
-            self.elt = elt
+    class EnumBody(BaseNode):
 
-        def visit(self, selfp):
-            selfp.hook(self, "in")
-            #print(self.elt.__dict__, end='')
-            selfp.hook(self, "out")
+        def apply(self, selfp):
+            pass
 
-    class ArraySelector:
+    class VariableDeclarator(BaseNode):
 
-        def __init__(self, elt):
-            self.elt = elt
-
-        def visit(self, selfp):
-            selfp.hook(self, "in")
-            #print(self.elt.__dict__, end='')
-            selfp.hook(self, "out")
-
-    class EnumBody:
-
-        def __init__(self, elt):
-            self.elt = elt
-
-        def visit(self, selfp):
-            selfp.hook(self, "in")
-            #print(self.elt.__dict__, end='')
-            selfp.hook(self, "out")
-
-    class VariableDeclarator:
-
-        def __init__(self, elt):
-            self.elt = elt
-
-        def visit(self, selfp):
+        def apply(self, selfp):
             if self.elt.initializer == None:
                 return
-            selfp.hook(self, "in")
             elt = self.elt.initializer
             if type(elt) is javalang.tree.Cast:
-                selfp.Cast(elt).visit(selfp)
+                selfp.Cast(elt, self).visit(selfp)
             elif type(elt) is javalang.tree.MethodInvocation:
-                selfp.MethodInvocation(elt).visit(selfp)
+                selfp.MethodInvocation(elt, self).visit(selfp)
             elif type(elt) is javalang.tree.ClassCreator:
-                selfp.ClassCreator(elt).visit(selfp)
+                selfp.ClassCreator(elt, self).visit(selfp)
             elif type(elt) is javalang.tree.MemberReference:
-                selfp.MemberReference(elt).visit(selfp)
+                selfp.MemberReference(elt, self).visit(selfp)
             else:
                 sys.stderr.write("%s - %s\n" % (self.__class__.__name__, type(elt)))
             #print(self.elt.__dict__, end='')
-            selfp.hook(self, "out")
 
 
-    class EnumConstantDeclaration:
+    class EnumConstantDeclaration(BaseNode):
 
-        def __init__(self, elt):
-            self.elt = elt
+        def apply(self, selfp):
+            pass
 
-        def visit(self, selfp):
-            selfp.hook(self, "in")
-            #print(self.elt.__dict__, end='')
-            selfp.hook(self, "out")
+    class Annotation(BaseNode):
 
-    class Annotation:
+        def apply(self, selfp):
+            pass
 
-        def __init__(self, elt):
-            self.elt = elt
+    class FormalParameter(BaseNode):
 
-        def visit(self, selfp):
-            selfp.hook(self, "in")
-            #print(self.elt.__dict__, end='')
-            selfp.hook(self, "out")
+        def apply(self, selfp):
+            pass
 
+    class TernaryExpression(BaseNode):
 
-    class FormalParameter:
+        def apply(self, selfp):
+            pass
 
-        def __init__(self, elt):
-            self.elt = elt
+    class ContinueStatement(BaseNode):
 
-        def visit(self, selfp):
-            selfp.hook(self, "in")
-            #print(self.elt.__dict__, end='')
-            selfp.hook(self, "out")
+        def apply(self, selfp):
+            pass
 
+    class BreakStatement(BaseNode):
 
-    class TernaryExpression:
+        def apply(self, selfp):
+            pass
 
-        def __init__(self, elt):
-            self.elt = elt
+    class Statement(BaseNode):
 
-        def visit(self, selfp):
-            selfp.hook(self, "in")
-            #print(self.elt.__dict__, end='')
-            selfp.hook(self, "out")
+        def apply(self, selfp):
+            pass
 
+    class SwitchStatementCase(BaseNode):
 
-    class ContinueStatement:
+        def apply(self, selfp):
+            pass
 
-        def __init__(self, elt):
-            self.elt = elt
+    class ForControl(BaseNode):
 
-        def visit(self, selfp):
-            selfp.hook(self, "in")
-            #print(self.elt.__dict__, end='')
-            selfp.hook(self, "out")
-
-    class BreakStatement:
-
-        def __init__(self, elt):
-            self.elt = elt
-
-        def visit(self, selfp):
-            selfp.hook(self, "in")
-            #print(self.elt.__dict__, end='')
-            selfp.hook(self, "out")
-
-
-    class Statement:
-
-        def __init__(self, elt):
-            self.elt = elt
-
-        def visit(self, selfp):
-            selfp.hook(self, "in")
-            #print(self.elt.__dict__, end='')
-            selfp.hook(self, "out")
-
-    class SwitchStatementCase:
-
-        def __init__(self, elt):
-            self.elt = elt
-
-        def visit(self, selfp):
-            selfp.hook(self, "in")
-            #print(self.elt.__dict__, end='')
-            selfp.hook(self, "out")
-
-    class ForControl:
-
-        def __init__(self, elt):
-            self.elt = elt
-
-        def visit(self, selfp):
-            selfp.hook(self, "in")
-            #print(self.elt.__dict__, end='')
-            selfp.hook(self, "out")
+        def apply(self, selfp):
+            pass
 
