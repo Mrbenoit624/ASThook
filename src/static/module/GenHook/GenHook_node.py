@@ -36,12 +36,12 @@ class MethodDeclaration:
                 overload += ".overload("
                 overload += ",".join([j for j,k in args if j != ""])
                 overload += ")"
-            print("%s : %s" % (self.elt.name, params))
+            #print("%s : %s" % (self.elt.name, params))
             for j, k in args:
                 prints += "%ssend('%s: ' + %s);\n" % (" "*8,k,k)
             #r["gen_hook_out"].append(\
             Output.add_tree_mod("gen_hook", "hook", ["%s.%s" % (func_name,class_name),
-"Java.perform(function()\n\
+"\nJava.perform(function()\n\
 {\n\
     var class_hook = Java.use('%s.%s')\n\
     class_hook.%s%s.implementation = function (%s) {\n\

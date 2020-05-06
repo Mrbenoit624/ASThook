@@ -116,7 +116,8 @@ class Output:
                             fg.li_cyan + modulek + fg.rs,
                             fg.li_magenta + tagk + fg.rs)
                         for i in arg:
-                            ret += i + "\n"
+                            ret += i + "\t"
+                        ret += '\n'
                     else:
                         ret += "[ %s ] [ %s ]  %s" % (
                             fg.li_cyan + modulek + fg.rs,
