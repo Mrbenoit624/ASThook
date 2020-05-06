@@ -46,11 +46,16 @@ def parser():
             type=str,
             help="Analyse only a portion of apk")
     
-    parser.add_argument(
+    group.add_argument(
             '--decompiler',
             type=str,
             default="none",
             choices=["none", "jd-gui", "cfr", "procyon"])
+
+    group.add_argument(
+            '--graph',
+            action="store_true",
+            help="Draw a AST graph of the apk source code")
 
     group = parser.add_argument_group('static')
 

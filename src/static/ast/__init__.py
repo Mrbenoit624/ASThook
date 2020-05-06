@@ -17,8 +17,9 @@ class Register:
     @classmethod
     def add_node(cls, node, state, func):
         if not node in cls.funcs:
-            cls.funcs[node] = {"in" : [],
-                               "out" : []}
+            cls.funcs[node] = {"in"      : [],
+                               "post-in" : [],
+                               "out"     : []}
         cls.funcs[node][state].append(func)
     
     @classmethod
@@ -53,6 +54,7 @@ class ast:
         self.__tmp_dir = tmp_dir
         self.__app = app
         self.__infos = {}
+        self.args = args
 
         for i in Register.get_node("Init", "in"):
             self.set_infos(i.call(self.get_infos()))
@@ -86,12 +88,9 @@ class ast:
 
                 sys.setrecursionlimit(10**7)
 
-                self.dot = Digraph(comment=self.__infos["package"] + "." +
-                        path.name)
-                self.dot.attr('node', shape='box')
-                self.dot.attr('graph', splines='ortho')
+                if args.graph:
+                    self.init_graph(path)
 
-                self.count_node = 0
                 self.load()
 
                 #print(self.dot.source)
@@ -104,6 +103,13 @@ class ast:
 
         for i in Register.get_node("Init", "out"):
             self.set_infos(i.call(self.get_infos()))
+
+    def init_graph(self, path):
+        self.dot = Digraph(comment=self.__infos["package"] + "." +
+                path.name)
+        self.dot.attr('node', shape='box')
+        self.dot.attr('graph', splines='ortho')
+        self.count_node = 0
 
     def set_infos(self, e):
         """Set marker to interact between different nodes"""
@@ -133,7 +139,9 @@ class ast:
 
     def hook(self, selfc, state):
         for i in Register.get_node(selfc.__class__.__name__, state):
-            self.set_infos(i.call(self.get_infos(), selfc))
+            r = i.call(self.get_infos(), selfc)
+            assert r != None # return miss in one of this module
+            self.set_infos(r)
 
     class BaseNode:
 
@@ -148,19 +156,37 @@ class ast:
         def NameFormat(self, name):
             return str(self.id) + name.replace(" ", "_").replace(":", "_")
 
-        def visit(self, selfp):
+        def graph(self, selfp):
             self.id = selfp.count_node
-            if selfp.count_node < 560:
-                selfp.count_node = selfp.count_node + 1
+            selfp.count_node +=1
+
+            if "active_graph" in selfp.get_infos() and \
+                    not selfp.get_infos()["active_graph"]:
+                return
 
             name = self.getName()
             selfp.dot.node(self.NameFormat(name), name)
-            if self.parent:
-                selfp.dot.edge(self.parent.NameFormat(self.parent.getName()),
-                    self.NameFormat(self.getName()), constraint='true')
+            
+            parent = self.parent
+            while True:
+                if not parent:
+                    break
+                if any(parent.NameFormat(parent.getName()) in s for s in selfp.dot.body):
+                    selfp.dot.edge(parent.NameFormat(parent.getName()),
+                            self.NameFormat(self.getName()), constraint='true')
+                    break
+                else:
+                    parent = parent.parent
 
+        def visit(self, selfp):
             selfp.hook(self, "in")
+            
+            if selfp.args.graph:
+                self.graph(selfp)
+            
+            selfp.hook(self, "post-in")
             self.apply(selfp)
+
             selfp.hook(self, "out")
         
         def apply(self, selfp):
@@ -245,6 +271,7 @@ class ast:
         def apply(self, selfp):
             if self.elt.body == None:
                 return # TODO: Fix bug None
+            #selfp.MethodDeclarationParameters(self.elt.parameters, self).visit(selfp)
             for elt in self.elt.body:
                 if type(elt) is javalang.tree.ReturnStatement:
                     selfp.ReturnStatement(elt, self).visit(selfp)
@@ -273,6 +300,13 @@ class ast:
                 else:
                     sys.stderr.write("%s - %s\n" % (self.__class__.__name__, type(elt)))
             #print(self.elt.__dict__, end='')
+
+    #class MethodDeclarationParameters(BaseNode):
+
+     #   def apply(self, selfp):
+     #       print(self.elt)
+     #       pass
+
 
     class FieldDeclaration(BaseNode):
         
@@ -628,6 +662,8 @@ class ast:
                     selfp.Cast(elt, self).visit(selfp)
                 elif type(elt) is javalang.tree.ClassCreator:
                     selfp.ClassCreator(elt, self).visit(selfp)
+                elif type(elt) is javalang.tree.MemberReference:
+                    selfp.MemberReference(elt, self).visit(selfp)
                 else:
                     sys.stderr.write("%s - %s\n" % (self.__class__.__name__, type(elt)))
     
@@ -679,8 +715,11 @@ class ast:
 
     class MemberReference(BaseNode):
 
+        def getName(self):
+            return self.__class__.__name__ + " : " +self.elt.member
+
         def apply(self, selfp):
-            self = self
+            pass
 
     #final node
     class Literal(BaseNode):
@@ -708,8 +747,6 @@ class ast:
 
         def apply(self, selfp):
             elt = [self.elt.expression]
-            if "selectors" in self.elt.__dict__:
-                elt.extend(self.elt.selectors)
             for elt in elt:
                 if type(elt) is javalang.tree.MethodInvocation:
                     selfp.MethodInvocation(elt, self).visit(selfp)
@@ -727,6 +764,20 @@ class ast:
                     selfp.MemberReference(elt, self).visit(selfp)
                 else:
                     sys.stderr.write("%s - %s\n" % (self.__class__.__name__, type(elt)))
+            
+            if "selectors" in self.elt.__dict__:
+                #elt.extend(self.elt.selectors)
+                selfp.CastSelectors(self.elt.selectors, self).visit(selfp)
+    
+    class CastSelectors(BaseNode):
+
+        def apply(self, selfp):
+            for elt in self.elt:
+                if type(elt) is javalang.tree.MethodInvocation:
+                    selfp.MethodInvocation(elt, self).visit(selfp)
+                else:
+                    sys.stderr.write("%s - %s\n" % (self.__class__.__name__, type(elt)))
+
 
     class ReferenceType(BaseNode):
 
