@@ -1,24 +1,24 @@
 static:
   - tree: true
-#  - tree_path: "/com/example"
-  - tree_path: "/"
+  - tree_path: "/com/example"
+    #  - tree_path: "/"
 
   - gen_hook:
     - "TraceEvents.nativeDisableProviders"
   - list_funcs: 
     - '^.*'
     - '^.*'
-      #  - list_funcs_call: 
-      #    - '^.*'
-      #    - '^.*'
+  - list_funcs_call: 
+    - '^.*'
+    - '^.*'
   - test: false
   
 dynamic:
-  #  - emulator: "/usr/lib/android-sdk"
+  - sdktools: "/usr/lib/android-sdk"
   - phone: "Pixel_3a_XL_API_22"
   - proxy: "127.0.0.1:8080"
   - proxy_cert: "misc/burp.der"
 
-  - sslpining: true
+  - sslpining: false
 
 

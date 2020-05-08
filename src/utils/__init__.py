@@ -5,6 +5,7 @@ import signal
 import json
 import re
 
+
 fg.orange = Style(RgbFg(255, 150, 50))
 fg.blue = Style(RgbFg(54,154,205))
 fg.h2 = Style(RgbFg(30,196,220))
@@ -93,8 +94,13 @@ class Output:
         if not type(arg) is list:
             cls.store_td[category][module][tag].append(re.sub("\\u001b\[.*?m", "", arg))
         else:
-            cls.store_td[category][module][tag].append([re.sub("\\u001b\[.*?m", "", e)
-                for e in arg])
+            tmp = []
+            for e in arg:
+                if type(e) is str:
+                    tmp.append(re.sub("\\u001b\[.*?m", "", e))
+                else:
+                    tmp.append(e)
+            cls.store_td[category][module][tag].append(tmp)
 
     @classmethod
     def add_tree_mod(cls, module, tag, arg):
@@ -104,6 +110,19 @@ class Output:
     @classmethod
     def get_store(cls):
         return cls.store_td
+
+    @classmethod
+    def pp(cls, arg):
+        ret = ""
+        if type(arg) is list:
+            ret += '\n'.join(map(cls.pp, arg))
+        elif type(arg) is str:
+            ret += arg
+        elif type(arg) is tuple:
+            ret += '\t'.join(map(cls.pp, arg))
+        else:
+            ret += str(arg)
+        return ret
 
     @classmethod
     def none_print(cls):
@@ -116,7 +135,8 @@ class Output:
                             fg.li_cyan + modulek + fg.rs,
                             fg.li_magenta + tagk + fg.rs)
                         for i in arg:
-                            ret += i + "\t"
+                            ret += cls.pp(i) + ("\t" if cls.pp(i)[-1] != '\n'
+                                    else "")
                         ret += '\n'
                     else:
                         ret += "[ %s ] [ %s ]  %s" % (

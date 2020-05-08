@@ -82,14 +82,20 @@ def parser():
     group = parser.add_argument_group('core_dynamic')
 
     group.add_argument(
-            '--emulator',
+            '--sdktools',
             type=str,
-            help='path of the emulator if used')
+            help='path of the sdktools for the emulation and some android sdk' \
+            'tools')
 
     group.add_argument(
             '--phone',
             type=str,
             help='phones target emulator -list-avds')
+
+    group.add_argument(
+            '--no-emulation',
+            action="store_true",
+            help="use a physical phone (useful for buetooth option)")
 
     group.add_argument(
             '--proxy',

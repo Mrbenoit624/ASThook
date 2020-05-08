@@ -53,6 +53,35 @@ python3 src/analysis.py <example>.apk --emulator ~/Android/Sdk/tools/ \
 # To list all emulator phone avaible
 emulator -list-avds
 
+================================= REQUIREMENT ==================================
+
+This project needed to use the sdktools the path is specify with the option
+--sdktools <path>
+
+To install sdktools and the less extrathings you should download
+commandlinetools: https://developer.android.com/studio/index.html#command-tools
+
+```bash
+$ wget https://dl.google.com/android/repository/commandlinetools-linux-6200805_latest.zip
+$ mkdir <sdktoolspath>
+$ cd <sdktoolspath>
+$ unzip commandlinetools-linux-6200805_latest.zip
+```
+
+To list all package available:
+```bash
+$ tools/bin/sdkmanager --list --sdk_root=.
+```
+
+Install the minimum with the correct version when I written that it's look like
+that:
+
+```bash
+tools/bin/sdkmanager "platforms;android-R" "build-tools;30.0.0-rc4" "emulator" --sdk_root=.
+```
+
+
+
 ===================================== BUG ======================================
 
 ```

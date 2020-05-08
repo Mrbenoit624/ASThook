@@ -27,11 +27,17 @@ class MethodInvocationIn:
         if r["vuln_intent"][0] and \
                 r["vuln_intent"][1]:
             if self.elt.member == "getBooleanExtra":
-                r["vuln_intent"][2] = " --ez %s true" % self.elt.arguments[0].value
+                r["vuln_intent"][2].append((bool,
+                    self.elt.arguments[0].value,
+                    r["Filename"] + " : " + str(self.elt._position)))
             elif self.elt.member == "getStringExtra":
-                r["vuln_intent"][2] = "-e %s <argument>" % self.elt.arguments[0].value
+                r["vuln_intent"][2].append((str,
+                    self.elt.arguments[0].value,
+                    r["Filename"] + " : " + str(self.elt._position)))
             elif self.elt.member == "getParcelableExtra":
-                r["vuln_intent"][2] = "TODO start Intent forInstance"
+                r["vuln_intent"][2].append((None,
+                    "TODO start Intent forInstance",
+                    r["Filename"] + " : " + str(self.elt._position)))
             elif self.elt.member == "getExtras":
                 pass
         return r
@@ -41,12 +47,25 @@ class MethodInvocationIn:
 class MethodDeclarationOut:
     @classmethod
     def call(cls, r, self):
-        if r["vuln_intent"][2]:
+        if len(r["vuln_intent"][2]) > 0:
+            arg = ""
+            tmp = []
+            for type_, val, pos in r["vuln_intent"][2]:
+                if val in tmp:
+                    continue
+                tmp.append(val)
+                if type_ is bool: 
+                    arg += " --ez %s true" % val
+                elif type_ is str:
+                    arg += " --es %s \"<argument>\"" % val
+                else:
+                    arg += val
             Output.add_tree_mod("vuln_intent", r["vuln_intent"][1], 
-            "adb shell am start -S -n %s %s" % (
-                r["vuln_intent"][0], r["vuln_intent"][2]))
+            ["\nadb shell 'am start -S -n %s %s'\n" % (
+                r["vuln_intent"][0], arg),
+                r["vuln_intent"][2]])
         r["vuln_intent"][1] = None
-        r["vuln_intent"][2] = None
+        r["vuln_intent"][2] = []
         return r
 
 @Node("ClassDeclaration", "out")
@@ -67,4 +86,5 @@ class Init:
     @classmethod
     def call(cls, r):
         r["vuln_intent"] = [None] * 3
+        r["vuln_intent"][2] = []
         return r

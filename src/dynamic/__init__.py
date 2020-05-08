@@ -100,7 +100,7 @@ class DynamicAnalysis:
 
     def __init__(self, package, args, tmp_dir):
 
-        if not args.emulator or not args.phone:
+        if not args.sdktools or not args.phone:
             return
 
         self.__package = package
@@ -113,9 +113,9 @@ class DynamicAnalysis:
 
         bprint("Dynamic analysis")
         subprocess.call(["adb", "start-server"])
-        if args.emulator:
+        if not args.no_emulation:
             self.__emulation = threading.Thread(target=self.emulation_f,
-                    args=(args.emulator, 
+                    args=(args.sdktools, 
                           args.phone,
                           args.proxy,
                           self.__tmp_dir,
@@ -127,14 +127,25 @@ class DynamicAnalysis:
         devices = []
         try:
             with timeout(60):
-                while devices == []:
+                while True:
                     devices = self.__client.devices()
-                    time.sleep(1)
-                self.__device = devices[0]
-        except:
-            print("No devices found after 60s")
-            sys.exit(1)
+                    for device in devices:
+                        if not args.no_emulation:
+                            if "emulator" in device.device.serial:
+                                self.__device = device
+                                break
+                        else:
+                            if device.device.serial == args.phone:
+                                self.__device = device
+                                break
+                    else:
+                        time.sleep(1)
+                        continue
+                    break
+        except TimeoutError:
+            pass
         if self.__device == None:
+            print("No devices found after 60s")
             sys.exit(1)
         while True:
             try:
@@ -152,6 +163,15 @@ class DynamicAnalysis:
                     break
                 else:
                     print(str(e))
+
+        if args.no_emulation:
+            if args.proxy:
+                self.__client.shell("settings put global http_proxy %s" %
+                        args.proxy)
+        # TODO add tcpdump for physical device
+        # https://www.andreafortuna.org/2018/05/28/how-to-install-and-run-tcpdump-on-android-devices/
+
+
         # setup certificate
         if args.proxy_cert:
             self.setup_certificate(args.proxy_cert)

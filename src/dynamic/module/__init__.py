@@ -27,8 +27,6 @@ class ModuleDynamic:
                 if module in self.__list_module_loaded:
                     self.unload(module)
                 if args:
-                    print(self.__args.quickhook)
-                    print(module)
                     test = self.__args
                     exec("test.%s = %s" % (module, args))
                 self.__list_module_loaded[name] = func(self.__frida,

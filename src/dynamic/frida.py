@@ -37,7 +37,10 @@ class Frida:
         os.system('bash -c \'adb shell <<< "dalvikvm -cp /data/local/tmp/Frida.zip Frida;exit"\'')
         #os.system('bash -c \'adb shell <<< "/data/local/tmp/frida-server&"\';exit')
         
-        self.__server = frida.get_usb_device()
+        #self.__server = frida.get_usb_device()
+        for device in frida.enumerate_devices():
+            if device.id == self.__device.device.serial:
+                self.__server = device
     
     def attach(self):
         print(self.__server)
