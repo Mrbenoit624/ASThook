@@ -59,6 +59,52 @@ class MethodDeclaration:
                 func_name, ",".join(k for j,k in args))]);
         return r
 
+@Node("ConstructorDeclaration", "in")
+class ConstructorDeclarationIn:
+    @classmethod
+    def call(cls, r, self):
+        functions = FuncToHook.get_name()
+        func_name = None
+        class_name = None
+        for i in range(0, len(r["gen_hook_class"])):
+            if self.elt.name == functions[i]:
+                if r["gen_hook_class"][i]:
+                    func_name  = self.elt.name
+                    class_name = ClassToHook.get_name()[i]
+                    
+        if func_name:
+            params = ""
+            args = []
+            overload = ""
+            prints = ""
+            i=1
+            if len(self.elt.parameters) > 0:
+                for param in self.elt.parameters:
+                    args.append(("", "arg%d" % i))
+                    i = i + 1
+            for j, k in args:
+                prints += "%ssend('%s: ' + %s);\n" % (" "*8,k,k)
+            Output.add_tree_mod("gen_hook", "hook", ["%s.%s" % (class_name,func_name),
+"\nJava.perform(function()\n\
+{\n\
+    var class_hook = Java.use('%s.%s')\n\
+    class_hook.$init.implementation = function (%s) {\n\
+        send('[+] %s.%s hooked');\n\
+%s\
+        var ret = this.$init(%s);\n\
+        send('ret = ' + ret);\n\
+        return ret\n\
+    };\n\
+});" % (
+                r["package"], class_name,
+                ",".join(k for j,k in args),
+                class_name, func_name,
+                prints,
+                ",".join(k for j,k in args))]);
+        return r
+
+
+
 @Node("ClassDeclaration", "in")
 class ClassDeclaration:
     @classmethod

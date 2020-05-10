@@ -50,6 +50,30 @@ class Manifest:
                 print(obj.attrib[self.android('name')])
                 Output.add_to_store("manifest", "activity", "exported",
                         obj.attrib[self.android('name')])
+        h2("Deeplink Activity")
+        for obj in t_all:
+            for intent_filter in obj.findall('intent-filter'):
+                view = False
+                browsable = False
+                data = []
+                for action in intent_filter.findall('action'):
+                    if action.attrib[self.android('name')] == \
+                    "android.intent.action.VIEW":
+                        view = True
+                for category in intent_filter.findall('category'):
+                    if category.attrib[self.android('name')] == \
+                    "android.intent.category.BROWSABLE":
+                        browsable = True
+                for data_ in intent_filter.findall('data'):
+                    if self.android('scheme') in data_.attrib:
+                        data.append(data_.attrib[self.android('scheme')])
+                if view and browsable and len(data) > 0:
+                    print(obj.attrib[self.android('name')] + " : " + str(data))
+                    print("adb shell am start -n %s/%s -a %s -d '%s://example'" % (
+                            self.package,
+                            obj.attrib[self.android('name')],
+                            "android.intent.action.VIEW",
+                            data[0]))
     
     def list_broadcasts(self):
         app = self.root.find('application')

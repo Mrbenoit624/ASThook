@@ -352,6 +352,9 @@ class ast:
 
     class ConstructorDeclaration(BaseNode):
 
+        def getName(self):
+            return self.__class__.__name__ + " : " + self.elt.name
+
         def apply(self, selfp):
             for elt in self.elt.body:
                 if type(elt) is javalang.tree.StatementExpression:

@@ -10,6 +10,14 @@ class MethodDeclaration:
             Output.add_tree_mod("list_funcs", "func", "%s.%s" % (r["list_funcs_class"], self.elt.name))
         return r
 
+@Node("ConstructorDeclaration", "in")
+class ClassDeclarationIn:
+    @classmethod
+    def call(cls, r, self):
+        if r["list_funcs_class"]:
+            Output.add_tree_mod("list_funcs", "func", "%s.%s" % (r["list_funcs_class"], self.elt.name))
+        return r
+
 @Node("ClassDeclaration", "in")
 class ClassDeclaration:
     @classmethod
