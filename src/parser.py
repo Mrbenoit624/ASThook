@@ -34,6 +34,12 @@ def parser():
             type=str,
             )
 
+    parser.add_argument(
+            '--sdktools',
+            type=str,
+            help='path of the sdktools for the emulation and some android sdk' \
+            'tools like the compilation of apk')
+
     group = parser.add_argument_group('core_static')
 
     group.add_argument(
@@ -53,7 +59,7 @@ def parser():
             choices=["none", "jd-gui", "cfr", "procyon"])
 
     group.add_argument(
-            '--graph',
+            '--graph_ast',
             action="store_true",
             help="Draw a AST graph of the apk source code")
 
@@ -82,12 +88,6 @@ def parser():
     group = parser.add_argument_group('core_dynamic')
 
     group.add_argument(
-            '--sdktools',
-            type=str,
-            help='path of the sdktools for the emulation and some android sdk' \
-            'tools')
-
-    group.add_argument(
             '--env_apks',
             type=str,
             nargs="+")
@@ -101,6 +101,12 @@ def parser():
             '--no-emulation',
             action="store_true",
             help="use a physical phone (useful for buetooth option)")
+    
+    group.add_argument(
+            '--noinstall',
+            action="store_true",
+            help="Application will not be installed and suggest that it was "\
+            "already install")
 
     group.add_argument(
             '--proxy',

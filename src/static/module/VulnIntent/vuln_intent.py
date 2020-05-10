@@ -98,6 +98,8 @@ class Init:
     @classmethod
     def call(cls, r, self):
         if poc:
+            if not "vuln_intent" in Output.get_store()["tree"]:
+                return r
             for k, ps in Output.get_store()["tree"]["vuln_intent"].items():
                 for p in ps:
                     appact = p[2].split('/')

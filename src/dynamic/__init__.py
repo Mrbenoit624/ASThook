@@ -165,7 +165,8 @@ class DynamicAnalysis:
             print("No devices found after 60s")
             sys.exit(1)
 
-        self.install_apk(args.app)
+        if not args.noinstall:
+            self.install_apk(args.app)
 
         if args.no_emulation:
             if args.proxy:

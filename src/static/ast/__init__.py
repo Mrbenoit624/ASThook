@@ -93,7 +93,7 @@ class ast:
 
                 sys.setrecursionlimit(10**7)
 
-                if args.graph:
+                if args.graph_ast:
                     self.init_graph(path)
 
                 self.load()
@@ -211,7 +211,7 @@ class ast:
 
             selfp.hook(self, "in")
             
-            if selfp.args.graph:
+            if selfp.args.graph_ast:
                 self.graph(selfp)
             
             selfp.hook(self, "post-in")
