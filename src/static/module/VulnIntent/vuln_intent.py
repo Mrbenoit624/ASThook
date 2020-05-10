@@ -1,5 +1,10 @@
 from static.ast import Node
 from utils import Output
+from static.generate_apk import GenerateAPK, JavaFile
+import javalang
+import os
+
+poc = False
 
 @Node("ClassDeclaration", "in")
 class ClassDeclarationIn:
@@ -39,7 +44,19 @@ class MethodInvocationIn:
                     "TODO start Intent forInstance",
                     r["Filename"] + " : " + str(self.elt._position)))
             elif self.elt.member == "getExtras":
-                pass
+                type_ = None
+                name_ = "TODO start Intent forInstance"
+                if self.elt.selectors:
+                    func = self.elt.selectors[0]
+                    if func.member == "getString":
+                        type_ = str
+                    elif func.member == "getInt":
+                        type_ = int
+                    if type(func.arguments[0]) is javalang.tree.Literal:
+                        name_ = func.arguments[0].value
+                r["vuln_intent"][2].append((type_,
+                    name_,
+                    r["Filename"] + " : " + str(self.elt._position)))
         return r
             
 
@@ -63,7 +80,8 @@ class MethodDeclarationOut:
             Output.add_tree_mod("vuln_intent", r["vuln_intent"][1], 
             ["\nadb shell 'am start -S -n %s %s'\n" % (
                 r["vuln_intent"][0], arg),
-                r["vuln_intent"][2]])
+                r["vuln_intent"][2],
+                r["vuln_intent"][0]])
         r["vuln_intent"][1] = None
         r["vuln_intent"][2] = []
         return r
@@ -75,16 +93,52 @@ class ClassDeclarationOut:
         r["vuln_intent"][0] = None
         return r
 
-@Node("File", "in")
-class File:
+@Node("Init", "out")
+class Init:
     @classmethod
-    def call(cls, r, path):
+    def call(cls, r, self):
+        if poc:
+            for k, ps in Output.get_store()["tree"]["vuln_intent"].items():
+                for p in ps:
+                    appact = p[2].split('/')
+                    app = appact[0]
+                    activity = appact[1]
+                    path = os.path.dirname(__file__) + "/poc/"
+                    parameters = []
+                    p_ = []
+                    tmp = []
+                    for i in p[1]:
+                        if i[1] in tmp:
+                            continue
+                        tmp.append(i[1])
+                        p_.append([i[0], i[1]])
+                    for i in p_:
+                        if i[0] is bool:
+                            parameters.append({'name' : i[1], 'value' : "true"})
+                        elif i[0] is str:
+                            parameters.append({'name' : i[1], 'value' : '"Hacked"'})
+                        else:
+                            parameters.append({'name' : '"TODO"', 'value' : '"TODO"'})
+                    manifest = JavaFile("/AndroidManifest.xml",
+                            path + "AndroidManifest.xml",
+                            {'app' : app,
+                             'activity' : activity})
+                    exploit = JavaFile("/exploit/intent/exploit.java",
+                            path + "/java/exploit/intent/exploit.java",
+                            {'app' : app,
+                             'activity' : activity,
+                             'parameters' : parameters})
+                    GenerateAPK("vulnIntent_%s" % activity,
+                            manifest,
+                            [exploit],
+                            self.args, self.get_tmp())
         return r
 
 @Node("Init", "in")
 class Init:
     @classmethod
-    def call(cls, r):
+    def call(cls, r, self):
         r["vuln_intent"] = [None] * 3
         r["vuln_intent"][2] = []
         return r
+

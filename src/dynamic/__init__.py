@@ -97,6 +97,23 @@ class DynamicAnalysis:
         print ("\033[36mObb Directory :\033[39m \t\t%s" % infos['obbDir'])
         print ("\033[36mPackage Code path :\033[39m \t\t%s" % infos['packageCodePath'])
 
+    def install_apk(self, apk):
+        while True:
+            try:
+                self.__device.install(apk)
+                break
+            except RuntimeError:
+                continue
+            except InstallError as e:
+                if "Is the system running" in str(e):
+                    continue
+                elif "[INSTALL_FAILED_TEST_ONLY]" in str(e):
+                    print("becareful install as test")
+                    subprocess.call(['adb', 'install', '-t', apk],
+                            stdout=Log.STD_OUTPOUT, stderr=Log.STD_ERR, shell=False)
+                    break
+                else:
+                    print(str(e))
 
     def __init__(self, package, args, tmp_dir):
 
@@ -147,22 +164,8 @@ class DynamicAnalysis:
         if self.__device == None:
             print("No devices found after 60s")
             sys.exit(1)
-        while True:
-            try:
-                self.__device.install(args.app)
-                break
-            except RuntimeError:
-                continue
-            except InstallError as e:
-                if "Is the system running" in str(e):
-                    continue
-                elif "[INSTALL_FAILED_TEST_ONLY]" in str(e):
-                    print("becareful install as test")
-                    subprocess.call(['adb', 'install', '-t', args.app],
-                            stdout=Log.STD_OUTPOUT, stderr=Log.STD_ERR, shell=False)
-                    break
-                else:
-                    print(str(e))
+
+        self.install_apk(args.app)
 
         if args.no_emulation:
             if args.proxy:
@@ -177,6 +180,11 @@ class DynamicAnalysis:
             self.setup_certificate(args.proxy_cert)
         #apps = device.shell("pm list packages -f")
         self.__frida = Frida(self.__device, self.__package)
+        if args.env_apks:
+            print("prepare env")
+            for apk in args.env_apks:
+                self.install_apk(apk[0])
+                self.__device.shell("monkey -p %s -c android.intent.category.LAUNCHER 1" % apk[1])
         print(self.__package)
         self.__device.shell("monkey -p %s -c android.intent.category.LAUNCHER 1" % self.__package)
 

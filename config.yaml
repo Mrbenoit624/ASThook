@@ -8,9 +8,9 @@ static:
   - list_funcs: 
     - '^.*'
     - '^.*'
-  - list_funcs_call: 
-    - '^.*'
-    - '^.*'
+      #  - list_funcs_call: 
+      #    - '^.*'
+      #    - '^.*'
   - test: false
   
 dynamic:

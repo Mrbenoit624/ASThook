@@ -27,18 +27,33 @@ class StaticAnalysis:
         self.__app = args.app
         self.__tmp_dir = tmp_dir
         self.manifest = None
+        if not os.path.exists(self.__app):
+            sys.stderr.write("Application doesn't exist\n")
+            sys.exit(1)
 
 
         bprint("Static Analysis")
         Decompiler(self.__app, self.__tmp_dir, args)
-        
+        packages = []
+        if args.env_apks:
+            for apk in args.env_apks:
+                Decompiler(apk, self.__tmp_dir, args)
+                packages.append([apk, 
+                    Manifest('%s/%s/%s/AndroidManifest.xml' %
+                        (self.__tmp_dir,
+                            "decompiled_app",
+                            apk.split('/')[-1])).package])
+            args.env_apks = packages
+
+
+
         self.manifest = Manifest('%s/%s/%s/AndroidManifest.xml' %
                 (self.__tmp_dir,
                  "decompiled_app",
                  self.__app.split('/')[-1]))
-        
+
         modules = ModuleStatic(self.__app, self.__tmp_dir, args)
-        
+
         if args.tree:
             bprint("Tree analysis")
             print(info("PATH_SRC = %s/decompiled_app/%s/src" % \

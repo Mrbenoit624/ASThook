@@ -89,14 +89,14 @@ class File:
 @Node("Init", "in")
 class Begin:
     @classmethod
-    def call(cls, r):
+    def call(cls, r, self):
         r["gen_hook_out"] = []
         return r
 
 @Node("Init", "out")
 class End:
     @classmethod
-    def call(cls, r):
+    def call(cls, r, self):
         #if len(r["gen_hook_out"]) > 0:
         #    Output.add_tree_mod("gen_hook", "hook",
         #        "\n"+info("*" * 32 + " Hook generated " + "*" * 32) + "\n" +

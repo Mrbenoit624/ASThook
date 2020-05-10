@@ -19,6 +19,7 @@ class Manifest:
         self.package = self.root.get('package')
         self.list_permissions()
         self.list_activities()
+        self.list_broadcasts()
 
         h2("Dangerous functionnality")
         # AllowBacup Functionality
@@ -43,11 +44,27 @@ class Manifest:
                             [obj.attrib[self.android('name')],
                              action.attrib[self.android('name')]])
                     #print(action.attrib[self.android('name')])
-            if not self.android('exported') in obj.attrib or \
-            obj.attrib[self.android('exported')]:
+            if self.android('exported') in obj.attrib and \
+            obj.attrib[self.android('exported')]: # Now it should false by default
                 print(obj.attrib[self.android('name')])
                 Output.add_to_store("manifest", "activity", "exported",
                         obj.attrib[self.android('name')])
+    
+    def list_broadcasts(self):
+        app = self.root.find('application')
+        t_all = app.findall('receiver')
+        # TODO: check if a permission is set with signature like that:
+        # <permission android:name="package.mybroadcast_perm"
+        # android:protectionLevel=signature" />
+        h2("Receiver Exported")
+        for obj in t_all:
+            if not self.android('exported') in obj.attrib or \
+                    obj.attrib[self.android('exported')]:
+                print(obj.attrib[self.android('name')])
+            for intent_filter in obj.findall('intent_filter'):
+                for action in intent_filter.findall('action'):
+                    print(action.attrib[self.android('name')])
+        pass
 
     def list_permissions(self):
         h2("Permission")

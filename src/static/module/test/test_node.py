@@ -21,6 +21,6 @@ class File:
 @Node("Init", "in")
 class Init:
     @classmethod
-    def call(cls, r):
+    def call(cls, r, self):
         r["toto"] = 0
         return r

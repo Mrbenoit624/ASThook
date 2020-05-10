@@ -50,6 +50,10 @@ class ast:
     """
     Class allow to create the AST of the apk
     """
+
+    def get_tmp(self):
+        return self.__tmp_dir
+
     def __init__(self, tmp_dir, app, args):
         self.__tmp_dir = tmp_dir
         self.__app = app
@@ -57,7 +61,7 @@ class ast:
         self.args = args
 
         for i in Register.get_node("Init", "in"):
-            self.set_infos(i.call(self.get_infos()))
+            self.set_infos(i.call(self.get_infos(), self))
 
         path_app = '%s/decompiled_app/%s/src' % \
                     (self.__tmp_dir,
@@ -74,7 +78,8 @@ class ast:
                 try:
                     content = file.read()
                     tree = javalang.parse.parse(content)
-                except javalang.parser.JavaSyntaxError:
+                except javalang.parser.JavaSyntaxError as err:
+                    sys.stderr.write("%s on %s at %s\n" % (err.description, path, err.at))
                     continue
                 except javalang.tokenizer.LexerError:
                     continue
@@ -102,7 +107,7 @@ class ast:
                     pass
 
         for i in Register.get_node("Init", "out"):
-            self.set_infos(i.call(self.get_infos()))
+            self.set_infos(i.call(self.get_infos(), self))
 
     def init_graph(self, path):
         self.dot = Digraph(comment=self.__infos["package"] + "." +
@@ -145,6 +150,15 @@ class ast:
 
     class BaseNode:
 
+        class NodeGraph:
+
+            def __init__(self):
+                self.Name = ""
+                self.Shape = "box"
+                self.Style = ""
+                self.FillColor = ""
+                self.Color = ""
+
         def __init__(self, elt, parent=None):
             self.elt = elt
             self.parent = parent
@@ -168,7 +182,13 @@ class ast:
                 return
 
             name = self.getName()
-            selfp.dot.node(self.NameFormat(name), name)
+            if self.node_graph.Name == "":
+                self.node_graph.Name = name
+            selfp.dot.node(self.NameFormat(name), self.node_graph.Name,
+                    style=self.node_graph.Style,
+                    fillcolor=self.node_graph.FillColor,
+                    color=self.node_graph.Color,
+                    shape=self.node_graph.Shape)
             
             parent = self.parent
             while True:
@@ -184,6 +204,11 @@ class ast:
                     parent = parent.parent
 
         def visit(self, selfp):
+
+            # if selfp.args.graph: # TODO : thinks what is the best opti vs
+            # friendly
+            self.node_graph = self.NodeGraph()
+
             selfp.hook(self, "in")
             
             if selfp.args.graph:
@@ -547,6 +572,8 @@ class ast:
                 selfp.MethodInvocation(elt, self).visit(selfp)
             elif type(elt) is javalang.tree.BinaryOperation:
                 selfp.BinaryOperation(elt, self).visit(selfp)
+            elif type(elt) is javalang.tree.This:
+                selfp.This(elt, self).visit(selfp)
             else:
                 sys.stderr.write("%s - %s\n" % (self.__class__.__name__, type(elt)))
 
@@ -636,6 +663,12 @@ class ast:
             return self.__class__.__name__ + " : " + qualifier + self.elt.member
 
         def apply(self, selfp):
+            if self.elt.selectors:
+                for elt in self.elt.selectors:
+                    if type(elt) is javalang.tree.MethodInvocation:
+                        selfp.MethodInvocation(elt, self).visit(selfp)
+                    else:
+                        sys.stderr.write("%s - %s\n" % (self.__class__.__name__, type(elt)))
             for elt in self.elt.arguments:
                 if type(elt) is javalang.tree.MemberReference:
                     selfp.MemberReference(elt, self).visit(selfp)
@@ -682,6 +715,8 @@ class ast:
                     selfp.Literal(elt, self).visit(selfp)
                 elif type(elt) is javalang.tree.This:
                     selfp.This(elt, self).visit(selfp)
+                elif type(elt) is javalang.tree.MethodInvocation:
+                    selfp.MethodInvocation(elt, self).visit(selfp)
                 else:
                     sys.stderr.write("%s - %s\n" % (self.__class__.__name__, type(elt)))
     
@@ -873,6 +908,8 @@ class ast:
                 selfp.ClassCreator(elt, self).visit(selfp)
             elif type(elt) is javalang.tree.MemberReference:
                 selfp.MemberReference(elt, self).visit(selfp)
+            elif type(elt) is javalang.tree.Literal:
+                selfp.Literal(elt, self).visit(selfp)
             else:
                 sys.stderr.write("%s - %s\n" % (self.__class__.__name__, type(elt)))
             #print(self.elt.__dict__, end='')

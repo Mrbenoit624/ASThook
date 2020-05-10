@@ -24,11 +24,11 @@ class MethodDeclaration:
                     qualifier = self.parent.parent.elt.type.name
                 else:
                     pass
-                    print(self.parent.elt[index-1])
         if len(r["TyperMethod"]) > 0:
             list_c_types = r["TyperMethod"][-1]
             for elt in list_c_types:
-                if qualifier == elt.name:
+                if qualifier == elt.name and \
+                        not type(qualifier) is str: # TODO bug type
                     qualifier = elt.type.name
                     break
         
@@ -38,7 +38,7 @@ class MethodDeclaration:
                     " " * (40 - (len(self.elt.member) + len(qualifier))))
 
         Output.add_tree_mod("list_funcs_called", "func", [function,
-            r["Filename"], str(self.elt._position)])
+            r["Filename"], self.elt._position])
         return r
 
 @Node("File", "in")

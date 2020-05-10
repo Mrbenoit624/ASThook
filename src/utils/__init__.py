@@ -153,11 +153,19 @@ class Output:
     @classmethod
     def dump(cls, mode):
         if mode == "json":
-            return json.dumps(cls.store_td, sort_keys=True, indent=4)
+            return json.dumps(cls.store_td, sort_keys=True,
+                    indent=4,cls=cls.SpecialEncoder)
         elif mode == "none":
             return cls.none_print()
 
-
+    class SpecialEncoder(json.JSONEncoder):
+        def default(self, o):
+            if type(o) is type:
+                return str(o)
+            return json.JSONEncoder.default(self, o)
+        
+        def py_encode_basestring(self, s):
+            return s
 
 
 

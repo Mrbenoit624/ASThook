@@ -88,6 +88,11 @@ def parser():
             'tools')
 
     group.add_argument(
+            '--env_apks',
+            type=str,
+            nargs="+")
+
+    group.add_argument(
             '--phone',
             type=str,
             help='phones target emulator -list-avds')

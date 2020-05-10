@@ -3,3 +3,5 @@ adb_shell
 pyyaml
 sty
 graphviz
+shutil
+jinja2
