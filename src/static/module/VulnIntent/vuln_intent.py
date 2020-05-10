@@ -12,7 +12,8 @@ class ClassDeclarationIn:
     def call(cls, r, self):
         activity = r["package"] + "." + self.elt.name
         if activity in Output.get_store()["manifest"]["activity"]["exported"]:
-            r["vuln_intent"][0] = r["package"] + "/" + r["package"] + "." + self.elt.name
+            package = Output.get_store()['manifest']['activity']['package'][0]
+            r["vuln_intent"][0] = package + "/" + r["package"] + "." + self.elt.name
         return r
 
 @Node("MethodDeclaration", "in")
@@ -103,6 +104,7 @@ class Init:
             for k, ps in Output.get_store()["tree"]["vuln_intent"].items():
                 for p in ps:
                     appact = p[2].split('/')
+                    #app = Output.get_store()['manifest']['activity']['package'][0]
                     app = appact[0]
                     activity = appact[1]
                     path = os.path.dirname(__file__) + "/poc/"

@@ -17,6 +17,7 @@ class Manifest:
         self.root = tree.getroot()
         print(self.root.get('package'))
         self.package = self.root.get('package')
+        Output.add_to_store("manifest", "activity", "package", self.package)
         self.list_permissions()
         self.list_activities()
         self.list_broadcasts()
@@ -45,7 +46,7 @@ class Manifest:
                              action.attrib[self.android('name')]])
                     #print(action.attrib[self.android('name')])
             if self.android('exported') in obj.attrib and \
-            obj.attrib[self.android('exported')]: # Now it should false by default
+            obj.attrib[self.android('exported')] == "true": # Now it should false by default
                 print(obj.attrib[self.android('name')])
                 Output.add_to_store("manifest", "activity", "exported",
                         obj.attrib[self.android('name')])
