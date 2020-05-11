@@ -235,8 +235,8 @@ class ast:
                     selfp.FieldDeclaration(elt, self).visit(selfp)
                 elif type(elt) is javalang.tree.ConstructorDeclaration:
                     selfp.ConstructorDeclaration(elt, self).visit(selfp)
-                #elif type(elt) is list:
-                #    selfp.ASTList(elt, self).visit(selfp)
+                elif type(elt) is list: # list of declaration variable
+                    selfp.ASTList(elt, self).visit(selfp)
                 elif type(elt) is javalang.tree.ClassDeclaration:
                     selfp.ClassDeclaration(elt, self).visit(selfp)
                 elif type(elt) is javalang.tree.InterfaceDeclaration:
@@ -246,6 +246,7 @@ class ast:
                 elif type(elt) is javalang.tree.AnnotationDeclaration:
                     selfp.AnnotationDeclaration(elt, self).visit(selfp)
                 else:
+                    print(elt)
                     sys.stderr.write("%s - %s\n" % (self.__class__.__name__, type(elt)))
 
  
@@ -399,6 +400,10 @@ class ast:
                 selfp.Cast(elt, self).visit(selfp)
             elif type(elt) is javalang.tree.ClassCreator:
                 selfp.ClassCreator(elt, self).visit(selfp)
+            elif type(elt) is javalang.tree.SuperConstructorInvocation:
+                selfp.SuperConstructorInvocation(elt, self).visit(selfp)
+            elif type(elt) is javalang.tree.ExplicitConstructorInvocation:
+                selfp.ExplicitConstructorInvocation(elt, self).visit(selfp)
             else:
                 sys.stderr.write("%s - %s\n" % (self.__class__.__name__, type(elt)))
 
@@ -577,6 +582,10 @@ class ast:
                 selfp.BinaryOperation(elt, self).visit(selfp)
             elif type(elt) is javalang.tree.This:
                 selfp.This(elt, self).visit(selfp)
+            elif type(elt) is javalang.tree.MemberReference:
+                selfp.MemberReference(elt, self).visit(selfp)
+            elif type(elt) is javalang.tree.Literal:
+                selfp.Literal(elt, self).visit(selfp)
             else:
                 sys.stderr.write("%s - %s\n" % (self.__class__.__name__, type(elt)))
 
@@ -594,6 +603,16 @@ class ast:
             for elt in self.elt.statements:
                 if type(elt) is javalang.tree.StatementExpression:
                     selfp.StatementExpression(elt, self).visit(selfp)
+                elif type(elt) is javalang.tree.LocalVariableDeclaration:
+                    selfp.LocalVariableDeclaration(elt, self).visit(selfp)
+                elif type(elt) is javalang.tree.ForStatement:
+                    selfp.ForStatement(elt, self).visit(selfp)
+                elif type(elt) is javalang.tree.IfStatement:
+                    selfp.IfStatement(elt, self).visit(selfp)
+                elif type(elt) is javalang.tree.ReturnStatement:
+                    selfp.ReturnStatement(elt, self).visit(selfp)
+                elif type(elt) is javalang.tree.TryStatement:
+                    selfp.TryStatement(elt, self).visit(selfp)
                 else:
                     sys.stderr.write("%s - %s\n" % (self.__class__.__name__, type(elt)))
             #print(self.elt.__dict__, end='')
@@ -631,21 +650,33 @@ class ast:
     class ForStatement(BaseNode):
 
         def apply(self, selfp):
-            for elt in self.elt.body:
-                #if type(elt) is tuple:
-                #    selfp.ASTList(elt, self).visit(selfp)
-                #else:
+            elt = self.elt.body
+            if type(elt) is javalang.tree.BlockStatement:
+                selfp.BlockStatement(elt, self).visit(selfp)
+            else:
                 sys.stderr.write("%s - %s\n" % (self.__class__.__name__, type(elt)))
-            #print(self.elt.__dict__, end='')
 
     class WhileStatement(BaseNode):
 
         def apply(self, selfp):
-            for elt in self.elt.body:
-                if type(elt) is tuple:
-                    selfp.ASTList(elt, self).visit(selfp)
-                else:
-                    sys.stderr.write("%s - %s\n" % (self.__class__.__name__, type(elt)))
+            selfp.WhileStatementCondition(self.elt.condition, self).visit(selfp)
+            elt = self.elt.body
+            if type(elt) is javalang.tree.BlockStatement:
+                selfp.BlockStatement(elt, self).visit(selfp)
+            else:
+                sys.stderr.write("%s - %s\n" % (self.__class__.__name__, type(elt)))
+    
+    class WhileStatementCondition(BaseNode):
+        
+        def apply(self, selfp):
+            elt = self.elt
+            if type(elt) is javalang.tree.MethodInvocation:
+                selfp.MethodInvocation(elt, self).visit(selfp)
+            elif type(elt) is javalang.tree.BinaryOperation:
+                selfp.BinaryOperation(elt, self).visit(selfp)
+            else:
+                sys.stderr.write("%s - %s\n" % (self.__class__.__name__, type(elt)))
+            pass
 
     class SwitchStatement(BaseNode):
 
@@ -670,6 +701,8 @@ class ast:
                 for elt in self.elt.selectors:
                     if type(elt) is javalang.tree.MethodInvocation:
                         selfp.MethodInvocation(elt, self).visit(selfp)
+                    elif type(elt) is javalang.tree.MemberReference:
+                        selfp.MemberReference(elt, self).visit(selfp)
                     else:
                         sys.stderr.write("%s - %s\n" % (self.__class__.__name__, type(elt)))
             for elt in self.elt.arguments:
@@ -720,6 +753,16 @@ class ast:
                     selfp.This(elt, self).visit(selfp)
                 elif type(elt) is javalang.tree.MethodInvocation:
                     selfp.MethodInvocation(elt, self).visit(selfp)
+                elif type(elt) is javalang.tree.Assignment:
+                    selfp.Assignment(elt, self).visit(selfp)
+                elif type(elt) is javalang.tree.BinaryOperation:
+                    selfp.BinaryOperation(elt, self).visit(selfp)
+                elif type(elt) is javalang.tree.ArrayCreator:
+                    selfp.ArrayCreator(elt, self).visit(selfp)
+                elif type(elt) is javalang.tree.TernaryExpression:
+                    selfp.TernaryExpression(elt, self).visit(selfp)
+                elif type(elt) is javalang.tree.ClassReference:
+                    selfp.ClassReference(elt, self).visit(selfp)
                 else:
                     sys.stderr.write("%s - %s\n" % (self.__class__.__name__, type(elt)))
     
@@ -859,6 +902,8 @@ class ast:
                     selfp.Literal(elt, self).visit(selfp)
                 elif type(elt) is javalang.tree.MethodInvocation:
                     selfp.MethodInvocation(elt, self).visit(selfp)
+                elif type(elt) is javalang.tree.This:
+                    selfp.This(elt, self).visit(selfp)
                 else:
                     sys.stderr.write("%s - %s\n" % (self.__class__.__name__, type(elt)))
 
@@ -913,6 +958,12 @@ class ast:
                 selfp.MemberReference(elt, self).visit(selfp)
             elif type(elt) is javalang.tree.Literal:
                 selfp.Literal(elt, self).visit(selfp)
+            elif type(elt) is javalang.tree.TernaryExpression:
+                selfp.TernaryExpression(elt, self).visit(selfp)
+            elif type(elt) is javalang.tree.BinaryOperation:
+                selfp.BinaryOperation(elt, self).visit(selfp)
+            elif type(elt) is javalang.tree.This:
+                selfp.This(elt, self).visit(selfp)
             else:
                 sys.stderr.write("%s - %s\n" % (self.__class__.__name__, type(elt)))
             #print(self.elt.__dict__, end='')

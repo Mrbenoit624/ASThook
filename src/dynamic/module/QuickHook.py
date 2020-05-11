@@ -18,7 +18,7 @@ class QuickHook:
         for i in args.quickhook:
             self.__sc.append(i)
             self.__frida.load(i, "custom", self.on_message_print)
-        if args.gen_hook:
+        if "gen_hook" in Output.get_store()["tree"]:
             with open("/dev/shm/quickhook.js", 'w') as f:
                 for i in Output.get_store()["tree"]["gen_hook"]["hook"]:
                     f.write(i[1])

@@ -1,5 +1,6 @@
 from static.ast import Node
 from utils import *
+import javalang
 
 @Node("MethodDeclaration", "in")
 class MethodDeclaration:
@@ -29,8 +30,13 @@ class MethodDeclaration:
                     params += " " + param.type.name
                     if param.type.name == "String":
                         args.append(("'%sjava.lang.String'" % pretype, "arg%d" % i))
+                    elif param.type.name == "JSONObject":
+                        args.append(("'%sorg.json.JSONObject'" % pretype, "arg%d" % i))
+                    elif param.type.name == "int":
+                        args.append(("'%sint'" % pretype, "arg%d" % i))
                     else:
-                        args.append(("", "args%d" % i))
+                        args.append(("%s<package>.%s" % ( pretype, param.type.name), "arg%d" % i))
+                        
                     i = i + 1
             if len([over for over, arg in args if over != ""]) > 0:
                 overload += ".overload("
@@ -38,22 +44,27 @@ class MethodDeclaration:
                 overload += ")"
             #print("%s : %s" % (self.elt.name, params))
             for j, k in args:
-                prints += "%ssend('%s: ' + %s);\n" % (" "*8,k,k)
+                if (j.startswith("'[") and j.endswith("int'")) or j == "'int'":
+                    prints += "%ssend('%s: ' + %s);\n" % (" "*8,k,k)
+                else:
+                    prints += "%ssend('%s: ' + %s.value);\n" % (" "*8,k,k)
             #r["gen_hook_out"].append(\
             Output.add_tree_mod("gen_hook", "hook", ["%s.%s" % (class_name,func_name),
 "\nJava.perform(function()\n\
 {\n\
     var class_hook = Java.use('%s.%s')\n\
-    class_hook.%s%s.implementation = function (%s) {\n\
+    //TODO:%s\n\
+    class_hook.%s.implementation = function (%s) {\n\
         send('[+] %s.%s hooked');\n\
 %s\
         var ret = this.%s(%s);\n\
-        send('ret = ' + ret);\n\
+        send('ret = ' + ret.value);\n\
         return ret\n\
     };\n\
 });" % (
                 r["package"], class_name,
-                func_name, overload, ",".join(k for j,k in args),
+                overload,
+                func_name, ",".join(k for j,k in args),
                 class_name, func_name,
                 prints,
                 func_name, ",".join(k for j,k in args))]);
@@ -73,6 +84,13 @@ class ConstructorDeclarationIn:
                     class_name = ClassToHook.get_name()[i]
                     
         if func_name:
+            construct_init = ""
+            for elt in self.parent.elt.body:
+                if type(elt) is javalang.tree.FieldDeclaration:
+                    construct_init += "%ssend('this.%s: ' + this.%s.value);\n" % (
+                            " "*8,
+                            elt.declarators[0].name, 
+                            elt.declarators[0].name)
             params = ""
             args = []
             overload = ""
@@ -93,6 +111,7 @@ class ConstructorDeclarationIn:
 %s\
         var ret = this.$init(%s);\n\
         send('ret = ' + ret);\n\
+%s\
         return ret\n\
     };\n\
 });" % (
@@ -100,7 +119,8 @@ class ConstructorDeclarationIn:
                 ",".join(k for j,k in args),
                 class_name, func_name,
                 prints,
-                ",".join(k for j,k in args))]);
+                ",".join(k for j,k in args),
+                construct_init)]);
         return r
 
 
