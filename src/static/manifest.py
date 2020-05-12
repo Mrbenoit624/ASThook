@@ -40,10 +40,15 @@ class Manifest:
                 end='\n\n')
         for obj in t_all:
             for intent_filter in obj.findall('intent-filter'):
-                for action in intent_filter.findall('action'):
+                actions = intent_filter.findall('action')
+                if len(actions) > 0:
+                    print(obj.attrib[self.android('name')])
+                for action in actions:
                     Output.add_to_store("manifest", "activity", "actions",
                             [obj.attrib[self.android('name')],
                              action.attrib[self.android('name')]])
+                if len(actions) > 0:
+                    continue
                     #print(action.attrib[self.android('name')])
             if self.android('exported') in obj.attrib and \
             obj.attrib[self.android('exported')] == "true": # Now it should false by default
@@ -83,12 +88,17 @@ class Manifest:
         # android:protectionLevel=signature" />
         h2("Receiver Exported")
         for obj in t_all:
-            if not self.android('exported') in obj.attrib or \
-                    obj.attrib[self.android('exported')]:
+            if self.android('exported') in obj.attrib and \
+                    obj.attrib[self.android('exported')] == 'True':
                 print(obj.attrib[self.android('name')])
-            for intent_filter in obj.findall('intent_filter'):
+                continue
+            for intent_filter in obj.findall('intent-filter'):
+                print(obj.attrib[self.android('name')], end=' ')
+                if self.android('permission') in obj.attrib:
+                    print('need: ' + obj.attrib[self.android('permission')], end='')
+                print()
                 for action in intent_filter.findall('action'):
-                    print(action.attrib[self.android('name')])
+                    print('\t' + action.attrib[self.android('name')])
         pass
 
     def list_permissions(self):

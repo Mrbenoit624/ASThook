@@ -14,6 +14,11 @@ def parser():
             help='app target <filename.apk>')
 
     parser.add_argument(
+            '--config_xxhdpi',
+            type=str,
+            help='adding xxhdpi files from google api downloader')
+
+    parser.add_argument(
             '--verbose',
             action="store_true",
             help='active verbose')

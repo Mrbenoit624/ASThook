@@ -19,6 +19,7 @@ from dynamic.module import ModuleDynamic
 
 from .cmd import DynCmd
 
+
 ################################################################################
 #
 # Dynamic Analysis
@@ -100,7 +101,11 @@ class DynamicAnalysis:
     def install_apk(self, apk):
         while True:
             try:
-                self.__device.install(apk)
+                if apk == self.__args.app and self.__args.config_xxhdpi:
+                    subprocess.call(['adb', 'install-multiple', apk,
+                        self.__args.config_xxhdpi] )
+                else:
+                    self.__device.install(apk)
                 break
             except RuntimeError:
                 continue
@@ -203,7 +208,8 @@ class DynamicAnalysis:
         cmd.cmdloop()
 
         #sys.stdin.read()
-        self.__emulation.join()
+        if not self.__args.no_emulation:
+            self.__emulation.join()
 
         self.__frida.detach()
 
