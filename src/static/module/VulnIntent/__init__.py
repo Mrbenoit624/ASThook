@@ -13,6 +13,7 @@ class Tree:
         if args.vuln_intent:
             if not "exported" in Output.get_store()["manifest"]["activity"]:
                 return
+            from ..name_file import name_file_node
             from . import vuln_intent
             if args.vuln_intent == "poc":
                 vuln_intent.poc = True

@@ -7,6 +7,7 @@ import re
 
 
 fg.orange = Style(RgbFg(255, 150, 50))
+fg.grey = Style(RgbFg(150, 150, 150))
 fg.blue = Style(RgbFg(54,154,205))
 fg.h2 = Style(RgbFg(30,196,220))
 if not sys.stdout.isatty():
@@ -14,6 +15,7 @@ if not sys.stdout.isatty():
     fg.li_blue = ""
     fg.li_yellow = ""
     fg.li_red = ""
+    fg.grey = ""
     fg.li_green = ""
     fg.rs = ""
 
@@ -48,6 +50,9 @@ def error(elt):
 
 def good(elt):
     return fg.li_green + elt + fg.rs
+
+def hide(elt):
+    return fg.grey + elt + fg.rs
 
 
 @contextmanager
@@ -91,8 +96,16 @@ class Output:
             cls.store[category][module][tag] = []
             cls.store_td[category][module][tag] = []
         cls.store[category][module][tag].append(arg)
-        if not type(arg) is list:
+        if type(arg) is str:
             cls.store_td[category][module][tag].append(re.sub("\\u001b\[.*?m", "", arg))
+        elif type(arg) is dict:
+            tmp = {}
+            for k, v in arg.items():
+                if type(v) is str:
+                    tmp[k] = re.sub("\\u001b\[.*?m", "", v)
+                else:
+                    tmp[k] = v
+            cls.store_td[category][module][tag].append(tmp)
         else:
             tmp = []
             for e in arg:
@@ -115,7 +128,7 @@ class Output:
     def pp(cls, arg):
         ret = ""
         if type(arg) is list:
-            ret += '\n'.join(map(cls.pp, arg))
+            ret += '\n'.join(map(cls.pp, arg)) + '\n'
         elif type(arg) is str:
             ret += arg
         elif type(arg) is tuple:

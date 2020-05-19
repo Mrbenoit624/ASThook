@@ -2,6 +2,17 @@ from static.ast import Node
 from utils import *
 import javalang
 
+
+def check_print(type_, name):
+    checks = ['int', 'java.lang.String']
+    for check in checks:
+        if (type_.startswith("'[") and type_.endswith("%s'" % check)) or \
+                type_ == "'%s'" % check:
+            return "%ssend('%s: ' + %s);\n" % (" "*8, name, name)
+    else:
+        return "%ssend('%s: ' + %s.value);\n" % (" "*8, name, name)
+
+
 @Node("MethodDeclaration", "in")
 class MethodDeclaration:
     @classmethod
@@ -43,11 +54,14 @@ class MethodDeclaration:
                 overload += ",".join([j for j,k in args if j != ""])
                 overload += ")"
             #print("%s : %s" % (self.elt.name, params))
+            
+            #### Return Type ####
+            ret_print = ""
+            if self.elt.return_type:
+                ret_print = "\tsend('ret = ' + ret.value);\n"
+            
             for j, k in args:
-                if (j.startswith("'[") and j.endswith("int'")) or j == "'int'":
-                    prints += "%ssend('%s: ' + %s);\n" % (" "*8,k,k)
-                else:
-                    prints += "%ssend('%s: ' + %s.value);\n" % (" "*8,k,k)
+                prints += check_print(j, k)
             #r["gen_hook_out"].append(\
             Output.add_tree_mod("gen_hook", "hook", ["%s.%s" % (class_name,func_name),
 "\nJava.perform(function()\n\
@@ -58,7 +72,7 @@ class MethodDeclaration:
         send('[+] %s.%s hooked');\n\
 %s\
         var ret = this.%s(%s);\n\
-        send('ret = ' + ret.value);\n\
+%s\
         return ret\n\
     };\n\
 });" % (
@@ -67,7 +81,8 @@ class MethodDeclaration:
                 func_name, ",".join(k for j,k in args),
                 class_name, func_name,
                 prints,
-                func_name, ",".join(k for j,k in args))]);
+                func_name, ",".join(k for j,k in args),
+                ret_print)]);
         return r
 
 @Node("ConstructorDeclaration", "in")

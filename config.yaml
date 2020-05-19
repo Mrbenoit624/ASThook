@@ -5,9 +5,9 @@ static:
 
   - gen_hook:
     - "TraceEvents.nativeDisableProviders"
-  - list_funcs: 
-    - '^.*'
-    - '^.*'
+      #  - list_funcs: 
+      #    - '^.*'
+      #    - '^.*'
       #  - list_funcs_call: 
       #    - '^.*'
       #    - '^.*'

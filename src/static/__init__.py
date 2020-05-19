@@ -26,39 +26,47 @@ class StaticAnalysis:
     def __init__(self, args, tmp_dir):
         self.__app = args.app
         self.__tmp_dir = tmp_dir
+        self.__basepath = '%s/%s/' % (
+                self.__tmp_dir,
+                self.__app.split('/')[-1])
+        self.__basepathdecompile = '%s/%s/' % (
+                self.__basepath,
+                "decompiled_app")
         self.manifest = None
+
         if not os.path.exists(self.__app):
             sys.stderr.write("Application doesn't exist\n")
             sys.exit(1)
 
 
         bprint("Static Analysis")
-        Decompiler(self.__app, self.__tmp_dir, args)
+        Decompiler(self.__app, self.__basepathdecompile, args)
         packages = []
         if args.env_apks:
             for apk in args.env_apks:
-                Decompiler(apk, self.__tmp_dir, args)
+                basepathdecompile = "%s/%s/%s/" % (
+                        self.__tmp_dir,
+                        apk.split('/')[-1],
+                        "decompiled_app")
+                Decompiler(apk, basepathdecompile, args)
                 packages.append([apk, 
-                    Manifest('%s/%s/%s/AndroidManifest.xml' %
-                        (self.__tmp_dir,
-                            "decompiled_app",
-                            apk.split('/')[-1])).package])
+                    Manifest('%s/AndroidManifest.xml' %
+                        (basepathdecompile)
+                        ).package])
             args.env_apks = packages
 
 
 
-        self.manifest = Manifest('%s/%s/%s/AndroidManifest.xml' %
-                (self.__tmp_dir,
-                 "decompiled_app",
-                 self.__app.split('/')[-1]))
+        self.manifest = Manifest('%s/AndroidManifest.xml' %
+                (self.__basepathdecompile))
 
-        modules = ModuleStatic(self.__app, self.__tmp_dir, args)
+        modules = ModuleStatic(self.__app, "%s" % (self.__basepath), args)
 
         if args.tree:
             bprint("Tree analysis")
-            print(info("PATH_SRC = %s/decompiled_app/%s/src" % \
-                    (self.__tmp_dir, self.__app.split('/')[-1])))
-            ast(self.__tmp_dir, self.__app, args)
+            print(info("PATH_SRC = %s/src" % \
+                    (self.__basepathdecompile)))
+            ast(self.__basepath, self.__app, args)
         Output.print_static_module()
         if args.output_file:
             with open(args.output_file, 'w') as f:

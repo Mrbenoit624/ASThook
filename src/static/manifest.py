@@ -15,20 +15,99 @@ class Manifest:
         self.__path = path
         tree = ET.parse(path)
         self.root = tree.getroot()
+
+        #### packages name ####
         print(self.root.get('package'))
         self.package = self.root.get('package')
         Output.add_to_store("manifest", "activity", "package", self.package)
+
+        #### SdkVersion ####
+        if 'platformBuildVersionCode' in self.root.attrib:
+            self.version = self.root.attrib['platformBuildVersionCode']
+        elif 'compileSdkVersion' in self.root.attrib:
+            self.version = self.root.attrib['compileSdkVersion']
+        else:
+            self.version = '? latest ?'
+        print('Build: ' + self.version)
+        Output.add_to_store("manifest", "general", "verison", self.version)
+        
+        self.dangerous_functionality()
         self.list_permissions()
         self.list_activities()
+        self.list_services()
         self.list_broadcasts()
+        self.list_providers()
 
+
+    def dangerous_functionality(self):
         h2("Dangerous functionnality")
         # AllowBacup Functionality
-        if not self.root.find('application').get("%sallowBackup" % self.CONST_ANDROID) == 'false':
-            print(error("allowBackup: allow to backup all sensitive function on the cloud or on a pc"))
+        if not self.root.find('application').get(
+                "%sallowBackup" % self.CONST_ANDROID) == 'false':
+            print(error("allowBackup: allow to backup all sensitive function"\
+                        "on the cloud or on a pc"))
         # debuggable Functionality
-        if self.root.find('application').get("%sdebuggable" % self.CONST_ANDROID) == 'true':
-            print(error("debuggable: allow to debug the application in user mode"))
+        if self.root.find('application').get(
+                "%sdebuggable" % self.CONST_ANDROID) == 'true':
+            print(error(
+                "debuggable: allow to debug the application in user mode"))
+
+    def get_actions_activity(self, intent_filter, obj):
+        actions = []
+        deeplink = self.get_deeplink(intent_filter, obj)
+        if deeplink:
+            actions.append(deeplink)
+        if not deeplink:
+            #data_ = []
+            #for data in intent_filter.findall('data'):
+            #    data_.append(
+            for action in intent_filter.findall('action'):
+                action_ = "adb shell am start -n %s/%s -a %s " % (
+                        self.package,
+                        obj.attrib[self.android('name')],
+                        action.attrib[self.android('name')])
+                actions.append(action_)
+                Output.add_to_store("manifest", "activity", "action",
+                        {'name' : obj.attrib[self.android('name')],
+                         'action': action.attrib[self.android('name')]})
+        return actions
+
+    def get_deeplink(self, intent_filter, obj):
+        view = False
+        browsable = False
+        sheme = []
+        host = []
+        pathPrefix = []
+        for action in intent_filter.findall('action'):
+            if action.attrib[self.android('name')] == \
+            "android.intent.action.VIEW":
+                view = True
+        for category in intent_filter.findall('category'):
+            if category.attrib[self.android('name')] == \
+            "android.intent.category.BROWSABLE":
+                browsable = True
+        for data_ in intent_filter.findall('data'):
+            if self.android('scheme') in data_.attrib:
+                sheme.append(data_.attrib[self.android('scheme')])
+            if self.android('host') in data_.attrib:
+                host.append(data_.attrib[self.android('host')])
+            if self.android('pathPrefix') in data_.attrib:
+                pathPrefix.append(data_.attrib[self.android('pathPrefix')])
+        if view and browsable:
+            #print(obj.attrib[self.android('name')] + " : " + str(data))
+            Output.add_to_store("manifest", "deeplink",
+                    obj.attrib[self.android('name')],
+                    {'sheme': sheme,
+                     'host' : host,
+                     'pathPrefix': pathPrefix})
+            return "adb shell am start -n %s/%s -a %s -d '%s://%s%s'" % (
+                    self.package,
+                    obj.attrib[self.android('name')],
+                    "android.intent.action.VIEW",
+                    info(str(sheme)),
+                    info(str(host)),
+                    info(str(pathPrefix)))
+        return None
 
     def list_activities(self):
         app = self.root.find('application')
@@ -37,49 +116,60 @@ class Manifest:
         h2("Activities  Exported")
         print("All theses activities can be launch externaly as follow:")
         print("adb shell am start -S -n %s/%s" % (self.package, "<activity>"),
-                end='\n\n')
+                end='\n')
         for obj in t_all:
+            actions_ = []
             for intent_filter in obj.findall('intent-filter'):
-                actions = intent_filter.findall('action')
-                if len(actions) > 0:
-                    print(obj.attrib[self.android('name')])
-                for action in actions:
-                    Output.add_to_store("manifest", "activity", "actions",
-                            [obj.attrib[self.android('name')],
-                             action.attrib[self.android('name')]])
-                if len(actions) > 0:
-                    continue
-                    #print(action.attrib[self.android('name')])
-            if self.android('exported') in obj.attrib and \
-            obj.attrib[self.android('exported')] == "true": # Now it should false by default
-                print(obj.attrib[self.android('name')])
+                actions_.extend(self.get_actions_activity(intent_filter, obj))
+                #actions = intent_filter.findall('action')
+                #if len(actions) > 0:
+                #    is_action = True
+                #for action in actions:
+                #    Output.add_to_store("manifest", "activity", "actions",
+                #            [obj.attrib[self.android('name')],
+                #             action.attrib[self.android('name')]])
+            if (self.android('exported') in obj.attrib and \
+                    obj.attrib[self.android('exported')] == "true") or \
+                    len(actions_) > 0:
+                print('\n' + warning(obj.attrib[self.android('name')]))
                 Output.add_to_store("manifest", "activity", "exported",
                         obj.attrib[self.android('name')])
-        h2("Deeplink Activity")
+                for action in actions_:
+                    print('\t%s' % action)
+
+    def get_actions_service(self, intent_filter, obj):
+        actions = []
+        for action in intent_filter.findall('action'):
+            action_ = "adb shell am startservice -n %s/%s -a %s " % (
+                    self.package,
+                    obj.attrib[self.android('name')],
+                    action.attrib[self.android('name')])
+            actions.append(action_)
+            Output.add_to_store("manifest", "service", "action",
+                    {'name' : obj.attrib[self.android('name')],
+                     'action': action.attrib[self.android('name')]})
+        return actions
+
+    def list_services(self):
+        app = self.root.find('application')
+        t_all = app.findall('service')
+        h2("Services  Exported")
+        print("All theses services can be launch externaly as follow:")
+        print("adb shell am startservice -S -n %s/%s" % (self.package, "<service>"),
+                end='\n')
         for obj in t_all:
+            actions_ = []
             for intent_filter in obj.findall('intent-filter'):
-                view = False
-                browsable = False
-                data = []
-                for action in intent_filter.findall('action'):
-                    if action.attrib[self.android('name')] == \
-                    "android.intent.action.VIEW":
-                        view = True
-                for category in intent_filter.findall('category'):
-                    if category.attrib[self.android('name')] == \
-                    "android.intent.category.BROWSABLE":
-                        browsable = True
-                for data_ in intent_filter.findall('data'):
-                    if self.android('scheme') in data_.attrib:
-                        data.append(data_.attrib[self.android('scheme')])
-                if view and browsable and len(data) > 0:
-                    print(obj.attrib[self.android('name')] + " : " + str(data))
-                    print("adb shell am start -n %s/%s -a %s -d '%s://example'" % (
-                            self.package,
-                            obj.attrib[self.android('name')],
-                            "android.intent.action.VIEW",
-                            data[0]))
-    
+                actions_.extend(self.get_actions_service(intent_filter, obj))
+            if (self.android('exported') in obj.attrib and \
+                    obj.attrib[self.android('exported')] == "true") or \
+                    len(actions_) > 0:
+                print('\n' + warning(obj.attrib[self.android('name')]))
+                Output.add_to_store("manifest", "service", "exported",
+                        obj.attrib[self.android('name')])
+                for action in actions_:
+                    print('\t%s' % action)
+
     def list_broadcasts(self):
         app = self.root.find('application')
         t_all = app.findall('receiver')
@@ -87,6 +177,11 @@ class Manifest:
         # <permission android:name="package.mybroadcast_perm"
         # android:protectionLevel=signature" />
         h2("Receiver Exported")
+        
+        print("All theses broadcast can be launch externaly as follow:")
+        print("adb shell am broadcast -a <action> --receiver-permission"\
+                " <permission-needed>", end='\n\n')
+        
         for obj in t_all:
             if self.android('exported') in obj.attrib and \
                     obj.attrib[self.android('exported')] == 'True':
@@ -114,17 +209,15 @@ class Manifest:
             print(name)
             Output.add_to_store("manifest", "permissions", "create", name)
 
-#
-#    def Manifest(self, path):
-#        """
-#        Analyse the manifest
-#        """
-#        tree = ET.parse(path)
-#        self.root = tree.getroot()
-#        print(self.root.get('package'))
-#        self.package = self.root.get('package')
-#        #print(root.find('application').attrib)
-#    
-#        
-#        self.list_activities()
-# 
+    def list_providers(self):
+        h2("Providers")
+        
+        app = self.root.find('application')
+        t_all = app.findall('provider')
+
+        for obj in t_all:
+            if not ('exported' in obj.attrib and obj.attrib['exported'] == "true") \
+                and not len(obj.findall('intent-filter')) > 0:
+                    continue
+            print(obj.attrib['authorities'])
+

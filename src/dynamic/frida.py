@@ -42,9 +42,17 @@ class Frida:
             if device.id == self.__device.device.serial:
                 self.__server = device
     
-    def attach(self):
+    def attach(self, pid=None):
         print(self.__server)
-        self.__session = self.__server.attach(self.__package)
+        self.__session = self.__server.attach(pid if pid else self.__package)
+
+    def spawn(self, arg):
+        self.__pid = self.__server.spawn(self.__package)
+        self.attach()
+
+    def resume(self):
+        if self.__pid:
+            self.__server.resume(self.__pid)
 
     def load(self, file, option, function = None):
         try:
@@ -65,7 +73,10 @@ class Frida:
 
     def unload(self, file):
         if file in self.List_files_loaded:
-            self.List_files_loaded[file].unload()
+            try:
+                self.List_files_loaded[file].unload()
+            except frida.InvalidOperationError:
+                pass
             del self.List_files_loaded[file]
 
     def reload(self):

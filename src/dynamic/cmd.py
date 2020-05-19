@@ -7,9 +7,12 @@ import os
 class DynCmd(cmd.Cmd):
     prompt = "frida >"
 
-    def __init__(self, modules):
+    def __init__(self, modules, device, frida, args):
         super().__init__()
-        self.modules = modules
+        self.__modules = modules
+        self.__device = device
+        self.__frida = frida
+        self.__args = args
 
 
     def emptyline(self):
@@ -20,7 +23,7 @@ class DynCmd(cmd.Cmd):
 
 #TODO fix complete
     def complete_load(self, text, line, begidx, endidx):
-        self.modules.load_module()
+        self.__modules.load_module()
         complete = [ name for name, desc, func, action, nargs in get_dynamic_modules() ]
         if (len(line.split()) > 2):
             print(os.listdir(text))
@@ -37,15 +40,15 @@ class DynCmd(cmd.Cmd):
     def do_load(self, arg):
         args = arg.split()
         if len(args) > 0:
-            self.modules.load(args[0], args[1:])
+            self.__modules.load(args[0], args[1:])
         else:
-            self.modules.load(arg)
+            self.__modules.load(arg)
 
     def do_reload(self, arg):
-        self.modules.reload()
+        self.__modules.reload()
 
     def complete_unload(self, text, line, begidx, endidx):
-        complete = self.modules.get_modules_list()
+        complete = self.__modules.get_modules_list()
         if not text:
             completions = complete
         else:
@@ -56,10 +59,20 @@ class DynCmd(cmd.Cmd):
         return completions
 
     def do_unload(self, arg):
-        self.modules.unload(arg)
+        self.__modules.unload(arg)
+
+    def do_shell(self, arg):
+        #self.__device.shell("input keyevent KEYCODE_HOME")
+        self.__device.shell("input keyevent KEYCODE_BACK")
+        self.__device.shell(arg)
+        #self.__frida.attach()
+        #self.__modules.reload(self.__frida)
+
+    def do_detach(self, arg):
+        self.__args.no_emulation = True
 
     def do_exit(self, arg):
-        self.modules.unload_all()
+        self.__modules.unload_all()
         print("exit")
         print("You should close your emulator if it's running..")
         return True

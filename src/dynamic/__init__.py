@@ -84,6 +84,7 @@ class DynamicAnalysis:
                 "/system/etc/security/cacerts/%s" % hash_cert)
         self.__device.shell("chmod 644 /system/etc/security/cacerts/%s.0" % hash_cert)
         self.__device.shell("mount -o ro,remount,ro /system")
+        os.system("rm %s/%s.0" % (self.__tmp_dir, hash_cert))
     
     def generalinfo(self):
         """
@@ -190,21 +191,26 @@ class DynamicAnalysis:
             print("prepare env")
             for apk in args.env_apks:
                 self.install_apk(apk[0])
-                self.__device.shell("monkey -p %s -c android.intent.category.LAUNCHER 1" % apk[1])
+                self.__device.spawn(apk[1])
+                #self.__device.shell("monkey -p %s -c android.intent.category.LAUNCHER 1" % apk[1])
         print(self.__package)
-        self.__device.shell("monkey -p %s -c android.intent.category.LAUNCHER 1" % self.__package)
+        self.__device.spawn(self.__package)
+        #self.__frida.spawn(self.__package)
+        #self.__device.shell("monkey -p %s -c android.intent.category.LAUNCHER 1" % self.__package)
 
         time.sleep(1)
         self.__frida.attach()
 
-        self.generalinfo()
 
         modules = ModuleDynamic(self.__frida, self.__device, self.__tmp_dir,
                 args)
 
+        #self.__frida.resume()
+
         #self.__frida.load("script_frida/socket.js", "print")
 
-        cmd = DynCmd(modules)
+        self.generalinfo()
+        cmd = DynCmd(modules, self.__device, self.__frida, self.__args)
         cmd.cmdloop()
 
         #sys.stdin.read()

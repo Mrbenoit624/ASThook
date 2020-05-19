@@ -4,6 +4,21 @@ from static.generate_apk import GenerateAPK, JavaFile
 import javalang
 import os
 
+class long:
+    pass
+
+class long_a:
+    pass
+
+class bytes_a:
+    pass
+
+class int_a:
+    pass
+
+class float_a:
+    pass
+
 poc = False
 
 @Node("ClassDeclaration", "in")
@@ -40,15 +55,49 @@ class MethodInvocationIn:
                 r["vuln_intent"][2].append((str,
                     self.elt.arguments[0].value,
                     r["Filename"] + " : " + str(self.elt._position)))
+            elif self.elt.member == "getIntExtra":
+                r["vuln_intent"][2].append((int,
+                    self.elt.arguments[0].value,
+                    r["Filename"] + " : " + str(self.elt._position)))
+            elif self.elt.member == "getLongExtra":
+                r["vuln_intent"][2].append((long,
+                    self.elt.arguments[0].value,
+                    r["Filename"] + " : " + str(self.elt._position)))
+            elif self.elt.member == "getFloatExtra":
+                r["vuln_intent"][2].append((float,
+                    self.elt.arguments[0].value,
+                    r["Filename"] + " : " + str(self.elt._position)))
+            elif self.elt.member == "getIntArrayExtra":
+                r["vuln_intent"][2].append((int_a,
+                    self.elt.arguments[0].value,
+                    r["Filename"] + " : " + str(self.elt._position)))
+            elif self.elt.member == "getLongArrayExtra":
+                r["vuln_intent"][2].append((long_a,
+                    self.elt.arguments[0].value,
+                    r["Filename"] + " : " + str(self.elt._position)))
+            elif self.elt.member == "getFloatArrayExtra":
+                r["vuln_intent"][2].append((float_a,
+                    self.elt.arguments[0].value,
+                    r["Filename"] + " : " + str(self.elt._position)))
+            elif self.elt.member == "getByteArrayExtra":
+                r["vuln_intent"][2].append((bytes_a,
+                    self.elt.arguments[0].value,
+                    r["Filename"] + " : " + str(self.elt._position)))
             elif self.elt.member == "getParcelableExtra":
                 r["vuln_intent"][2].append((None,
-                    "TODO start Intent forInstance",
+                    "TODO Parcelable",
                     r["Filename"] + " : " + str(self.elt._position)))
             elif self.elt.member == "getExtras":
                 type_ = None
-                name_ = "TODO start Intent forInstance"
+                name_ = "TODO"
+                func = None
                 if self.elt.selectors:
                     func = self.elt.selectors[0]
+                elif self.parent.elt.selectors:
+                    i = self.parent.elt.selectors.index(self.elt)
+                    if i + 1 < len(self.parent.elt.selectors):
+                        func = self.parent.elt.selectors[i+1]
+                if func:
                     if func.member == "getString":
                         type_ = str
                     elif func.member == "getInt":
@@ -76,8 +125,23 @@ class MethodDeclarationOut:
                     arg += " --ez %s true" % val
                 elif type_ is str:
                     arg += " --es %s \"<argument>\"" % val
+                elif type_ is int:
+                    arg += " --ei %s 1" % val
+                elif type_ is long:
+                    arg += " --el %s 1" % val
+                elif type_ is float:
+                    arg += " --ef %s 1.0" % val
+                elif type_ is int_a:
+                    arg += " --eia %s 1,1" % val
+                elif type_ is long_a:
+                    arg += " --ela %s 1,1" % val
+                elif type_ is float_a:
+                    arg += " --efa %s 1.0,1.0" % val
+                elif type_ is bytes_a:
+                    arg += " --eba %s 1,1" % val
                 else:
-                    arg += val
+                    pass
+                    #arg += val
             Output.add_tree_mod("vuln_intent", r["vuln_intent"][1], 
             ["\nadb shell 'am start -S -n %s %s'\n" % (
                 r["vuln_intent"][0], arg),
@@ -121,6 +185,10 @@ class Init:
                             parameters.append({'name' : i[1], 'value' : "true"})
                         elif i[0] is str:
                             parameters.append({'name' : i[1], 'value' : '"Hacked"'})
+                        elif i[0] is int or i[0] is float or i[0] is long:
+                            parameters.append({'name' : i[1], 'value' : "1"})
+                        elif i[0] is int_a or i[0] is float_a or i[0] is long_a:
+                            parameters.append({'name' : i[1], 'value' : "[1, 1]"})
                         else:
                             parameters.append({'name' : '"TODO"', 'value' : '"TODO"'})
                     manifest = JavaFile("/AndroidManifest.xml",

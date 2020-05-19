@@ -30,6 +30,10 @@ class my_adb:
         def shell(self, arg):
             return self.device.shell(arg)
 
+        def spawn(self, arg):
+            return self.shell("monkey -p %s -c android.intent.category.LAUNCHER 1" %
+                    arg)
+
         def push(self, src, dst):
             return self.device.push(src, dst)
 

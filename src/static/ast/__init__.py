@@ -52,10 +52,10 @@ class ast:
     """
 
     def get_tmp(self):
-        return self.__tmp_dir
+        return self.__basepath
 
-    def __init__(self, tmp_dir, app, args):
-        self.__tmp_dir = tmp_dir
+    def __init__(self, base_path, app, args):
+        self.__basepath = base_path
         self.__app = app
         self.__infos = {}
         self.args = args
@@ -63,14 +63,14 @@ class ast:
         for i in Register.get_node("Init", "in"):
             self.set_infos(i.call(self.get_infos(), self))
 
-        path_app = '%s/decompiled_app/%s/src' % \
-                    (self.__tmp_dir,
-                    self.__app.split('/')[-1])
+        path_app = '%s/%s/src' % \
+                    (self.__basepath,
+                     "decompiled_app")
         if args.tree_path:
             path_app += "/" + args.tree_path
-        for action in Output.get_store()["manifest"]["activity"]["actions"]:
-            if len(action) > 1 and action[1] == "android.intent.action.MAIN":
-                self.main = action[0]
+        for action in Output.get_store()["manifest"]["activity"]["action"]:
+            if action['action'] == "android.intent.action.MAIN":
+                self.main = action['action']
         print("/".join(self.main.split(".")))
         for path in Path(path_app).rglob('*.java'):
             #print(path)
