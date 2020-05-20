@@ -5,14 +5,6 @@ for i in [x for x in Path(__file__).parent.absolute().iterdir() if x.is_dir()]:
     __import__("static.module.%s" % i.stem)
 
 
-for i in Path(__file__).parent.absolute().glob('*.py'):
-    if i.name != "register.py" and i.name != "__init__.py" and \
-    not str(i).endswith("node.py"):
-        __import__("static.module.%s" % i.stem)
-
-#from .tree import Tree
-#from . import name_file
-
 from .register import get_static_modules
 
 class ModuleStatic:
@@ -22,7 +14,8 @@ class ModuleStatic:
     def __init__(self, package, tmp_dir, args):
         self.__package = package
         for name, desc, func, action, nargs in get_static_modules():
-            if name in args.__dict__:
+            if name in args.__dict__ and \
+                    (args.__dict__[name] or args.__dict__[name] == []):
                 func(package, tmp_dir, args)
 
 

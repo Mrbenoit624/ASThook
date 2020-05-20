@@ -1,5 +1,5 @@
 
-from .register import ModuleDynamicCmd
+from dynamic.module.register import ModuleDynamicCmd
 
 import os
 

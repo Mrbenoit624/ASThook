@@ -7,8 +7,7 @@ class Tree:
     Class Exemple of cresation static module
     """
     def __init__(self, package, tmp_dir, args):
-        if args.types:
-            from . import typer
+        from . import typer
         #print("test")
         return None
 

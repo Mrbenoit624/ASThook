@@ -1,12 +1,10 @@
 from pathlib import Path
 
-for i in Path(__file__).parent.absolute().glob('*.py'):
-    if i.name != "register.py" and i.name != "__init__.py":
-        __import__("dynamic.module.%s" % i.stem)
+for i in [x for x in Path(__file__).parent.absolute().iterdir() if x.is_dir()]:
+    __import__("dynamic.module.%s" % i.stem)
 
 
 from .register import get_dynamic_modules
-from . import *
 
 class ModuleDynamic:
     def __init__(self, frida, device, tmp_dir, args):
@@ -17,7 +15,9 @@ class ModuleDynamic:
         self.__args = args
 
         for name, desc, func, action, nargs in get_dynamic_modules():
-            if args.__dict__[name] or args.__dict__[name] == []:
+            #if args.__dict__[name] or args.__dict__[name] == []:
+            if name in args.__dict__ and \
+                    (args.__dict__[name] or args.__dict__[name] == []):
                 self.__list_module_loaded[name] = func(frida, device, tmp_dir, args)
 
     def load(self, module, args=None):

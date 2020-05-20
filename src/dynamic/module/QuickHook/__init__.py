@@ -1,5 +1,5 @@
 
-from .register import ModuleDynamicCmd
+from dynamic.module.register import ModuleDynamicCmd
 from utils import Output
 
 @ModuleDynamicCmd("quickhook", "give a list a js file to hook", str, "*")

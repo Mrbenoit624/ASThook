@@ -15,12 +15,11 @@ class ListFuncs:
       --list_funcs_call '.*' '.*'
     """
     def __init__(self, package, tmp_dir, args):
-        if args.list_funcs_call:
-            from ..name_file import name_file_node # dependance
-            from ..Typer import typer
-            from . import ListFuncsCalled_node
-            ListFuncsCalled_node.Class.set_class(args.list_funcs_call[0])
-            ListFuncsCalled_node.Func.set_func(args.list_funcs_call[1])
+        from ..name_file import name_file_node # dependance
+        from ..Typer import typer
+        from . import ListFuncsCalled_node
+        ListFuncsCalled_node.Class.set_class(args.list_funcs_call[0])
+        ListFuncsCalled_node.Func.set_func(args.list_funcs_call[1])
         return None
 
 

@@ -15,10 +15,9 @@ class ListFuncs:
       --list_funcs '.*' '.*'
     """
     def __init__(self, package, tmp_dir, args):
-        if args.list_funcs:
-            from . import ListFuncs_node
-            ListFuncs_node.Class.set_class(args.list_funcs[0])
-            ListFuncs_node.Func.set_func(args.list_funcs[1])
+        from . import ListFuncs_node
+        ListFuncs_node.Class.set_class(args.list_funcs[0])
+        ListFuncs_node.Func.set_func(args.list_funcs[1])
         return None
 
 

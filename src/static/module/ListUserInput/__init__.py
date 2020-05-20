@@ -9,7 +9,6 @@ class ListUserInput:
       --user_input
     """
     def __init__(self, package, tmp_dir, args):
-        if args.user_input:
-            from ..name_file import name_file_node
-            from . import ListUserInput_node
+        from ..name_file import name_file_node
+        from . import ListUserInput_node
 

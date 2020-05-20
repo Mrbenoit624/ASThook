@@ -1,5 +1,5 @@
 
-from .register import ModuleDynamicCmd
+from dynamic.module.register import ModuleDynamicCmd
 
 @ModuleDynamicCmd("sslpining", "bypass all sslpining", bool)
 class SSLpinning:

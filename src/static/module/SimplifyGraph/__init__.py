@@ -8,7 +8,6 @@ class Tree:
     Class Exemple of cresation static module
     """
     def __init__(self, package, tmp_dir, args):
-        if args.simplify_graph:
-            from . import simplify_graph
+        from . import simplify_graph
         return None
 
