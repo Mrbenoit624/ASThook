@@ -20,6 +20,7 @@ function traceModule(impl, name)
       {
         //console.log("arg" + i + " : " + Memory.readCString(args[i]));
         send("arg" + i + " : " + args[i]);
+        send("arg" + i + " : " + Memory.readCString(args[i]));
       }
       send("*** entered " + name);
       // print backtrace

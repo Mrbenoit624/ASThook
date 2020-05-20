@@ -56,8 +56,11 @@ class Frida:
 
     def load(self, file, option, function = None):
         try:
-            f = open(file, "r")
-            script = self.__session.create_script(f.read())
+            if len(file.split(" ")) > 1:
+                script = self.__session.create_script(file)
+            else:
+                f = open(file, "r")
+                script = self.__session.create_script(f.read())
             if option == "print":
                 script.on('message', self.on_message_print)
             if option == "store":
