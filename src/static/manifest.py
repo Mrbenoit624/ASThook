@@ -75,7 +75,7 @@ class Manifest:
     def get_deeplink(self, intent_filter, obj):
         view = False
         browsable = False
-        sheme = []
+        scheme = []
         host = []
         pathPrefix = []
         for action in intent_filter.findall('action'):
@@ -88,7 +88,7 @@ class Manifest:
                 browsable = True
         for data_ in intent_filter.findall('data'):
             if self.android('scheme') in data_.attrib:
-                sheme.append(data_.attrib[self.android('scheme')])
+                scheme.append(data_.attrib[self.android('scheme')])
             if self.android('host') in data_.attrib:
                 host.append(data_.attrib[self.android('host')])
             if self.android('pathPrefix') in data_.attrib:
@@ -97,14 +97,14 @@ class Manifest:
             #print(obj.attrib[self.android('name')] + " : " + str(data))
             Output.add_to_store("manifest", "deeplink",
                     obj.attrib[self.android('name')],
-                    {'sheme': sheme,
+                    {'scheme': scheme,
                      'host' : host,
                      'pathPrefix': pathPrefix})
             return "adb shell am start -n %s/%s -a %s -d '%s://%s%s'" % (
                     self.package,
                     obj.attrib[self.android('name')],
                     "android.intent.action.VIEW",
-                    info(str(sheme)),
+                    info(str(scheme)),
                     info(str(host)),
                     info(str(pathPrefix)))
         return None

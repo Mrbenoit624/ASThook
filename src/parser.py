@@ -67,6 +67,11 @@ def parser():
             '--graph_ast',
             action="store_true",
             help="Draw a AST graph of the apk source code")
+    
+    group.add_argument(
+            '--debug_ast',
+            action="store_true",
+            help="print error encounter during the browsing of AST")
 
     group = parser.add_argument_group('static')
 
