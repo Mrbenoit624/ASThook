@@ -25,6 +25,7 @@ poc = False
 class ClassDeclarationIn:
     @classmethod
     def call(cls, r, self):
+        #### get Activity name as written in manifest ####
         activity = r["package"] + "." + self.elt.name
         if activity in Output.get_store()["manifest"]["activity"]["exported"]:
             package = Output.get_store()['manifest']['activity']['package'][0]
@@ -37,9 +38,84 @@ class MethodDeclarationIn:
     def call(cls, r, self):
         activites_status = ["onCreate", "onStart", "onResume", "onPause",
         "onStop", "onRestart", "onDestroy"]
-        if self.elt.name in activites_status:
-            r["vuln_intent"][1] = self.elt.name
+        #if self.elt.name in activites_status:
+        #    r["vuln_intent"][1] = self.elt.name
+        r["vuln_intent"][1] = self.elt.name
         return r
+
+def DataDetect(elt, parent):
+    return elt.member == "getDataString" or elt.member == "getData"
+
+def ExtraDetect(elt, parent):
+    if elt.member == "getBooleanExtra":
+        return (bool, elt.arguments[0].value)
+    elif elt.member == "getStringExtra":
+        return (str, elt.arguments[0].value)
+    elif elt.member == "getIntExtra":
+        return (int, elt.arguments[0].value)
+    elif elt.member == "getLongExtra":
+        return (long, elt.arguments[0].value)
+    elif elt.member == "getFloatExtra":
+        return (float, elt.arguments[0].value)
+    elif elt.member == "getIntArrayExtra":
+        return (int_a, elt.arguments[0].value)
+    elif elt.member == "getLongArrayExtra":
+        return (long_a, elt.arguments[0].value)
+    elif elt.member == "getFloatArrayExtra":
+        return (float_a, elt.arguments[0].value)
+    elif elt.member == "getByteArrayExtra":
+        return (bytes_a, elt.arguments[0].value)
+    elif elt.member == "getParcelableExtra":
+        return (None, "TODO Parcelable")
+    elif elt.member == "getExtras":
+       type_ = None
+       name_ = "TODO"
+       func = None
+       if elt.selectors:
+           func = elt.selectors[0]
+       elif parent.elt.selectors:
+           i = parent.elt.selectors.index(self.elt)
+           if i + 1 < len(parent.elt.selectors):
+               func = parent.elt.selectors[i+1]
+       if func:
+           if func.member == "getString":
+               type_ = str
+           elif func.member == "getInt":
+               type_ = int
+           if type(func.arguments[0]) is javalang.tree.Literal:
+               name_ = func.arguments[0].value
+       return (type_, name_)
+    return (None, None)
+
+def AdbArgs_extra(elts):
+    arg = ""
+    tmp = []
+    for type_, val, pos in elts:
+        if val in tmp:
+            continue
+        tmp.append(val)
+        if type_ is bool: 
+            arg += " --ez %s true" % val
+        elif type_ is str:
+            arg += " --es %s \"<argument>\"" % val
+        elif type_ is int:
+            arg += " --ei %s 1" % val
+        elif type_ is long:
+            arg += " --el %s 1" % val
+        elif type_ is float:
+            arg += " --ef %s 1.0" % val
+        elif type_ is int_a:
+            arg += " --eia %s 1,1" % val
+        elif type_ is long_a:
+            arg += " --ela %s 1,1" % val
+        elif type_ is float_a:
+            arg += " --efa %s 1.0,1.0" % val
+        elif type_ is bytes_a:
+            arg += " --eba %s 1,1" % val
+        else:
+            pass
+    return arg
+
 
 @Node("MethodInvocation", "in")
 class MethodInvocationIn:
@@ -47,101 +123,27 @@ class MethodInvocationIn:
     def call(cls, r, self):
         if r["vuln_intent"][0] and \
                 r["vuln_intent"][1]:
-            if self.elt.member == "getBooleanExtra":
-                r["vuln_intent"][2].append((bool,
-                    self.elt.arguments[0].value,
-                    r["Filename"] + " : " + str(self.elt._position)))
-            elif self.elt.member == "getStringExtra":
-                r["vuln_intent"][2].append((str,
-                    self.elt.arguments[0].value,
-                    r["Filename"] + " : " + str(self.elt._position)))
-            elif self.elt.member == "getIntExtra":
-                r["vuln_intent"][2].append((int,
-                    self.elt.arguments[0].value,
-                    r["Filename"] + " : " + str(self.elt._position)))
-            elif self.elt.member == "getLongExtra":
-                r["vuln_intent"][2].append((long,
-                    self.elt.arguments[0].value,
-                    r["Filename"] + " : " + str(self.elt._position)))
-            elif self.elt.member == "getFloatExtra":
-                r["vuln_intent"][2].append((float,
-                    self.elt.arguments[0].value,
-                    r["Filename"] + " : " + str(self.elt._position)))
-            elif self.elt.member == "getIntArrayExtra":
-                r["vuln_intent"][2].append((int_a,
-                    self.elt.arguments[0].value,
-                    r["Filename"] + " : " + str(self.elt._position)))
-            elif self.elt.member == "getLongArrayExtra":
-                r["vuln_intent"][2].append((long_a,
-                    self.elt.arguments[0].value,
-                    r["Filename"] + " : " + str(self.elt._position)))
-            elif self.elt.member == "getFloatArrayExtra":
-                r["vuln_intent"][2].append((float_a,
-                    self.elt.arguments[0].value,
-                    r["Filename"] + " : " + str(self.elt._position)))
-            elif self.elt.member == "getByteArrayExtra":
-                r["vuln_intent"][2].append((bytes_a,
-                    self.elt.arguments[0].value,
-                    r["Filename"] + " : " + str(self.elt._position)))
-            elif self.elt.member == "getParcelableExtra":
-                r["vuln_intent"][2].append((None,
-                    "TODO Parcelable",
-                    r["Filename"] + " : " + str(self.elt._position)))
-            elif self.elt.member == "getExtras":
-                type_ = None
-                name_ = "TODO"
-                func = None
-                if self.elt.selectors:
-                    func = self.elt.selectors[0]
-                elif self.parent.elt.selectors:
-                    i = self.parent.elt.selectors.index(self.elt)
-                    if i + 1 < len(self.parent.elt.selectors):
-                        func = self.parent.elt.selectors[i+1]
-                if func:
-                    if func.member == "getString":
-                        type_ = str
-                    elif func.member == "getInt":
-                        type_ = int
-                    if type(func.arguments[0]) is javalang.tree.Literal:
-                        name_ = func.arguments[0].value
+            type_, value = ExtraDetect(self.elt, self.parent)
+            if value:
                 r["vuln_intent"][2].append((type_,
-                    name_,
+                    value,
                     r["Filename"] + " : " + str(self.elt._position)))
+            elif DataDetect(self.elt, self.parent):
+                r["vuln_intent"][2].append((self.elt.member,"Deeplink",
+                    r["Filename"] + " : " + str(self.elt._position)))
+            elif self.elt.member == "setClipData":
+                r["vuln_intent"][2].append((self.elt.member,"Deeplinks",
+                    r["Filename"] + " : " + str(self.elt._position)))
+
         return r
-            
+
 
 @Node("MethodDeclaration", "out")
 class MethodDeclarationOut:
     @classmethod
     def call(cls, r, self):
         if len(r["vuln_intent"][2]) > 0:
-            arg = ""
-            tmp = []
-            for type_, val, pos in r["vuln_intent"][2]:
-                if val in tmp:
-                    continue
-                tmp.append(val)
-                if type_ is bool: 
-                    arg += " --ez %s true" % val
-                elif type_ is str:
-                    arg += " --es %s \"<argument>\"" % val
-                elif type_ is int:
-                    arg += " --ei %s 1" % val
-                elif type_ is long:
-                    arg += " --el %s 1" % val
-                elif type_ is float:
-                    arg += " --ef %s 1.0" % val
-                elif type_ is int_a:
-                    arg += " --eia %s 1,1" % val
-                elif type_ is long_a:
-                    arg += " --ela %s 1,1" % val
-                elif type_ is float_a:
-                    arg += " --efa %s 1.0,1.0" % val
-                elif type_ is bytes_a:
-                    arg += " --eba %s 1,1" % val
-                else:
-                    pass
-                    #arg += val
+            arg = AdbArgs_extra(r["vuln_intent"][2])
             Output.add_tree_mod("vuln_intent", r["vuln_intent"][1], 
             ["\nadb shell 'am start -S -n %s %s'\n" % (
                 r["vuln_intent"][0], arg),
@@ -173,6 +175,8 @@ class Init:
                     activity = appact[1]
                     path = os.path.dirname(__file__) + "/poc/"
                     parameters = []
+                    Data = ""
+                    Datas = ""
                     p_ = []
                     tmp = []
                     for i in p[1]:
@@ -189,6 +193,23 @@ class Init:
                             parameters.append({'name' : i[1], 'value' : "1"})
                         elif i[0] is int_a or i[0] is float_a or i[0] is long_a:
                             parameters.append({'name' : i[1], 'value' : "[1, 1]"})
+                        elif i[1] == "Deeplink":
+                            acti = Output.get_store()["manifest"]["deeplink"][activity][0]
+                            Data = "%s://%s%s" % (
+                                "" if len(acti["scheme"]) < 1 else acti["scheme"][0],
+                                "" if len(acti["host"]) < 1 else acti["host"][0],
+                                "" if len(acti["pathPrefix"]) < 1 else acti["pathPrefix"][0]
+                                )
+                        elif i[1] == "Deeplinks":
+                            acti = Output.get_store()["manifest"]["deeplink"][activity][0]
+                            Datas = "%s://%s%s" % (
+                                "" if len(acti["scheme"]) < 1 else acti["scheme"][0],
+                                "" if len(acti["host"]) < 1 else acti["host"][0],
+                                "" if len(acti["pathPrefix"]) < 1 else acti["pathPrefix"][0]
+                                )
+                            #print("%s%s%s" % (str(acti["scheme"]),
+                            #    str(acti["host"]),
+                            #    str(acti["pathPrefix"])))
                         else:
                             parameters.append({'name' : '"TODO"', 'value' : '"TODO"'})
                     manifest = JavaFile("/AndroidManifest.xml",
@@ -199,8 +220,10 @@ class Init:
                             path + "/java/exploit/intent/exploit.java",
                             {'app' : app,
                              'activity' : activity,
-                             'parameters' : parameters})
-                    GenerateAPK("vulnIntent_%s" % activity,
+                             'parameters' : parameters,
+                             'data': Data,
+                             'datas': Datas})
+                    GenerateAPK("vulnIntent_%s_%s" % (activity, k),
                             manifest,
                             [exploit],
                             self.args, self.get_tmp())
