@@ -11,6 +11,17 @@ static:
       #  - list_funcs_call: 
       #    - '^.*'
       #    - '^.*'
+
+#### Intent give data when it's call ####
+#  - list_funcs_call:
+#    - '.*'
+#    - 'setResult'
+
+#### Application send broadcast ####
+#  - list_funcs_call:
+#    - '.*'
+#    - 'sendBroadcast'
+  - test: false
   - test: false
   
 dynamic:
