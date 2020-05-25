@@ -219,5 +219,6 @@ class Manifest:
             if not ('exported' in obj.attrib and obj.attrib['exported'] == "true") \
                 and not len(obj.findall('intent-filter')) > 0:
                     continue
-            print(obj.attrib['authorities'])
+            if "authorities" in obj.attrib:
+                print(obj.attrib['authorities'])
 

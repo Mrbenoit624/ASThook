@@ -44,6 +44,9 @@ class my_adb:
             return self.device.install(app)
             #return subprocess.call(["adb", "install", app])
 
+        def uninstall(self, package):
+            return self.device.uninstall(package)
+
         def dir_exist(self, dir):
             if "True" in self.device.shell("([ -d %s ] && echo 'True') || echo 'False'" % dir):
                 return True

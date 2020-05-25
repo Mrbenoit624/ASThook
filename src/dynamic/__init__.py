@@ -39,12 +39,15 @@ class DynamicAnalysis:
         options = ["%s/emulator/emulator" % path, "@%s" % phone, "-selinux",
                 "disabled", "-memory", "3192", "-no-boot-anim", "-no-snapshot", "-tcpdump",
                 "%s/dumpfile.pcap" % tmp_dir, "-writable-system"]
+        #options = ["%s/emulator/emulator" % path, "@%s" % phone,
+        #        "-no-snapshot", "-tcpdump",
+        #        "%s/dumpfile.pcap" % tmp_dir, "-writable-system"]
         if not proxy == None:
             options.extend(["-http-proxy", proxy])
         if not no_erase:
             options.extend(["-wipe-data"])
-        print(options)
-        subprocess.call(options, stdout=Log.STD_OUTPOUT, stderr=Log.STD_ERR)
+        print(" ".join(options))
+        subprocess.call(options, stdout=Log.STD_OUTPOUT, stderr=sys.stderr)
 
     def get_user_share(self):
         if "False" in self.__device.shell("([ -d /data/data/%s/shared_prefs/ ] && echo 'True') || echo 'False'" % self.__package):
@@ -118,6 +121,14 @@ class DynamicAnalysis:
                     subprocess.call(['adb', 'install', '-t', apk],
                             stdout=Log.STD_OUTPOUT, stderr=Log.STD_ERR, shell=False)
                     break
+                elif "[INSTALL_FAILED_UPDATE_INCOMPATIBLE]" in str(e):
+                    if apk == self.__args.app:
+                        self.__device.uninstall(self.__package)
+                    else:
+                        print(str(e))
+                elif "[INSTALL_FAILED_OLDER_SDK]" in str(e):
+                    sys.stderr.write("Your phone is too old\n")
+                    sys.exit(1)
                 else:
                     print(str(e))
 
@@ -151,6 +162,9 @@ class DynamicAnalysis:
         try:
             with timeout(60):
                 while True:
+                    if not args.no_emulation and not self.__emulation.isAlive():
+                        sys.stderr.write("Device not found\n")
+                        sys.exit(1)
                     devices = self.__client.devices()
                     for device in devices:
                         if not args.no_emulation:
@@ -167,56 +181,76 @@ class DynamicAnalysis:
                     break
         except TimeoutError:
             pass
+
         if self.__device == None:
             print("No devices found after 60s")
             sys.exit(1)
+        else:
+        
+            wait_boot = False
+            while True:
+                try:
+                    boot = self.__device.shell("getprop sys.boot_completed")[0]
+                    if boot == '1':
+                        break
+                except:
+                    if not wait_boot:
+                        print("Waiting for boot device")
+                        wait_boot = True
+                    pass
 
-        if not args.noinstall:
-            self.install_apk(args.app)
+            #### writable system for recent version ####
+            version_android = int(self.__device.shell("getprop ro.build.version.sdk"))
+            if version_android >= 27:
+                os.system("adb root")
+                os.system("adb remount")
 
-        if args.no_emulation:
-            if args.proxy:
-                self.__client.shell("settings put global http_proxy %s" %
-                        args.proxy)
-        # TODO add tcpdump for physical device
-        # https://www.andreafortuna.org/2018/05/28/how-to-install-and-run-tcpdump-on-android-devices/
+            if not args.noinstall:
+                self.install_apk(args.app)
 
-
-        # setup certificate
-        if args.proxy_cert:
-            self.setup_certificate(args.proxy_cert)
-        #apps = device.shell("pm list packages -f")
-        self.__frida = Frida(self.__device, self.__package)
-        if args.env_apks:
-            print("prepare env")
-            for apk in args.env_apks:
-                self.install_apk(apk[0])
-                self.__device.spawn(apk[1])
-                #self.__device.shell("monkey -p %s -c android.intent.category.LAUNCHER 1" % apk[1])
-        print(self.__package)
-        self.__device.spawn(self.__package)
-        #self.__frida.spawn(self.__package)
-        #self.__device.shell("monkey -p %s -c android.intent.category.LAUNCHER 1" % self.__package)
-
-        time.sleep(1)
-        self.__frida.attach()
+            if args.no_emulation:
+                if args.proxy:
+                    self.__client.shell("settings put global http_proxy %s" %
+                            args.proxy)
+            # TODO add tcpdump for physical device
+            # https://www.andreafortuna.org/2018/05/28/how-to-install-and-run-tcpdump-on-android-devices/
 
 
-        modules = ModuleDynamic(self.__frida, self.__device, self.__tmp_dir,
-                args)
+            # setup certificate
+            if args.proxy_cert:
+                self.setup_certificate(args.proxy_cert)
+            #apps = device.shell("pm list packages -f")
+            self.__frida = Frida(self.__device, self.__package)
+            if args.env_apks:
+                print("prepare env")
+                for apk in args.env_apks:
+                    self.install_apk(apk[0])
+                    self.__device.spawn(apk[1])
+                    #self.__device.shell("monkey -p %s -c android.intent.category.LAUNCHER 1" % apk[1])
+            print(self.__package)
+            self.__device.spawn(self.__package)
+            #self.__frida.spawn(self.__package)
+            #self.__device.shell("monkey -p %s -c android.intent.category.LAUNCHER 1" % self.__package)
 
-        #self.__frida.resume()
+            time.sleep(1)
+            self.__frida.attach()
 
-        #self.__frida.load("script_frida/socket.js", "print")
 
-        self.generalinfo()
-        cmd = DynCmd(modules, self.__device, self.__frida, self.__args)
-        cmd.cmdloop()
+            modules = ModuleDynamic(self.__frida, self.__device, self.__tmp_dir,
+                    args)
 
-        #sys.stdin.read()
-        if not self.__args.no_emulation:
-            self.__emulation.join()
+            #self.__frida.resume()
 
-        self.__frida.detach()
+            #self.__frida.load("script_frida/socket.js", "print")
+
+            self.generalinfo()
+            cmd = DynCmd(modules, self.__device, self.__frida, self.__args)
+            cmd.cmdloop()
+
+            #sys.stdin.read()
+            if not self.__args.no_emulation:
+                self.__emulation.join()
+
+            self.__frida.detach()
 
 
