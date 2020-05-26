@@ -21,7 +21,18 @@ static:
 #  - list_funcs_call:
 #    - '.*'
 #    - 'sendBroadcast'
-  - test: false
+
+#### Find Webview with js added ####
+#  - list_funcs_call:
+#    - '.*'
+#    - 'addJavascriptInterface'
+
+#### Find PendingIntent ####
+# If itent is not specified the data is broadcast
+# https://www.cs.uni-potsdam.de/se/papers/esorics18.pdf
+#  - list_funcs_call:
+#    - '^PendingIntent$'
+#    - '^getActivity$'
   - test: false
   
 dynamic:
