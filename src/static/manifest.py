@@ -8,6 +8,13 @@ class Manifest:
     
     CONST_ANDROID = "{http://schemas.android.com/apk/res/android}"
 
+    PERMISSIONS_DANGEROUS = {
+        'SEND_SMS' : 'Application can send premium sms without user interaction',
+        'WRITE_EXTERNAL_STORAGE' : 'Write data on external storage',
+        'READ_EXTERNAL_STORAGE'  : 'Read data on external storage',
+        'RECEIVE_BOOT_COMPLETED' : 'Launch activity when phone boot',
+        }
+
     def android(self, name):
         return "%s%s" % (self.CONST_ANDROID, name)
 
@@ -201,7 +208,13 @@ class Manifest:
         print(warning("permissions used:"))
         for permissions in self.root.findall('uses-permission'):
             name = permissions.get(self.android('name'))
-            print(name)
+            if name.split('.')[-1] in self.PERMISSIONS_DANGEROUS:
+                print("%s%s%s" % (
+                    error(name),
+                    " " * (80 - len(name)) + "| ",
+                    self.PERMISSIONS_DANGEROUS[name.split('.')[-1]]))
+            else:
+                print("%s%s" % (name, " " * (80 - len(name)) + "|"))
             Output.add_to_store("manifest", "permissions", "uses", name)
         print(warning("\npermissions created:"))
         for permissions in self.root.findall('permission'):

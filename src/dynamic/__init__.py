@@ -47,7 +47,7 @@ class DynamicAnalysis:
         if not no_erase:
             options.extend(["-wipe-data"])
         print(" ".join(options))
-        subprocess.call(options, stdout=Log.STD_OUTPOUT, stderr=sys.stderr)
+        subprocess.call(options, stdout=Log.STD_OUTPOUT, stderr=Log.STD_ERR)
 
     def get_user_share(self):
         if "False" in self.__device.shell("([ -d /data/data/%s/shared_prefs/ ] && echo 'True') || echo 'False'" % self.__package):
@@ -103,6 +103,7 @@ class DynamicAnalysis:
         print ("\033[36mPackage Code path :\033[39m \t\t%s" % infos['packageCodePath'])
 
     def install_apk(self, apk):
+        print(f"install {apk}...")
         while True:
             try:
                 if apk == self.__args.app and self.__args.config_xxhdpi:
@@ -127,7 +128,7 @@ class DynamicAnalysis:
                     else:
                         print(str(e))
                 elif "[INSTALL_FAILED_OLDER_SDK]" in str(e):
-                    sys.stderr.write("Your phone is too old\n")
+                    sys.stderr.write("APK need an Android platform more recent\n")
                     sys.exit(1)
                 else:
                     print(str(e))
@@ -195,7 +196,7 @@ class DynamicAnalysis:
                         break
                 except:
                     if not wait_boot:
-                        print("Waiting for boot device")
+                        print("waiting for boot device...")
                         wait_boot = True
                     pass
 
@@ -203,14 +204,28 @@ class DynamicAnalysis:
             version_android = int(self.__device.shell("getprop ro.build.version.sdk"))
             if version_android >= 27:
                 os.system("adb root")
-                os.system("adb remount")
+                while True:
+                    try:
+                        subprocess.check_output('adb remount',
+                                stderr=Log.STD_ERR, shell = True)
+                    except subprocess.CalledProcessError:
+                        continue
+                    #if b"remount succeeded" in ret:
+                    break
 
             if not args.noinstall:
                 self.install_apk(args.app)
 
             if args.no_emulation:
                 if args.proxy:
-                    self.__client.shell("settings put global http_proxy %s" %
+                    ps = subprocess.check_output('ps -aux', shell = True).decode().split('\n')
+                    proxy_set = False
+                    for p in ps:
+                        if "-http-proxy" in p and "qemu" in p:
+                            proxy_set = True
+                            break
+                    if not proxy_set:
+                        self.__device.shell("settings put global http_proxy %s" %
                             args.proxy)
             # TODO add tcpdump for physical device
             # https://www.andreafortuna.org/2018/05/28/how-to-install-and-run-tcpdump-on-android-devices/
