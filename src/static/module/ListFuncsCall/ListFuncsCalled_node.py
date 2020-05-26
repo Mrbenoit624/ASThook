@@ -5,7 +5,7 @@ from utils import Output
 from static.ast import ast
 
 @Node("MethodInvocation", "in")
-class MethodDeclaration:
+class MethodInvocationIn:
     @classmethod
     def call(cls, r, self):
         #print("TEST")
@@ -32,6 +32,8 @@ class MethodDeclaration:
                     qualifier = elt.type.name
                     break
         
+        if not re.search(Class.get_name(), qualifier):
+            return r
         function = "%s%s%s" % \
                 (qualifier + "." if qualifier else "",
                     self.elt.member,
