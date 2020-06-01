@@ -75,13 +75,31 @@ class ast:
         for path in Path(path_app).rglob('*.java'):
             #print(path)
             with open(path, 'r') as file:
-                try:
-                    content = file.read()
-                    tree = javalang.parse.parse(content)
-                except javalang.parser.JavaSyntaxError as err:
-                    sys.stderr.write("%s on %s at %s\n" % (err.description, path, err.at))
-                    continue
-                except javalang.tokenizer.LexerError:
+                code_valid = False
+                correct = ""
+                content = file.read()
+                while True:
+                    try:
+                        #print(content)
+                        tree = javalang.parse.parse(content)
+                        code_valid = True
+                        break
+                    except javalang.parser.JavaSyntaxError as err:
+                        if correct == "":
+                            sys.stderr.write("%s on %s at %s\n" % (err.description, path, err.at))
+                        if not err.at.position:
+                            break
+                        correct = content.split('\n')
+                        correct[err.at.position.line - 1] = "//" + correct[err.at.position.line -1]
+                        content = "\n".join(correct)
+                        #print(content)
+                        #sys.exit(1)
+                        #break
+                        continue
+                    except javalang.tokenizer.LexerError:
+                        break
+                        continue
+                if not code_valid:
                     continue
                 if tree.package == None:
                     continue

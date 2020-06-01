@@ -33,7 +33,8 @@ class VariableDeclaratorIn:
                 type(self.elt.initializer) is javalang.tree.BinaryOperation or \
                 type(self.elt.initializer) is javalang.tree.Literal or \
                 type(self.elt.initializer) is javalang.tree.SuperMethodInvocation or \
-                type(self.elt.initializer) is javalang.tree.TernaryExpression:
+                type(self.elt.initializer) is javalang.tree.TernaryExpression or \
+                type(self.elt.initializer) is javalang.tree.ArrayInitializer:
             return r
         elt = EltType(self.elt.name, self.elt.initializer.type)
         if len(r["TyperMethod"]) == 0:
