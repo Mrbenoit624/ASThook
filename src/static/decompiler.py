@@ -1,6 +1,7 @@
 import os
 import subprocess
 import apk2java
+from pathlib import Path
 
 class Decompiler:
     def __init__(self, app, base_path, args):
@@ -28,5 +29,15 @@ class Decompiler:
            #subprocess.call(["mkdir", dir_extract + "/zip" ])
            #subprocess.call(["cp", dir_extract + "/AndroidManifest.xml",
            #    dir_extract + "/zip/" ])
+        elif self.__args.decompiler == "fernflower":
+            subprocess.call(["apktool", "d", self.__app, "-o", self.__dir_extract +
+                "/apktools"])
+            subprocess.call(["unzip", self.__app, "-d", self.__dir_extract + "/zip/"])
+            subprocess.call(["cp", self.__dir_extract + "/apktools/AndroidManifest.xml",
+                self.__dir_extract])
+            #### TODO add dex2jar ####
+            for path in Path(self.__dir_extract).rglob('classes*.jar'):
+                subprocess.call(["java", "-jar", "submodule/fernflower.jar",
+                    "-ren=1", path, self.__dir_extract + "/src"])
         else:
             apk2java.decompile(self.__app, self.__dir_extract)

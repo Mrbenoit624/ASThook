@@ -25,7 +25,7 @@ static:
 #### Find Webview with js added ####
 #  - list_funcs_call:
 #    - '.*'
-#    - 'addJavascriptInterface'
+#    - 'addJavascriptInterface|WebView.*'
 
 #### Find PendingIntent ####
 # If itent is not specified the data is broadcast

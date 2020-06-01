@@ -61,7 +61,7 @@ def parser():
             '--decompiler',
             type=str,
             default="none",
-            choices=["none", "jd-gui", "cfr", "procyon"])
+            choices=["none", "jd-gui", "cfr", "procyon", "fernflower"])
 
     group.add_argument(
             '--graph_ast',
