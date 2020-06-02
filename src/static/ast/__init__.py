@@ -72,8 +72,10 @@ class ast:
             if action['action'] == "android.intent.action.MAIN":
                 self.main = action['action']
         print("/".join(self.main.split(".")))
-        for path in Path(path_app).rglob('*.java'):
-            #print(path)
+        paths = list(Path(path_app).rglob('*.java'))
+        #for path in paths:
+        while len(paths) > 0:
+            path = paths.pop()
             with open(path, 'r') as file:
                 code_valid = False
                 correct = ""
@@ -103,7 +105,30 @@ class ast:
                     continue
                 if tree.package == None:
                     continue
+                import_found = 0
+                for import_ in tree.imports:
+                    path_import = Path('%s/%s/src/%s%s' % \
+                                  (self.__basepath,
+                                   "decompiled_app",
+                                   "/".join(import_.path.split('.')),
+                                   ".java"))
+                    try:
+                        path_import_i = paths.index(path_import)
+                        if path_import_i:
+                            #print("\t%s" % path_import)
+                            import_found += 1
+                            paths.pop(path_import_i)
+                            paths.append(path_import)
+                    except ValueError as e:
+                        #print(e)
+                        continue
+                if import_found > 0:
+                    paths.insert(len(paths) - import_found, path)
+                    continue
+
+                print(path)
                 self.__infos["package"] = tree.package.name
+                self.__infos["imports"] = tree.imports
                 self.l = tree.types
 
                 for i in Register.get_node("File", "in"):
@@ -833,6 +858,8 @@ class ast:
             for elt in self.elt.body:
                 if type(elt) is javalang.tree.MethodDeclaration:
                     selfp.MethodDeclaration(elt, self).visit(selfp)
+                elif type(elt) is javalang.tree.FieldDeclaration:
+                    selfp.FieldDeclaration(elt, self).visit(selfp)
                 else:
                     if selfp.args.debug_ast:
                         sys.stderr.write("%s - %s\n" % (self.__class__.__name__, type(elt)))
