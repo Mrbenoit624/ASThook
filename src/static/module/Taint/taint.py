@@ -6,7 +6,8 @@ class MethodDeclarationIn:
     @classmethod
     def call(cls, r, self):
         # Add scope method
-        TaintElt.Method(self.elt.name)
+        #TaintElt.Method(self.elt.name)
+        TaintElt.Class(self.elt.name)
         # Create Node for each parameters
         for param in self.elt.parameters:
             TaintElt.new(self, param.name, None,
@@ -88,17 +89,17 @@ class MemberReferenceIn:
                 if type(v.parent) is ast.This:
                     # found variable which call the method 'm'
                     clazz, member = ThisAttribute(v.parent)
-                    n = TaintElt.get(clazz, [],
-                        member)
+                    n = TaintElt.get(clazz, member)
                     if n:
                         #found parameters node of the method 'm'
-                        n = TaintElt.get([n.node_get().elt.type.name],
-                                [v.elt.member], None)["__fields__"][0][-(i+1)]
+                        n = TaintElt.get(
+                                [n.node_get().elt.type.name, v.elt.member],
+                                None
+                                )["__fields__"][0][-(i+1)]
                         if type(self.parent) is ast.This:
                             # found node of argument in parameters
                             clazz2, member = ThisAttribute(self.parent)
-                            n2 = TaintElt.get(clazz2,
-                                    TaintElt._Method[:len(clazz2)-1], member)
+                            n2 = TaintElt.get(clazz2[:-1], member)
                             # add node as child
                             n2.child(n)
                             n.parent(n2)
@@ -135,7 +136,8 @@ class MethodDeclarationOut:
     @classmethod
     def call(cls, r, self):
         # Remove last Method scope
-        TaintElt.OutMethod()
+        #TaintElt.OutMethod()
+        TaintElt.OutClass()
         return r
 
 @Node("Init", "in")
@@ -204,6 +206,9 @@ class Node:
     def set(self, elt):
         self._elt = elt
 
+def p_n(node):
+    return str(hex(id(node)))
+
 class TaintElt:
 
     @classmethod
@@ -220,19 +225,20 @@ class TaintElt:
                     for j in range(len(v)):
                         for i in v[j]:
                             #print(f"{base}{k}{i}")
-                            print(str(i.node_get()) + " " + str(i))
-                            dot.node(str(i.node_get())+str(i.get()), i.get())
+                            print(p_n(i.node_get()) + " " + str(i))
+                            dot.node(f"{p_n(i.node_get())}_{i.get()}",
+                                    i.get())
                             for e in i.child_get():
                                 dot.edge(
-                                        str(i.node_get())+str(i.get()),
-                                        str(e.node_get())+str(e.get()),
+                                        f"{p_n(i.node_get())}_{i.get()}",
+                                        f"{p_n(e.node_get())}_{e.get()}",
                                         color="blue")
                                 print(e.node_get())
-                            for e in i.parent_get():
-                                dot.edge(
-                                        str(i.node_get())+str(i.get()),
-                                        str(e.node_get())+str(e.get()),
-                                        color="red")
+                            #for e in i.parent_get():
+                            #    dot.edge(
+                            #            f"{p_n(i.node_get())}_{i.get()}",
+                            #            f"{p_n(e.node_get())}_{e.get()}",
+                            #            color="red")
                             pass
                     continue
                 for k2, v2 in v.items():
@@ -243,21 +249,20 @@ class TaintElt:
                         for i in v2:
                             for i2 in range(len(i)):
                                 #print(f"{base}{k}{k2}{i[i2]}")
-                                print(str(i[i2].node_get()) + " " + str(i[i2]))
-                                dot.node(str(i[i2].node_get())+str(i[i2].get()),
+                                print(p_n(i[i2].node_get()) + " " + str(i[i2]))
+                                dot.node(f"{p_n(i[i2].node_get())}_{i[i2].get()}",
                                         i[i2].get())
                                 for e in i[i2].child_get():
                                     dot.edge(
-                                            str(i[i2].node_get())+str(i[i2].get()),
-                                            str(e.node_get())+str(e.get()),
-                                            color="blue")
+                                        f"{p_n(i[i2].node_get())}_{i[i2].get()}",
+                                        f"{p_n(e.node_get())}_{e.get()}",
+                                        color="blue")
                                     print(e.node_get())
-                                for e in i[i2].parent_get():
-                                    dot.edge(
-                                            str(i[i2].node_get())+str(i[i2].get()),
-                                            str(e.node_get())+str(e.get()),
-                                            color="red"
-                                            )
+                                #for e in i[i2].parent_get():
+                                #    dot.edge(
+                                #        f"{p_n(i[i2].node_get())}_{i[i2].get()}",
+                                #        f"{p_n(e.node_get())}_{e.get()}",
+                                #        color="red")
         dot.render("taint/Taint")
 
     # PrettyPrint of graph
@@ -288,7 +293,7 @@ class TaintElt:
         # Traversal graph
         nodes = cls._nodes
         for i in range(len(cls._Class) - 1):
-            nodes = nodes[cls._Class[i]][cls._Method[i]]
+            nodes = nodes[cls._Class[i]]
 
         # Add node Class with field and scope field
         nodes[cls._Class[-1]] = {}
@@ -331,23 +336,16 @@ class TaintElt:
         # Traversal graph
         nodes = cls._nodes
         for i in range(len(cls._Class) - 1):
-            nodes = nodes[cls._Class[i]][cls._Method[i]]
-
-        if len(cls._Method) != len(cls._Class):
-            # Add field node for class field
-            nodes[cls._Class[-1]]["__fields__"][-1].append(Node(name,
-                None,
-                None,
-                elt))
-        elif index and len(nodes[cls._Class[-1]][cls._Method[-1]]["__fields__"][-1]) > index:
+            nodes = nodes[cls._Class[i]]
+        if index and len(nodes[cls._Class[-1]]["__fields__"][-1]) > index:
             # Update field (normaly for parameters)
-            n = nodes[cls._Class[-1]][cls._Method[-1]]["__fields__"][-1][index]
+            n = nodes[cls._Class[-1]]["__fields__"][-1][index]
             n.set(name)
             n.node(elt)
         else:
             # Add field node for Method field
             n = Node(name, None, None, elt)
-            nodes[cls._Class[-1]][cls._Method[-1]]["__fields__"][-1].append(n)
+            nodes[cls._Class[-1]]["__fields__"][-1].append(n)
 
     #@classmethod
     #def add(cls, elt, name):
@@ -359,7 +357,7 @@ class TaintElt:
     #            e.child(n)
     
     @classmethod
-    def get(cls, clazz, func, field):
+    def get(cls, clazz, field):
         # Find node in graph
         nodes = cls._nodes
         for i in range(len(clazz)):
@@ -367,11 +365,6 @@ class TaintElt:
                 # class i not found
                 return None
             nodes = nodes[clazz[i]]
-            if i < len(func):
-                if not func[i] in nodes:
-                    # method i not found
-                    return None
-                nodes = nodes[func[i]]
         if field:
             for n in nodes["__fields__"][0]:
                 if n.get() == field:
