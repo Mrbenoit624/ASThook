@@ -74,6 +74,9 @@ class ast:
         print("/".join(self.main.split(".")))
         paths = list(Path(path_app).rglob('*.java'))
         #for path in paths:
+
+        percent_max = len(paths)
+        path_circle = None
         while len(paths) > 0:
             path = paths.pop()
             with open(path, 'r') as file:
@@ -115,6 +118,8 @@ class ast:
                     try:
                         path_import_i = paths.index(path_import)
                         if path_import_i:
+                            if path_circle == path_import:
+                                continue
                             #print("\t%s" % path_import)
                             import_found += 1
                             paths.pop(path_import_i)
@@ -123,14 +128,17 @@ class ast:
                         #print(e)
                         continue
                 if import_found > 0:
+                    path_circle = path
                     paths.insert(len(paths) - import_found, path)
                     continue
 
-                print(path)
+                #print(path)
                 self.__infos["package"] = tree.package.name
                 self.__infos["imports"] = tree.imports
                 self.l = tree.types
 
+                percent = int((percent_max - len(paths))/percent_max * 100)
+                print(f"\r{percent}%     ", end='')
                 for i in Register.get_node("File", "in"):
                     self.set_infos(i.call(self.get_infos(), path))
 
@@ -348,7 +356,8 @@ class ast:
         def apply(self, selfp):
             if self.elt.body == None:
                 return # TODO: Fix bug None
-            #selfp.MethodDeclarationParameters(self.elt.parameters, self).visit(selfp)
+            for elt in self.elt.parameters:
+                selfp.MethodDeclarationParameters(elt, self).visit(selfp)
             for elt in self.elt.body:
                 if type(elt) is javalang.tree.ReturnStatement:
                     selfp.ReturnStatement(elt, self).visit(selfp)
@@ -379,11 +388,11 @@ class ast:
                         sys.stderr.write("%s - %s\n" % (self.__class__.__name__, type(elt)))
             #print(self.elt.__dict__, end='')
 
-    #class MethodDeclarationParameters(BaseNode):
+    class MethodDeclarationParameters(BaseNode):
 
-     #   def apply(self, selfp):
-     #       print(self.elt)
-     #       pass
+        def apply(self, selfp):
+            #print(self.elt)
+            pass
 
 
     class FieldDeclaration(BaseNode):
@@ -404,6 +413,8 @@ class ast:
             return self.__class__.__name__ + " : " + self.elt.name
 
         def apply(self, selfp):
+            for elt in self.elt.parameters:
+                selfp.ConstructorDeclarationParameters(elt, self).visit(selfp)
             for elt in self.elt.body:
                 if type(elt) is javalang.tree.StatementExpression:
                     selfp.StatementExpression(elt, self).visit(selfp)
@@ -426,6 +437,11 @@ class ast:
                 else:
                     if selfp.args.debug_ast:
                         sys.stderr.write("%s - %s\n" % (self.__class__.__name__, type(elt)))
+    
+    class ConstructorDeclarationParameters(BaseNode):
+
+        def apply(self, selfp):
+            pass
 
     class StatementExpression(BaseNode):
         
@@ -460,6 +476,7 @@ class ast:
 
         def apply(self, selfp):
             #print(self.elt.type.name)
+            #print(self.elt.declarators[0].name)
             for elt in self.elt.declarators:
                 if type(elt) is javalang.tree.VariableDeclarator:
                     selfp.VariableDeclarator(elt, self).visit(selfp)
@@ -763,28 +780,33 @@ class ast:
                         if selfp.args.debug_ast:
                             sys.stderr.write("%s - %s\n" % (self.__class__.__name__, type(elt)))
             for elt in self.elt.arguments:
-                if type(elt) is javalang.tree.MemberReference:
-                    selfp.MemberReference(elt, self).visit(selfp)
-                elif type(elt) is javalang.tree.ClassCreator:
-                    selfp.ClassCreator(elt, self).visit(selfp)
-                elif type(elt) is javalang.tree.MethodInvocation:
-                    selfp.MethodInvocation(elt, self).visit(selfp)
-                elif type(elt) is javalang.tree.This:
-                    selfp.This(elt, self).visit(selfp)
-                elif type(elt) is javalang.tree.Literal:
-                    selfp.Literal(elt, self).visit(selfp)
-                elif type(elt) is javalang.tree.Cast:
-                    selfp.Cast(elt, self).visit(selfp)
-                elif type(elt) is javalang.tree.ArrayCreator:
-                    selfp.ArrayCreator(elt, self).visit(selfp)
-                elif type(elt) is javalang.tree.BinaryOperation:
-                    selfp.BinaryOperation(elt, self).visit(selfp)
-                elif type(elt) is javalang.tree.ClassReference:
-                    selfp.ClassReference(elt, self).visit(selfp)
-                else:
-                    if selfp.args.debug_ast:
-                        sys.stderr.write("%s - %s\n" % (self.__class__.__name__, type(elt)))
+                selfp.MethodInvocationParameters(elt, self).visit(selfp)
             #print(self.elt.__dict__, end='')
+    
+    class MethodInvocationParameters(BaseNode):
+        def apply(self, selfp):
+            elt = self.elt
+            if type(elt) is javalang.tree.MemberReference:
+                selfp.MemberReference(elt, self).visit(selfp)
+            elif type(elt) is javalang.tree.ClassCreator:
+                selfp.ClassCreator(elt, self).visit(selfp)
+            elif type(elt) is javalang.tree.MethodInvocation:
+                selfp.MethodInvocation(elt, self).visit(selfp)
+            elif type(elt) is javalang.tree.This:
+                selfp.This(elt, self).visit(selfp)
+            elif type(elt) is javalang.tree.Literal:
+                selfp.Literal(elt, self).visit(selfp)
+            elif type(elt) is javalang.tree.Cast:
+                selfp.Cast(elt, self).visit(selfp)
+            elif type(elt) is javalang.tree.ArrayCreator:
+                selfp.ArrayCreator(elt, self).visit(selfp)
+            elif type(elt) is javalang.tree.BinaryOperation:
+                selfp.BinaryOperation(elt, self).visit(selfp)
+            elif type(elt) is javalang.tree.ClassReference:
+                selfp.ClassReference(elt, self).visit(selfp)
+            else:
+                if selfp.args.debug_ast:
+                    sys.stderr.write("%s - %s\n" % (self.__class__.__name__, type(elt)))
 
     class MemberReference(BaseNode):
 
@@ -797,33 +819,68 @@ class ast:
         #    return self.__class__.__name__ + " : " +self.elt.expressionl.member
 
         def apply(self, selfp):
-            elt = [self.elt.expressionl, self.elt.value]
-            for elt in elt:
-                if type(elt) is javalang.tree.Cast:
-                    selfp.Cast(elt, self).visit(selfp)
-                elif type(elt) is javalang.tree.ClassCreator:
-                    selfp.ClassCreator(elt, self).visit(selfp)
-                elif type(elt) is javalang.tree.MemberReference:
-                    selfp.MemberReference(elt, self).visit(selfp)
-                elif type(elt) is javalang.tree.Literal:
-                    selfp.Literal(elt, self).visit(selfp)
-                elif type(elt) is javalang.tree.This:
-                    selfp.This(elt, self).visit(selfp)
-                elif type(elt) is javalang.tree.MethodInvocation:
-                    selfp.MethodInvocation(elt, self).visit(selfp)
-                elif type(elt) is javalang.tree.Assignment:
-                    selfp.Assignment(elt, self).visit(selfp)
-                elif type(elt) is javalang.tree.BinaryOperation:
-                    selfp.BinaryOperation(elt, self).visit(selfp)
-                elif type(elt) is javalang.tree.ArrayCreator:
-                    selfp.ArrayCreator(elt, self).visit(selfp)
-                elif type(elt) is javalang.tree.TernaryExpression:
-                    selfp.TernaryExpression(elt, self).visit(selfp)
-                elif type(elt) is javalang.tree.ClassReference:
-                    selfp.ClassReference(elt, self).visit(selfp)
-                else:
-                    if selfp.args.debug_ast:
-                        sys.stderr.write("%s - %s\n" % (self.__class__.__name__, type(elt)))
+            selfp.AssignmentVar(self.elt.expressionl, self).visit(selfp)
+            selfp.AssignmentValue(self.elt.value, self).visit(selfp)
+    
+    class AssignmentVar(BaseNode):
+ 
+        def apply(self, selfp):
+            elt = self.elt
+            if type(elt) is javalang.tree.Cast:
+                selfp.Cast(elt, self).visit(selfp)
+            elif type(elt) is javalang.tree.ClassCreator:
+                selfp.ClassCreator(elt, self).visit(selfp)
+            elif type(elt) is javalang.tree.MemberReference:
+                selfp.MemberReference(elt, self).visit(selfp)
+            elif type(elt) is javalang.tree.Literal:
+                selfp.Literal(elt, self).visit(selfp)
+            elif type(elt) is javalang.tree.This:
+                selfp.This(elt, self).visit(selfp)
+            elif type(elt) is javalang.tree.MethodInvocation:
+                selfp.MethodInvocation(elt, self).visit(selfp)
+            elif type(elt) is javalang.tree.Assignment:
+                selfp.Assignment(elt, self).visit(selfp)
+            elif type(elt) is javalang.tree.BinaryOperation:
+                selfp.BinaryOperation(elt, self).visit(selfp)
+            elif type(elt) is javalang.tree.ArrayCreator:
+                selfp.ArrayCreator(elt, self).visit(selfp)
+            elif type(elt) is javalang.tree.TernaryExpression:
+                selfp.TernaryExpression(elt, self).visit(selfp)
+            elif type(elt) is javalang.tree.ClassReference:
+                selfp.ClassReference(elt, self).visit(selfp)
+            else:
+                if selfp.args.debug_ast:
+                    sys.stderr.write("%s - %s\n" % (self.__class__.__name__, type(elt)))
+ 
+    class AssignmentValue(BaseNode):
+ 
+        def apply(self, selfp):
+            elt = self.elt
+            if type(elt) is javalang.tree.Cast:
+                selfp.Cast(elt, self).visit(selfp)
+            elif type(elt) is javalang.tree.ClassCreator:
+                selfp.ClassCreator(elt, self).visit(selfp)
+            elif type(elt) is javalang.tree.MemberReference:
+                selfp.MemberReference(elt, self).visit(selfp)
+            elif type(elt) is javalang.tree.Literal:
+                selfp.Literal(elt, self).visit(selfp)
+            elif type(elt) is javalang.tree.This:
+                selfp.This(elt, self).visit(selfp)
+            elif type(elt) is javalang.tree.MethodInvocation:
+                selfp.MethodInvocation(elt, self).visit(selfp)
+            elif type(elt) is javalang.tree.Assignment:
+                selfp.Assignment(elt, self).visit(selfp)
+            elif type(elt) is javalang.tree.BinaryOperation:
+                selfp.BinaryOperation(elt, self).visit(selfp)
+            elif type(elt) is javalang.tree.ArrayCreator:
+                selfp.ArrayCreator(elt, self).visit(selfp)
+            elif type(elt) is javalang.tree.TernaryExpression:
+                selfp.TernaryExpression(elt, self).visit(selfp)
+            elif type(elt) is javalang.tree.ClassReference:
+                selfp.ClassReference(elt, self).visit(selfp)
+            else:
+                if selfp.args.debug_ast:
+                    sys.stderr.write("%s - %s\n" % (self.__class__.__name__, type(elt)))
     
     #final node
     class Literal(BaseNode):
@@ -1009,6 +1066,9 @@ class ast:
             pass
 
     class VariableDeclarator(BaseNode):
+
+        def getName(self):
+            return self.__class__.__name__ + " : " + self.elt.name
 
         def apply(self, selfp):
             if self.elt.initializer == None:
