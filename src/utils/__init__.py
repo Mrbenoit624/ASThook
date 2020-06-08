@@ -86,7 +86,24 @@ class Output:
         cls.store_td["manifest"] = {}
         cls.store_td["tree"] = {}
         #cls.store_td["dynamic"] = {}
-    
+        cls.printer_callback = {"manifest": {},
+                                "tree": {}}
+
+    @classmethod
+    def add_printer_callback(cls, category, module, tag, func):
+        if not module in cls.printer_callback[category]:
+            cls.printer_callback[category][module] = {}
+        cls.printer_callback[category][module][tag] = func
+
+    @classmethod
+    def get_printer_callback(cls, category, module, tag):
+        if not module in cls.printer_callback[category]:
+            return None
+        if not tag in cls.printer_callback[category][module]:
+            return None
+        return cls.printer_callback[category][module][tag]
+
+
     @classmethod
     def add_to_store(cls, category, module, tag, arg):
         if not module in cls.store[category]:
@@ -125,39 +142,20 @@ class Output:
         return cls.store_td
 
     @classmethod
-    def pp(cls, arg):
-        ret = ""
-        if type(arg) is list:
-            ret += '\n'.join(map(cls.pp, arg)) + '\n'
-        elif type(arg) is str:
-            ret += arg
-        elif type(arg) is tuple:
-            ret += '\t'.join(map(cls.pp, arg))
-        else:
-            ret += str(arg)
-        return ret
-
-    @classmethod
     def none_print(cls):
         ret = ""
         for modulek, modulev in cls.store["tree"].items():
             for tagk, tagv in modulev.items():
+                call = cls.get_printer_callback("tree", modulek, tagk)
+                if not call:
+                    continue
                 for arg in tagv:
-                    if type(arg) is list:
-                        ret += "[ %s ] [ %s ]  " % (
-                            fg.li_cyan + modulek + fg.rs,
-                            fg.li_magenta + tagk + fg.rs)
-                        for i in arg:
-                            ret += cls.pp(i) + ("\t" if cls.pp(i)[-1] != '\n'
-                                    else "")
-                        ret += '\n'
-                    else:
-                        ret += "[ %s ] [ %s ]  %s" % (
-                            fg.li_cyan + modulek + fg.rs,
-                            fg.li_magenta + tagk + fg.rs,
-                            arg) + "\n"
+                    ret += "[ %s ] [ %s ] " % (
+                        fg.li_cyan + modulek + fg.rs,
+                        fg.li_magenta + tagk + fg.rs)
+                    ret += call(arg)
+                    ret += '\n'
         return ret
-
 
     @classmethod
     def print_static_module(cls):

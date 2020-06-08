@@ -7,7 +7,7 @@ class ConstructorDeclarationIn:
     @classmethod
     def call(cls, r, self):
         TaintElt.new(self, self.elt.name, None,
-                self.parent.elt.parameters.index(self.elt))
+                index=self.parent.elt.parameters.index(self.elt))
         return r
 
 @Node("ConstructorDeclaration", "in")
@@ -72,15 +72,19 @@ class AssignmentVarIn:
         print("##################################################")
         #print(self.elt.expressionl)
         path = revxref(JavaLang2NodeAst(self.elt.expressionl, self))
-        parent = TaintElt.get(path[:-1], path[-1])
-        path = revxref(JavaLang2NodeAst(self.elt.value, self))
-        child = xref(path[:-1], path[-1])
+        child = TaintElt.get(path[:-1], path[-1])
+        if type(self.elt.value) is javalang.tree.Literal:
+            parent = [] #self.elt.value
+        else:
+            path = revxref(JavaLang2NodeAst(self.elt.value, self))
+            parent = xref(path[:-1], path[-1])
         n = Node(path[-1], child,parent , self)
         TaintElt.add_elt(
             TaintElt.get(
                 TaintElt._Class,
                 None)["__fields__"], n)
-        parent.child(n)
+        if type(parent) is Node:
+            parent.child(n)
 
         print("##################################################")
         #print(xref([], self.elt.expressionl))
@@ -307,8 +311,6 @@ def revxref(node):
                     root.append(e2)
     return prev_type
 
-
-
 def get_type(node):
     prev_type = []
     root = [node]
@@ -324,7 +326,13 @@ def get_type(node):
             if e.elt.qualifier:
                 prev_type = conv_type(prev_type, e.elt.qualifier)
                 #prev_type.append(e.elt.qualifier)
-            prev_type = conv_type(prev_type, e.elt.member)
+            #prev_type = conv_type(prev_type, e.elt.member)
+            tmp_type = conv_type(prev_type, e.elt.member)
+            if not tmp_type:
+                prev_type.append(e.elt.member)
+                TaintElt.ConstructScope(prev_type)
+            else:
+                prev_type = tmp_type
         elif type(e) is ast.This:
             prev_type.extend(TaintElt._Class[:-1] if TaintElt._ClassType[-1] else TaintElt._Class)
             for s in reversed(e.elt.selectors):
@@ -370,6 +378,9 @@ class MemberReferenceIn:
             if k == "parameters_function":
                 child = TaintElt.get(get_type(up2Statement(v)), None)
                 if child:
+                    if len(child["__fields__"][0]) <= i:
+                        n = Node(None, [], [], self)
+                        child["__fields__"][0].append(n)
                     child = child["__fields__"][0][i]
                     #print(get_type(self.elt.member))
                     #print(conv_type([], self.elt.member))
@@ -442,7 +453,7 @@ class Node:
         ret = f"{self._elt}:{self.position()}"
         if not len(self._child) == 0:
             #ret += " -> { " + ",".join(str(x) for x in self._child) + " }"
-            ret += " -> {" + ",".join(x.get() for x in self._child) + "}"
+            ret += " -> {" + ",".join(str(x.get()) for x in self._child) + "}"
         return ret
     
     def node(self, node):
@@ -624,17 +635,30 @@ class TaintElt:
         # Add scope Class
         cls._Class.append(name)
         cls._ClassType.append(method)
-        # Traversal graph
-        nodes = cls._nodes
-        for i in range(len(cls._Class) - 1):
-            nodes = nodes[cls._Class[i]]
+        cls.ConstructScope(cls._Class)
+        ## Traversal graph
+        #nodes = cls._nodes
+        #for i in range(len(cls._Class) - 1):
+        #    nodes = nodes[cls._Class[i]]
 
-        # Add node Class with field and scope field
-        nodes[cls._Class[-1]] = {}
-        nodes[cls._Class[-1]]["__fields__"] = [[]]
+        ## Add node Class with field and scope field
+        #nodes[cls._Class[-1]] = {}
+        #nodes[cls._Class[-1]]["__fields__"] = [[]]
         cls.scope_p.append([-1])
         #cls.add_scope(nodes[cls._Class[-1]]["__fields__"])
         #nodes[cls._Class[-1]]["__fields__"].append([])
+
+    @classmethod
+    def ConstructScope(cls, path):
+        # Traversal graph
+        nodes = cls._nodes
+        for i in range(len(path) - 1):
+            nodes = nodes[path[i]]
+        if path[-1] in nodes:
+            return
+        # Add node Class with field and scope field
+        nodes[path[-1]] = {}
+        nodes[path[-1]]["__fields__"] = [[]]
 
     @classmethod
     def OutClass(cls):
@@ -683,6 +707,10 @@ class TaintElt:
         f = fields[-1]
         for sc in cls.scope_p[-1][:-1]:
             f = f[sc]
+        #print("---------------------------------")
+        #print(f)
+        #print(fields[-1])
+        #TaintElt.print()
         f.append(elt)
         cls.scope_p[-1][-1] += 1
         #print(cls.scope_p, end='-')
@@ -696,11 +724,13 @@ class TaintElt:
         for i in range(len(cls._Class) - 1):
             nodes = nodes[cls._Class[i]]
         #print(nodes)
-        if index and len(nodes[cls._Class[-1]]["__fields__"][-1]) > index:
+        if index != None and len(nodes[cls._Class[-1]]["__fields__"][-1]) > index:
             # Update field (normaly for parameters)
+            print(index)
             n = nodes[cls._Class[-1]]["__fields__"][-1][index]
             n.set(name)
             n.node(elt)
+            cls.scope_p[-1][-1] += 1
         else:
             # Add field node for Method field
             n = Node(name, None, None, elt)

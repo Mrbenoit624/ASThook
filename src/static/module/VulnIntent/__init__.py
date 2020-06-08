@@ -16,4 +16,10 @@ class Tree:
         from . import vuln_intent
         if args.vuln_intent == "poc":
             vuln_intent.poc = True
+        
 
+def mprint(arg : list) -> str:
+    ret = f"{arg[0]}"
+    for i in arg[1]:
+        ret+= f"\n\t{i}"
+    return ret

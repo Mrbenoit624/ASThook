@@ -34,10 +34,9 @@ class MethodInvocationIn:
         
         if not re.search(Class.get_name(), qualifier):
             return r
-        function = "%s%s%s" % \
+        function = "%s%s" % \
                 (qualifier + "." if qualifier else "",
-                    self.elt.member,
-                    " " * (40 - (len(self.elt.member) + len(qualifier))))
+                    self.elt.member)
 
         Output.add_tree_mod("list_funcs_called", "func", [function,
             r["Filename"], self.elt._position])

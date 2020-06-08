@@ -72,11 +72,12 @@ class ast:
             if action['action'] == "android.intent.action.MAIN":
                 self.main = action['action']
         print("/".join(self.main.split(".")))
-        paths = list(Path(path_app).rglob('*.java'))
+        paths_pre = path_app.split('/')
+        paths = list(Path("/".join(paths_pre[:-1])).rglob(f'{paths_pre[-1]}*.java'))
         #for path in paths:
 
         percent_max = len(paths)
-        path_circle = None
+        path_circle = []
         while len(paths) > 0:
             path = paths.pop()
             with open(path, 'r') as file:
@@ -118,7 +119,7 @@ class ast:
                     try:
                         path_import_i = paths.index(path_import)
                         if path_import_i:
-                            if path_circle == path_import:
+                            if path_import in path_circle:
                                 continue
                             #print("\t%s" % path_import)
                             import_found += 1
@@ -128,9 +129,10 @@ class ast:
                         #print(e)
                         continue
                 if import_found > 0:
-                    path_circle = path
+                    path_circle.append(path)
                     paths.insert(len(paths) - import_found, path)
                     continue
+                path_circle = []
 
                 #print(path)
                 self.__infos["package"] = tree.package.name

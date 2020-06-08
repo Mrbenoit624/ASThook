@@ -4,6 +4,8 @@ from static.generate_apk import GenerateAPK, JavaFile
 import javalang
 import os
 
+from . import mprint
+
 class long:
     pass
 
@@ -144,8 +146,9 @@ class MethodDeclarationOut:
     def call(cls, r, self):
         if len(r["vuln_intent"][2]) > 0:
             arg = AdbArgs_extra(r["vuln_intent"][2])
+            Output.add_printer_callback("tree", "vuln_intent", r["vuln_intent"][1], mprint)
             Output.add_tree_mod("vuln_intent", r["vuln_intent"][1], 
-            ["\nadb shell 'am start -S -n %s %s'\n" % (
+            ["adb shell 'am start -S -n %s %s'" % (
                 r["vuln_intent"][0], arg),
                 r["vuln_intent"][2],
                 r["vuln_intent"][0]])

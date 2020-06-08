@@ -64,7 +64,7 @@ class MethodDeclaration:
                 prints += check_print(j, k)
             #r["gen_hook_out"].append(\
             Output.add_tree_mod("gen_hook", "hook", ["%s.%s" % (class_name,func_name),
-"\nJava.perform(function()\n\
+"Java.perform(function()\n\
 {\n\
     var class_hook = Java.use('%s.%s')\n\
     //TODO:%s\n\
@@ -118,7 +118,7 @@ class ConstructorDeclarationIn:
             for j, k in args:
                 prints += "%ssend('%s: ' + %s);\n" % (" "*8,k,k)
             Output.add_tree_mod("gen_hook", "hook", ["%s.%s" % (class_name,func_name),
-"\nJava.perform(function()\n\
+"Java.perform(function()\n\
 {\n\
     var class_hook = Java.use('%s.%s')\n\
     class_hook.$init.implementation = function (%s) {\n\

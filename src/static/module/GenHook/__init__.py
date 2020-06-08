@@ -1,5 +1,6 @@
 
 from static.module.register import ModuleStaticCmd
+from utils import Output
 
 @ModuleStaticCmd("gen_hook", "generate hook", str, "+")
 class GenHook:
@@ -15,6 +16,8 @@ class GenHook:
             hooks = arg.split('.')
             GenHook_node.ClassToHook.add_class(hooks[0])
             GenHook_node.FuncToHook.add_func(hooks[1])
+        Output.add_printer_callback("tree", "gen_hook", "hook", mprint)
         return None
 
-
+def mprint(arg : list) -> str:
+    return f"{arg[0]}\n{arg[1]}"

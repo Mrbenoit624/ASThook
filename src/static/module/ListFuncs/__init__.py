@@ -1,5 +1,6 @@
 
 from static.module.register import ModuleStaticCmd
+from utils import Output
 
 @ModuleStaticCmd("list_funcs",
         "list all funcs with regex as follow: "
@@ -18,6 +19,11 @@ class ListFuncs:
         from . import ListFuncs_node
         ListFuncs_node.Class.set_class(args.list_funcs[0])
         ListFuncs_node.Func.set_func(args.list_funcs[1])
-        return None
+
+        Output.add_printer_callback("tree", "list_funcs", "func", mprint)
+
+def mprint(arg : list) -> str:
+    pad = "." * (78 - len(arg[0]))
+    return f"{arg[0]} {pad} {arg[1]}"
 
 
