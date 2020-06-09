@@ -90,6 +90,8 @@ tools/bin/sdkmanager "platforms;android-R" "build-tools;30.0.0-rc4" "emulator" -
 ``̀`
 This appear happend certainly because an other hypervisor is running
 
+Render in pdf complicated ``xpdf'' is a good tools to display big pdf
+
 =================================== CHANGELOG ==================================
 
 
