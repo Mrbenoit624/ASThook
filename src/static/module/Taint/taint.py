@@ -15,19 +15,65 @@ import javalang
 # 24         this.isDataValid = bl;
 
 @Node("ConstructorDeclarationParameters", "in")
-class ConstructorDeclarationIn:
+class ConstructorDeclarationParametersIn:
     @classmethod
     def call(cls, r, self):
         TaintElt.new(self, self.elt.name, None,
                 index=self.parent.elt.parameters.index(self.elt))
         return r
 
+def declaration_method(self):
+    # Add scope method
+    overloads = findOverload(TaintElt._Class, self.elt.name)
+    to_merge = []
+    for overload in overloads:
+        if not len(overload) == len(self.elt.parameters):
+            continue
+        ismerge = True
+        for type_i in range(len(overload)):
+            if overload[type_i] == "None":
+                if self.elt.parameters[type_i].type.name in \
+                        ["int", "byte", "short", "long", "char", "float",
+                         "double", "boolean" ]:
+                    ismerge = False
+                    break
+            elif not overload[type_i] == self.elt.parameters[type_i].type.name:
+                ismerge = False
+                break
+        if ismerge:
+            to_merge.append(overload)
+    
+    nfield = []
+    for e in to_merge:
+        classes = TaintElt.get(TaintElt._Class, None)
+        classe = classes['$' + "|".join(e) + "$$" + self.elt.name]
+        for i in range(len(classe["__fields__"][0])):
+            if len(nfield) == i:
+                nfield.append(classe["__fields__"][0][i])
+            else:
+                for child in classe["__fields__"][0][i].child_get():
+                    nfield[i].child(child)
+                for parent in classe["__fields__"][0][i].parent_get():
+                    nfield[i].parent(parent)
+        del classes['$' + "|".join(e) + "$$" + self.elt.name]
+    # Renaming function for overload
+    pre = '$'
+    # TODO: If type is byte, int or short convert to int
+    pre += "|".join(param.type.name for param in self.elt.parameters)
+    pre += f'$${self.elt.name}'
+    TaintElt.get(TaintElt._Class, None)[pre] = {'__fields__': [nfield]}
+    TaintElt.Class(pre, True)
+
+
+
+
+
 @Node("ConstructorDeclaration", "in")
 class ConstructorDeclarationIn:
     @classmethod
     def call(cls, r, self):
         # Add scope method
-        TaintElt.Class(self.elt.name, True)
+        declaration_method(self)
         return r
 
 @Node("ConstructorDeclaration", "out")
@@ -43,7 +89,7 @@ class MethodDeclarationIn:
     @classmethod
     def call(cls, r, self):
         # Add scope method
-        TaintElt.Class(self.elt.name, True)
+        declaration_method(self)
         return r
 
 @Node("MethodDeclarationParameters", "in")
@@ -129,6 +175,36 @@ class AssignmentVarIn:
 
         return r
 
+def TypeLiteral(value):
+    assert type(value) is str and len(value) > 0
+    if value[0] == '"' and value[-1] == '"':
+        return "String"
+    if value[0] == "'" and value[-1] == "'":
+        return "char"
+    if value[-1] == 'L':
+        return "long"
+    if value[-1] == 'f':
+        return "float"
+    if value[-1] == 'd':
+        return "double"
+    if value == "null":
+        return None
+    if value == "true" or value == "false":
+        return "boolean"
+    return "int"
+
+def findOverload(path, method_name):
+    overloads = []
+    for k, v in list(TaintElt.get(path, None).items())[1:]:
+        if not k[0] == '$':
+            continue
+        # split types arguments and method
+        types, method = k[1:].split('$$')
+        if not method == method_name:
+            continue
+        # split types of arguments
+        overloads.append(types.split('|'))
+    return overloads
 
 @Node("MethodInvocation", "in")
 class MethodInvocationIn:
@@ -136,27 +212,102 @@ class MethodInvocationIn:
     def call(cls, r, self):
         # Add status for enumerate parameters of this function
         # parameters_function will be use in MemberReference
-        TaintElt.status.append(("parameters_function", self, 0))
+
+        #TaintElt.status.append(("parameters_functionbak", self, 0))
+
         #print(TaintElt._Class)
-        nodes = TaintElt.get(TaintElt._Class, None)
-        TaintElt.add_scope(nodes["__fields__"])
+
+        # Get argument type of method Invocation
+        types_meth_invok = []
+        for argument in self.elt.arguments:
+            if type(argument) is javalang.tree.Literal:
+                types_meth_invok.append(TypeLiteral(argument.value))
+            else:
+                path = revxref(JavaLang2NodeAst(argument, self))
+                types_meth_invok.append(xref(path[:-1], path[-1]).node_get().elt.type.name)
+
+        # Get path to access at node of method
+        path = get_type(up2Statement(self), nscope=types_meth_invok)
+
+        # Check if path is in scope to analyse
+        if len(path) == 0:
+            return r
+        if not path[0] in TaintElt._nodes:
+            return r
+        n = TaintElt._nodes
+        for i in path[:-1]:
+            if i in n:
+                n = n[i]
+            else:
+                return r
+
+        signature = False
+        for k, v in list(TaintElt.get(path[:-1], None).items())[1:]:
+            if signature:
+                break
+            # if no begin with $ this is a subclass
+            if not k[0] == '$':
+                continue
+            # split types arguments and method
+            types, method = k[1:].split('$$')
+            if not method == self.elt.member:
+                continue
+            # split types of arguments
+            types = types.split('|')
+            # If signature have not the same number of arguments skip
+            if not len(types) == len(types_meth_invok):
+                continue
+            # Check signature arguments
+            signature = True
+            for i_type in range(len(types)):
+                if not types[i_type] == types_meth_invok[i_type]:
+                    if not types_meth_invok[i_type] == None:
+                        signature = False
+            if not signature:
+                continue
+            # Replace the path by the good signature
+            path[-1] = k
+            for i in range(len(self.elt.arguments)):
+                argument = self.elt.arguments[i]
+                if not type(argument) is javalang.tree.Literal:
+                    path_p = revxref(JavaLang2NodeAst(argument, self))
+                    parent = xref(path_p[:-1], path_p[-1])
+
+                    if len(TaintElt.get(path, None)["__fields__"][0]) == i:
+                        n = Node(None, [], [], self)
+                        TaintElt.get(path, None)["__fields__"][0].append(n)
+                    
+                    child = TaintElt.get(path, None)["__fields__"][0][i]
+                    node = Node(path_p[-1], child, parent,
+                            JavaLang2NodeAst(argument, self))
+                    TaintElt.add_elt(
+                        TaintElt.get(
+                            TaintElt._Class,
+                            None)["__fields__"], node)
+                    child.parent(node)
+                    parent.child(node)
+        
+        assert signature # signature of the function not found
+        
+        #nodes = TaintElt.get(TaintElt._Class, None)
+        #TaintElt.add_scope(nodes["__fields__"])
         return r
 
 @Node("MethodInvocation", "out")
-class MethodInvocationIn:
+class MethodInvocationOut:
     @classmethod
     def call(cls, r, self):
         # Remove status for enumerate parameters of this function
-        TaintElt.status.pop()
-        TaintElt.scope_p[-1].pop()
+        #TaintElt.status.pop()
+        #TaintElt.scope_p[-1].pop()
         return r
 
 @Node("MethodInvocationParameters", "out")
 class MethodInvocationParametersOut:
     @classmethod
     def call(cls, r, self):
-        k, v, i = TaintElt.status[-1]
-        TaintElt.status[-1] = (k, v, i + 1)
+        #k, v, i = TaintElt.status[-1]
+        #TaintElt.status[-1] = (k, v, i + 1)
         return r
 
 @Node("ClassCreator", "in")
@@ -338,7 +489,7 @@ def revxref(node : ast.BaseNode) -> list:
 """
 Like xref but give the type at the end and not the name
 """
-def get_type(node):
+def get_type(node, nscope=None):
     prev_type = []
     root = [node]
     #while type(root[-1].parent) in [ast.MethodInvocation,
@@ -356,7 +507,9 @@ def get_type(node):
             #prev_type = conv_type(prev_type, e.elt.member)
             tmp_type = conv_type(prev_type, e.elt.member)
             if not tmp_type:
-                prev_type.append(e.elt.member)
+                assert not nscope == None # Scope doesn't exist
+                name_scope = "$" + "|".join(str(s) for s in nscope) + "$$" + e.elt.member
+                prev_type.append(name_scope)
                 TaintElt.ConstructScope(prev_type)
             else:
                 prev_type = tmp_type
@@ -380,7 +533,6 @@ def get_type(node):
                 if tmp:
                     break
                 prev_type_tmp.pop()
-            prev_type = tmp
             if tmp[-1] == "List":
                 e2 = root.pop()
                 if type(e2) is ast.ArraySelector:
@@ -388,6 +540,8 @@ def get_type(node):
                 else:
                     prev_type = tmp
                     root.append(e2)
+            else:
+                prev_type = tmp
 
             
             #print(f"{e.elt.qualifier}.{e.elt.member}")
@@ -673,8 +827,8 @@ class TaintElt:
 
     
     @classmethod
-    def get(cls, clazz, field):
-        assert len(clazz) > 0 or field
+    def get(cls, clazz : list, field : str):
+        assert type(clazz) is list and (len(clazz) > 0 or field)
         if len(clazz) == 0:
             clazz = cls._Class.copy()
         if field:
