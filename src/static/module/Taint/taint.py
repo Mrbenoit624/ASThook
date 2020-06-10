@@ -2,17 +2,7 @@ from static.ast import *
 from graphviz import Digraph
 import javalang
 
-# TODO: Add Capability to overload function
-# 15 LoginFormState(Integer n, Integer n2) {
-# 16         this.usernameError = n;
-# 17         this.passwordError = n2;
-# 18         this.isDataValid = false;
-# 19     }
-# 20
-# 21     LoginFormState(boolean bl) {
-# 22         this.usernameError = null;
-# 23         this.passwordError = null;
-# 24         this.isDataValid = bl;
+# TODO: Add Interface managing
 
 @Node("ConstructorDeclarationParameters", "in")
 class ConstructorDeclarationParametersIn:
@@ -89,6 +79,7 @@ class ConstructorDeclarationOut:
     def call(cls, r, self):
         # Add scope method
         TaintElt._Class.pop()
+        TaintElt._ClassType.pop()
         return r
 
 @Node("MethodDeclaration", "in")
@@ -122,6 +113,26 @@ class VariableDeclaratorIn:
     @classmethod
     def call(cls, r, self):
         TaintElt.new(self.parent, self.elt.name, None)
+        #if type(self.elt.initializer) is javalang.tree.Literal:
+        #    parent = None #self.elt.value
+        #else:
+        #    if not self.elt.initializer:
+        #        return r
+        #    path = revxref(JavaLang2NodeAst(self.elt.initializer, self))
+        #    # Reference not found should probably there not in the scope
+        #    if len(path) == 0:
+        #        return r # No node influence here
+        #    else:
+        #        parent = xref(path[:-1], path[-1])
+        #if parent:
+        if self.elt.initializer == None:
+            return r
+        parent = ref_assignment(self.elt.initializer, self)
+        if len(parent) > 0:
+            n = TaintElt.get(TaintElt._Class, self.elt.name)
+            for p in parent:
+                n.parent(p)
+                p.child(n)
         return r
 """
 Convert javalang type Node in Ast Node
@@ -139,7 +150,44 @@ def JavaLang2NodeAst(node : javalang.tree, parent : ast.BaseNode) -> Node:
         return ast.ClassCreator(node, parent)
     if type(node) is javalang.tree.ClassReference:
         return ast.ClassReference(node, parent)
+    if type(node) is javalang.tree.ArrayCreator:
+        return ast.ArrayCreator(node, parent)
+    if type(node) is javalang.tree.BinaryOperation:
+        return ast.BinaryOperation(node, parent)
+    if type(node) is javalang.tree.Literal:
+        return ast.Literal(node, parent)
+    if type(node) is javalang.tree.TernaryExpression:
+        return ast.TernaryExpression(node, parent)
+    if type(node) is javalang.tree.Assignment:
+        return ast.Assignment(node, parent)
+    if type(node) is javalang.tree.SuperMethodInvocation:
+        return ast.SuperMethodInvocation(node, parent)
+    if type(node) is javalang.tree.ReferenceType:
+        return ast.ReferenceType(node, parent)
+    if type(node) is javalang.tree.ArrayInitializer:
+        return ast.ArrayInitializer(node, parent)
+    if type(node) is javalang.tree.BasicType:
+        return ast.BasicType(node, parent)
+    print(node)
     assert False # node not implemented
+
+def ref_assignment(value, parent):
+    # Remove Literral case
+    ret = []
+    values = [value]
+    while len(values) > 0:
+        value = values.pop()
+        if type(value) is javalang.tree.Literal:
+            continue
+        if type(value) is javalang.tree.BinaryOperation:
+            values.extend([value.operandl, value.operandr])
+        path = revxref(JavaLang2NodeAst(value, parent))
+        # Reference not found should probably there not in the scope
+        if not len(path) == 0:
+            ret.append(xref(path[:-1], path[-1]))
+            if ret[-1] == None:
+                ret.pop()
+    return ret
 
 """
 Add Assignment Edge with:
@@ -148,27 +196,29 @@ Add Assignment Edge with:
 """
 # TODO: Why child get and parent xref
 @Node("Assignment", "in")
-class AssignmentVarIn:
+class AssignmentIn:
     @classmethod
     def call(cls, r, self):
         #print(self.elt.expressionl)
         # Seek Reference Node from left expression and store it in child
         path = revxref(JavaLang2NodeAst(self.elt.expressionl, self))
+        if len(path) == 0:
+            return r
         child = TaintElt.get(path[:-1], path[-1])
+        if not child:
+            return r
+        node_name = path[-1]
 
         # Seek Reference Node from right expression and store it in parent
-        # Remove Literral case
-        if type(self.elt.value) is javalang.tree.Literal:
-            parent = [] #self.elt.value
-        else:
-            path = revxref(JavaLang2NodeAst(self.elt.value, self))
-            # Reference not found should probably there not in the scope
-            if len(path) == 0:
-                return r # No node influence here
-            else:
-                parent = xref(path[:-1], path[-1])
+        parent = ref_assignment(self.elt.value, self)
+        
         # Create Node
-        n = Node(path[-1], child, parent, self)
+        n = Node(node_name, child, None, self)
+
+        # Add Childness
+        for p in parent:
+            p.child(n)
+            n.parent(p)
 
         # Add Node
         TaintElt.add_elt(
@@ -176,9 +226,6 @@ class AssignmentVarIn:
                 TaintElt._Class,
                 None)["__fields__"], n)
 
-        # Add Childness
-        if type(parent) is Node:
-            parent.child(n)
 
         # Add Parentness
         child.parent(n)
@@ -205,7 +252,6 @@ def TypeLiteral(value):
 
 def findOverload(path, method_name):
     overloads = []
-    print(path, method_name)
     for k, v in list(TaintElt.get(path, None).items())[1:]:
         if not k[0] == '$':
             continue
@@ -216,6 +262,33 @@ def findOverload(path, method_name):
         # split types of arguments
         overloads.append(types.split('|'))
     return overloads
+
+def get_node_typable(n):
+    bak_n = n
+    found = True
+    loop=[]
+    while not type(n.node_get()) is ast.LocalVariableDeclaration and \
+          not type(n.node_get()) is ast.FieldDeclaration and \
+          not type(n.node_get()) is ast.MethodDeclarationParameters and \
+          not type(n.node_get()) is ast.ConstructorDeclarationParameters:
+        if len(n.parent_get()) <= 0 or n in loop:
+            found = False
+            break
+        loop.append(n)
+        n = n.parent_get()[0]
+    if found:
+        return n
+    n = bak_n
+    loop=[]
+    while not type(n.node_get()) is ast.LocalVariableDeclaration and \
+          not type(n.node_get()) is ast.FieldDeclaration and \
+          not type(n.node_get()) is ast.MethodDeclarationParameters and \
+          not type(n.node_get()) is ast.ConstructorDeclarationParameters:
+        assert len(n.child_get()) > 0 or not n in loop
+        loop.append(n)
+        n = n.child_get()[0]
+    return n
+
 
 def get_types_arguments(arguments, parent):
     types_meth_invok = []
@@ -230,7 +303,7 @@ def get_types_arguments(arguments, parent):
             else:
                 n = xref(path[:-1], path[-1])
                 if n:
-                    types_meth_invok.append(n.node_get().elt.type.name)
+                    types_meth_invok.append(get_node_typable(n).node_get().elt.type.name)
                 else:
                     types_meth_invok.append("None") # path[0] is the right object
     return types_meth_invok
@@ -251,6 +324,7 @@ class MethodInvocationIn:
         
         # Get path to access at node of method
         #path = get_type(up2Statement(self), nscope=types_meth_invok, stop=self)
+        #print(self.elt)
         path = revxref(up2Statement(self), stop=self)
         
         # Check if path is in scope to analyse
@@ -264,7 +338,14 @@ class MethodInvocationIn:
                 n = n[i]
             else:
                 return r
-        
+
+        if len(path) == 1:
+            for i in reversed(range(len(TaintElt._ClassType))):
+                if not TaintElt._ClassType[i]:
+                    npath = TaintElt._Class[:i+1].copy()
+                    npath.append(path[-1])
+                    path = npath
+                    break
         path[-1] = "$" + "|".join(str(s) for s in types_meth_invok) + "$$" + path[-1]
         TaintElt.ConstructScope(path)
 
@@ -296,6 +377,9 @@ class MethodInvocationIn:
             path[-1] = k
             for i in range(len(self.elt.arguments)):
                 argument = self.elt.arguments[i]
+                if len(TaintElt.get(path, None)["__fields__"][0]) == i:
+                    n = Node(None, [], [], self)
+                    TaintElt.get(path, None)["__fields__"][0].append(n)
                 if not type(argument) is javalang.tree.Literal:
                     path_p = revxref(JavaLang2NodeAst(argument, self))
                     if len(path_p) == 0:
@@ -305,9 +389,9 @@ class MethodInvocationIn:
                     if not type(parent) is Node:
                         continue
 
-                    if len(TaintElt.get(path, None)["__fields__"][0]) == i:
-                        n = Node(None, [], [], self)
-                        TaintElt.get(path, None)["__fields__"][0].append(n)
+                    #if len(TaintElt.get(path, None)["__fields__"][0]) == i:
+                    #    n = Node(None, [], [], self)
+                    #    TaintElt.get(path, None)["__fields__"][0].append(n)
                     
                     child = TaintElt.get(path, None)["__fields__"][0][i]
                     node = Node(path_p[-1], child, parent,
@@ -399,6 +483,7 @@ def conv_type(path : list, node : str, child=False, params_type=None) -> list:
                     if n.get() == node:
                         if child:
                             return [n.node_get().elt.type.arguments[0].type.name]
+                        n = get_node_typable(n)
                         return [n.node_get().elt.type.name]
                 path = path[:-1]
         else:
@@ -406,6 +491,7 @@ def conv_type(path : list, node : str, child=False, params_type=None) -> list:
                 if type(n) is list:
                     continue
                 if n.get() == node:
+                    n = get_node_typable(n)
                     if child:
                         return [n.node_get().elt.type.arguments[0].type.name]
                     return [n.node_get().elt.type.name]
@@ -490,8 +576,12 @@ def revxref(node : ast.BaseNode, stop=None) -> list:
                 if e.elt == stop.elt:
                     prev_type.append(e.elt.member)
                     return prev_type
-            prev_type = conv_type(prev_type, e.elt.member,
+            tmp_type = conv_type(prev_type, e.elt.member,
                     params_type=get_types_arguments(e.elt.arguments, e))
+            if tmp_type:
+                prev_type = tmp_type
+            else:
+                return ["None"]
         elif type(e) is ast.This:
             prev_type.extend(TaintElt._Class[:-1] if TaintElt._ClassType[-1] else TaintElt._Class)
             for s in reversed(e.elt.selectors):
@@ -502,7 +592,7 @@ def revxref(node : ast.BaseNode, stop=None) -> list:
                 elif type(s) is javalang.tree.MethodInvocation:
                     root.append(ast.MethodInvocation(s, e))
                 else:
-                    root.append(s)
+                    root.append(JavaLang2NodeAst(s, e))
         elif type(e) is ast.ArraySelector:
             pass # No incidence
         elif type(e) is ast.MemberReference:
@@ -519,6 +609,8 @@ def revxref(node : ast.BaseNode, stop=None) -> list:
             last.append(e.elt.member)
             last = (last, tmp)
             prev_type = tmp
+            if not tmp:
+                return ["None"]
             if tmp[-1] == "List":
                 e2 = root.pop()
                 if type(e2) is ast.ArraySelector:
@@ -640,6 +732,14 @@ class ClassDeclarationIn:
         TaintElt.Class(self.elt.name)
         return r
 
+@Node("InterfaceDeclaration", "in")
+class InterfaceDeclarationIn:
+    @classmethod
+    def call(cls, r, self):
+        # Add node Class and scope Class
+        TaintElt.Class(self.elt.name)
+        return r
+
 @Node("ClassDeclaration", "out")
 class ClassDeclarationOut:
     @classmethod
@@ -701,7 +801,10 @@ class Node:
         return self._node
 
     def position(self):
-        return self._node.elt._position if "_position" in self._node.elt.__dict__ else ""
+        elt2pos = self._node.elt
+        if type(elt2pos) is javalang.tree.Assignment:
+            elt2pos = elt2pos.expressionl
+        return elt2pos._position if "_position" in elt2pos.__dict__ else ""
 
     def parent_get(self):
         return self._parent
