@@ -62,7 +62,14 @@ def declaration_method(self):
     pre += "|".join(param.type.name for param in self.elt.parameters)
     pre += f'$${self.elt.name}'
     TaintElt.get(TaintElt._Class, None)[pre] = {'__fields__': [nfield]}
-    TaintElt.Class(pre, True)
+    if type(self) is ast.ConstructorDeclaration:
+        ret_type = self.elt.name
+    else:
+        if self.elt.return_type:
+            ret_type = self.elt.return_type.name
+        else:
+            ret_type = "None"
+    TaintElt.Class(pre, True, ret_type=ret_type)
 
 
 
@@ -130,6 +137,9 @@ def JavaLang2NodeAst(node : javalang.tree, parent : ast.BaseNode) -> Node:
         return ast.Cast(node, parent)
     if type(node) is javalang.tree.ClassCreator:
         return ast.ClassCreator(node, parent)
+    if type(node) is javalang.tree.ClassReference:
+        return ast.ClassReference(node, parent)
+    assert False # node not implemented
 
 """
 Add Assignment Edge with:
@@ -195,6 +205,7 @@ def TypeLiteral(value):
 
 def findOverload(path, method_name):
     overloads = []
+    print(path, method_name)
     for k, v in list(TaintElt.get(path, None).items())[1:]:
         if not k[0] == '$':
             continue
@@ -206,6 +217,24 @@ def findOverload(path, method_name):
         overloads.append(types.split('|'))
     return overloads
 
+def get_types_arguments(arguments, parent):
+    types_meth_invok = []
+    for argument in arguments:
+        if type(argument) is javalang.tree.Literal:
+            types_meth_invok.append(TypeLiteral(argument.value))
+        else:
+            path = revxref(JavaLang2NodeAst(argument, parent))
+            if len(path) == 0:
+                types_meth_invok.append("None") # Object but don't know witch one
+                continue
+            else:
+                n = xref(path[:-1], path[-1])
+                if n:
+                    types_meth_invok.append(n.node_get().elt.type.name)
+                else:
+                    types_meth_invok.append("None") # path[0] is the right object
+    return types_meth_invok
+
 @Node("MethodInvocation", "in")
 class MethodInvocationIn:
     @classmethod
@@ -216,19 +245,14 @@ class MethodInvocationIn:
         #TaintElt.status.append(("parameters_functionbak", self, 0))
 
         #print(TaintElt._Class)
-
+        
         # Get argument type of method Invocation
-        types_meth_invok = []
-        for argument in self.elt.arguments:
-            if type(argument) is javalang.tree.Literal:
-                types_meth_invok.append(TypeLiteral(argument.value))
-            else:
-                path = revxref(JavaLang2NodeAst(argument, self))
-                types_meth_invok.append(xref(path[:-1], path[-1]).node_get().elt.type.name)
-
+        types_meth_invok = get_types_arguments(self.elt.arguments, self)
+        
         # Get path to access at node of method
-        path = get_type(up2Statement(self), nscope=types_meth_invok)
-
+        #path = get_type(up2Statement(self), nscope=types_meth_invok, stop=self)
+        path = revxref(up2Statement(self), stop=self)
+        
         # Check if path is in scope to analyse
         if len(path) == 0:
             return r
@@ -240,6 +264,9 @@ class MethodInvocationIn:
                 n = n[i]
             else:
                 return r
+        
+        path[-1] = "$" + "|".join(str(s) for s in types_meth_invok) + "$$" + path[-1]
+        TaintElt.ConstructScope(path)
 
         signature = False
         for k, v in list(TaintElt.get(path[:-1], None).items())[1:]:
@@ -253,7 +280,7 @@ class MethodInvocationIn:
             if not method == self.elt.member:
                 continue
             # split types of arguments
-            types = types.split('|')
+            types = [] if len(types) == 0 else (types.split('|') if '|' in types else [types])
             # If signature have not the same number of arguments skip
             if not len(types) == len(types_meth_invok):
                 continue
@@ -271,7 +298,12 @@ class MethodInvocationIn:
                 argument = self.elt.arguments[i]
                 if not type(argument) is javalang.tree.Literal:
                     path_p = revxref(JavaLang2NodeAst(argument, self))
+                    if len(path_p) == 0:
+                        continue
                     parent = xref(path_p[:-1], path_p[-1])
+                    # parent not a variable
+                    if not type(parent) is Node:
+                        continue
 
                     if len(TaintElt.get(path, None)["__fields__"][0]) == i:
                         n = Node(None, [], [], self)
@@ -333,14 +365,22 @@ class ClassDeclarationOut:
 """
 Convert node given in Type of this node
 """
-def conv_type(path : list, node : str, child=False) -> list:
+def conv_type(path : list, node : str, child=False, params_type=None) -> list:
     nodes = TaintElt._nodes
+    assert not path is None
     for p in path:
         # Not in scope to analyzed
         if not p in nodes:
             return path
         nodes = nodes[p]
     # If node is already a type return it
+    for n in nodes:
+        if n[0] == '$':
+            n1 = n[1:].split("$$")
+            if n1[1] == node:
+                if "__type__" in nodes[n]:
+                    return [nodes[n]["__type__"]]
+
     if node in nodes:
         path.append(node)
         return path
@@ -432,7 +472,7 @@ def up2Statement(node):
 """
 From parent Ast Node to path to access
 """
-def revxref(node : ast.BaseNode) -> list:
+def revxref(node : ast.BaseNode, stop=None) -> list:
     #print(f"{node.elt}")
     assert node
     prev_type = []
@@ -446,7 +486,12 @@ def revxref(node : ast.BaseNode) -> list:
                 if prev_type == None:
                     return []
                 #prev_type.append(e.elt.qualifier)
-            prev_type = conv_type(prev_type, e.elt.member)
+            if stop:
+                if e.elt == stop.elt:
+                    prev_type.append(e.elt.member)
+                    return prev_type
+            prev_type = conv_type(prev_type, e.elt.member,
+                    params_type=get_types_arguments(e.elt.arguments, e))
         elif type(e) is ast.This:
             prev_type.extend(TaintElt._Class[:-1] if TaintElt._ClassType[-1] else TaintElt._Class)
             for s in reversed(e.elt.selectors):
@@ -481,6 +526,9 @@ def revxref(node : ast.BaseNode) -> list:
                 else:
                     prev_type = tmp
                     root.append(e2)
+        if stop:
+            if stop.elt == e.elt:
+                break
     if last:
         if last[1] == prev_type:
             return last[0]
@@ -489,7 +537,7 @@ def revxref(node : ast.BaseNode) -> list:
 """
 Like xref but give the type at the end and not the name
 """
-def get_type(node, nscope=None):
+def get_type(node, nscope=None, stop=None):
     prev_type = []
     root = [node]
     #while type(root[-1].parent) in [ast.MethodInvocation,
@@ -503,6 +551,9 @@ def get_type(node, nscope=None):
         if type(e) is ast.MethodInvocation:
             if e.elt.qualifier:
                 prev_type = conv_type(prev_type, e.elt.qualifier)
+                # If no prev_type it means the method is not in the scope
+                if not prev_type:
+                    return []
                 #prev_type.append(e.elt.qualifier)
             #prev_type = conv_type(prev_type, e.elt.member)
             tmp_type = conv_type(prev_type, e.elt.member)
@@ -542,6 +593,8 @@ def get_type(node, nscope=None):
                     root.append(e2)
             else:
                 prev_type = tmp
+        if e.elt == stop.elt:
+            break
 
             
             #print(f"{e.elt.qualifier}.{e.elt.member}")
@@ -704,7 +757,7 @@ class TaintElt:
                         if type(sc) is list:
                             for i in sc:
                                 scopes.append(i)
-                        else:
+                        elif type(sc) is Node:
                             if orphan or (len(sc.child_get()) > 0 or len(sc.parent_get()) > 0):
                                 dot.node(f"{sc.id()}_{sc.get()}",
                                         "%s\n%s\n%s" % (
@@ -736,6 +789,8 @@ class TaintElt:
             for k, v in nodes.items():
                 print("%s%s" % ("\t"* layers, k))
                 cls.print(v, layers+1)
+        elif type(nodes) is str:
+            print("%s%s" % ("\t"* layers, nodes))
         else:
             for k in reversed(nodes):
                 #print("%s%s" % ("\t"* layers, ", ".join([str(e) for e in k])))
@@ -743,20 +798,22 @@ class TaintElt:
 
 
     @classmethod
-    def Class(cls, name, method=False):
+    def Class(cls, name, method=False, ret_type=None):
         # Add scope Class
         cls._Class.append(name)
         cls._ClassType.append(method)
-        cls.ConstructScope(cls._Class)
+        cls.ConstructScope(cls._Class, ret_type=ret_type)
 
         cls.scope_p.append([-1])
 
     @classmethod
-    def ConstructScope(cls, path):
+    def ConstructScope(cls, path, ret_type=None):
         # Traversal graph
         nodes = cls._nodes
         for i in range(len(path) - 1):
             nodes = nodes[path[i]]
+        if ret_type:
+            nodes[path[-1]]["__type__"] = ret_type
         if path[-1] in nodes:
             return
         # Add node Class with field and scope field

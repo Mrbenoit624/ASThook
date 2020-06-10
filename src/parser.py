@@ -55,7 +55,14 @@ def parser():
     group.add_argument(
             "--tree_path",
             type=str,
+            nargs="+",
             help="Analyse only a portion of apk")
+
+    group.add_argument(
+            "--tree_exclude",
+            type=str,
+            nargs="+",
+            help="Expludes directory to analyszed")
     
     group.add_argument(
             '--decompiler',

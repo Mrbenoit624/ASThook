@@ -63,18 +63,33 @@ class ast:
         for i in Register.get_node("Init", "in"):
             self.set_infos(i.call(self.get_infos(), self))
 
-        path_app = '%s/%s/src' % \
+        path_app_base = '%s/%s/src' % \
                     (self.__basepath,
                      "decompiled_app")
-        if args.tree_path:
-            path_app += "/" + args.tree_path
         for action in Output.get_store()["manifest"]["activity"]["action"]:
             if action['action'] == "android.intent.action.MAIN":
                 self.main = action['action']
+        
         print("/".join(self.main.split(".")))
-        paths_pre = path_app.split('/')
-        paths = list(Path("/".join(paths_pre[:-1])).rglob(f'{paths_pre[-1]}*.java'))
-        #for path in paths:
+        paths = []
+        if args.tree_path:
+            npaths = []
+            for tree_path in args.tree_path:
+                path_app = path_app_base
+                path_app += "/" + tree_path
+                paths_pre = path_app.split('/')
+                npaths = list(Path("/".join(paths_pre[:-1])).rglob(f'{paths_pre[-1]}*.java'))
+                paths = list(set().union(npaths, paths))
+        else:
+            paths = list(Path(path_app_base).rglob('*.java'))
+        
+        if args.tree_exclude:
+            for ex_path in args.tree_exclude:
+                npath = []
+                for pi in paths:
+                    if not str(pi).startswith(str(Path(path_app_base + ex_path))):
+                        npath.append(pi)
+                paths = npath
 
         percent_max = len(paths)
         path_circle = []
