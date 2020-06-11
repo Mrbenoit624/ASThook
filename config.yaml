@@ -1,5 +1,5 @@
 static:
-  - tree: true
+  - tree: false
   - tree_path: "/com/example"
     #  - tree_path: "/"
 

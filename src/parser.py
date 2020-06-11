@@ -20,7 +20,9 @@ def parser():
 
     parser.add_argument(
             '--verbose',
-            action="store_true",
+            #action="store_true",
+            type=str,
+            choices=['debug', 'info', 'warning'],
             help='active verbose')
 
     parser.add_argument(

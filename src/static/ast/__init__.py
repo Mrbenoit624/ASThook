@@ -5,6 +5,8 @@ import sys
 from utils import *
 import re
 
+import logging
+
 from graphviz import Digraph
 
 
@@ -44,7 +46,7 @@ def protect_node(fun):
         try:
             func(args, kwargs)
         except:
-            sys.stderr.write("an error happend\n")
+            logging.error("an error happend")
 
 class ast:
     """
@@ -107,7 +109,7 @@ class ast:
                         break
                     except javalang.parser.JavaSyntaxError as err:
                         if correct == "":
-                            sys.stderr.write("%s on %s at %s\n" % (err.description, path, err.at))
+                            logging.error("%s on %s at %s" % (err.description, path, err.at))
                         if not err.at.position:
                             break
                         correct = content.split('\n')
@@ -315,7 +317,7 @@ class ast:
                     selfp.AnnotationDeclaration(elt, self).visit(selfp)
                 else:
                     if selfp.args.debug_ast:
-                        sys.stderr.write("%s - %s\n" % (self.__class__.__name__, type(elt)))
+                        logging.error("%s - %s" % (self.__class__.__name__, type(elt)))
 
  
     class AnnotationDeclaration(BaseNode):
@@ -332,7 +334,7 @@ class ast:
                     selfp.ConstantDeclaration(elt, self).visit(selfp)
                 else:
                     if selfp.args.debug_ast:
-                        sys.stderr.write("%s - %s\n" % (self.__class__.__name__, type(elt)))
+                        logging.error("%s - %s" % (self.__class__.__name__, type(elt)))
             #print(self.elt.__dict__, end='')
  
     class EnumDeclaration(BaseNode):
@@ -343,7 +345,7 @@ class ast:
                 #    selfp.ASTList(elt, self).visit(selfp)
                 #else:
                 if selfp.args.debug_ast:
-                    sys.stderr.write("%s - %s\n" % (self.__class__.__name__, type(elt)))
+                    logging.error("%s - %s" % (self.__class__.__name__, type(elt)))
             #print(self.elt.__dict__, end='')
 
     class InterfaceDeclaration(BaseNode):
@@ -362,7 +364,7 @@ class ast:
                     selfp.ConstantDeclaration(elt, self).visit(selfp)
                 else:
                     if selfp.args.debug_ast:
-                        sys.stderr.write("%s - %s\n" % (self.__class__.__name__, type(elt)))
+                        logging.error("%s - %s" % (self.__class__.__name__, type(elt)))
             #print(self.elt.__dict__, end='')
     
     class MethodDeclaration(BaseNode):
@@ -402,7 +404,7 @@ class ast:
                     selfp.SwitchStatement(elt, self).visit(selfp)
                 else:
                     if selfp.args.debug_ast:
-                        sys.stderr.write("%s - %s\n" % (self.__class__.__name__, type(elt)))
+                        logging.error("%s - %s" % (self.__class__.__name__, type(elt)))
             #print(self.elt.__dict__, end='')
 
     class MethodDeclarationParameters(BaseNode):
@@ -453,7 +455,7 @@ class ast:
                     selfp.DoStatement(elt, self).visit(selfp)
                 else:
                     if selfp.args.debug_ast:
-                        sys.stderr.write("%s - %s\n" % (self.__class__.__name__, type(elt)))
+                        logging.error("%s - %s" % (self.__class__.__name__, type(elt)))
     
     class ConstructorDeclarationParameters(BaseNode):
 
@@ -487,7 +489,7 @@ class ast:
                 selfp.ExplicitConstructorInvocation(elt, self).visit(selfp)
             else:
                 if selfp.args.debug_ast:
-                    sys.stderr.write("%s - %s\n" % (self.__class__.__name__, type(elt)))
+                    logging.error("%s - %s" % (self.__class__.__name__, type(elt)))
 
     class LocalVariableDeclaration(BaseNode):
 
@@ -499,7 +501,7 @@ class ast:
                     selfp.VariableDeclarator(elt, self).visit(selfp)
                 else:
                     if selfp.args.debug_ast:
-                        sys.stderr.write("%s - %s\n" % (self.__class__.__name__, type(elt)))
+                        logging.error("%s - %s" % (self.__class__.__name__, type(elt)))
             #print(self.elt.__dict__, end='')
 
     class ASTList(BaseNode):
@@ -654,7 +656,7 @@ class ast:
                     selfp.MethodInvocation(elt, self).visit(selfp)
                 else:
                     if selfp.args.debug_ast:
-                        sys.stderr.write("%s - %s\n" % (self.__class__.__name__, type(elt)))
+                        logging.error("%s - %s" % (self.__class__.__name__, type(elt)))
             #print(self.elt.__dict__, end='')
     
     class IfStatementCondition(BaseNode):
@@ -673,7 +675,7 @@ class ast:
                 selfp.Literal(elt, self).visit(selfp)
             else:
                 if selfp.args.debug_ast:
-                    sys.stderr.write("%s - %s\n" % (self.__class__.__name__, type(elt)))
+                    logging.error("%s - %s" % (self.__class__.__name__, type(elt)))
 
     class TryStatement(BaseNode):
 
@@ -701,7 +703,7 @@ class ast:
                     selfp.TryStatement(elt, self).visit(selfp)
                 else:
                     if selfp.args.debug_ast:
-                        sys.stderr.write("%s - %s\n" % (self.__class__.__name__, type(elt)))
+                        logging.error("%s - %s" % (self.__class__.__name__, type(elt)))
             #print(self.elt.__dict__, end='')
 
     class AnnotationMethod(BaseNode):
@@ -742,7 +744,7 @@ class ast:
                 selfp.BlockStatement(elt, self).visit(selfp)
             else:
                 if selfp.args.debug_ast:
-                    sys.stderr.write("%s - %s\n" % (self.__class__.__name__, type(elt)))
+                    logging.error("%s - %s" % (self.__class__.__name__, type(elt)))
 
     class WhileStatement(BaseNode):
 
@@ -753,7 +755,7 @@ class ast:
                 selfp.BlockStatement(elt, self).visit(selfp)
             else:
                 if selfp.args.debug_ast:
-                    sys.stderr.write("%s - %s\n" % (self.__class__.__name__, type(elt)))
+                    logging.error("%s - %s" % (self.__class__.__name__, type(elt)))
     
     class WhileStatementCondition(BaseNode):
         
@@ -765,7 +767,7 @@ class ast:
                 selfp.BinaryOperation(elt, self).visit(selfp)
             else:
                 if selfp.args.debug_ast:
-                    sys.stderr.write("%s - %s\n" % (self.__class__.__name__, type(elt)))
+                    logging.error("%s - %s" % (self.__class__.__name__, type(elt)))
             pass
 
     class SwitchStatement(BaseNode):
@@ -795,7 +797,7 @@ class ast:
                         selfp.MemberReference(elt, self).visit(selfp)
                     else:
                         if selfp.args.debug_ast:
-                            sys.stderr.write("%s - %s\n" % (self.__class__.__name__, type(elt)))
+                            logging.error("%s - %s" % (self.__class__.__name__, type(elt)))
             for elt in self.elt.arguments:
                 selfp.MethodInvocationParameters(elt, self).visit(selfp)
             #print(self.elt.__dict__, end='')
@@ -823,7 +825,7 @@ class ast:
                 selfp.ClassReference(elt, self).visit(selfp)
             else:
                 if selfp.args.debug_ast:
-                    sys.stderr.write("%s - %s\n" % (self.__class__.__name__, type(elt)))
+                    logging.error("%s - %s" % (self.__class__.__name__, type(elt)))
 
     class MemberReference(BaseNode):
 
@@ -867,7 +869,7 @@ class ast:
                 selfp.ClassReference(elt, self).visit(selfp)
             else:
                 if selfp.args.debug_ast:
-                    sys.stderr.write("%s - %s\n" % (self.__class__.__name__, type(elt)))
+                    logging.error("%s - %s" % (self.__class__.__name__, type(elt)))
  
     class AssignmentValue(BaseNode):
  
@@ -897,7 +899,7 @@ class ast:
                 selfp.ClassReference(elt, self).visit(selfp)
             else:
                 if selfp.args.debug_ast:
-                    sys.stderr.write("%s - %s\n" % (self.__class__.__name__, type(elt)))
+                    logging.error("%s - %s" % (self.__class__.__name__, type(elt)))
     
     #final node
     class Literal(BaseNode):
@@ -918,7 +920,7 @@ class ast:
                     selfp.MemberReference(elt, self).visit(selfp)
                 else:
                     if selfp.args.debug_ast:
-                        sys.stderr.write("%s - %s\n" % (self.__class__.__name__, type(elt)))
+                        logging.error("%s - %s" % (self.__class__.__name__, type(elt)))
             pass
 
     class ClassCreator(BaseNode):
@@ -936,7 +938,7 @@ class ast:
                     selfp.FieldDeclaration(elt, self).visit(selfp)
                 else:
                     if selfp.args.debug_ast:
-                        sys.stderr.write("%s - %s\n" % (self.__class__.__name__, type(elt)))
+                        logging.error("%s - %s" % (self.__class__.__name__, type(elt)))
 
     class SwitchStatement(BaseNode):
 
@@ -986,7 +988,7 @@ class ast:
                     selfp.ClassCreator(elt, self).visit(selfp)
                 else:
                     if selfp.args.debug_ast:
-                        sys.stderr.write("%s - %s\n" % (self.__class__.__name__, type(elt)))
+                        logging.error("%s - %s" % (self.__class__.__name__, type(elt)))
             
             if "selectors" in self.elt.__dict__:
                 #elt.extend(self.elt.selectors)
@@ -1000,7 +1002,7 @@ class ast:
                     selfp.MethodInvocation(elt, self).visit(selfp)
                 else:
                     if selfp.args.debug_ast:
-                        sys.stderr.write("%s - %s\n" % (self.__class__.__name__, type(elt)))
+                        logging.error("%s - %s" % (self.__class__.__name__, type(elt)))
 
 
     class ReferenceType(BaseNode):
@@ -1045,7 +1047,7 @@ class ast:
                     selfp.This(elt, self).visit(selfp)
                 else:
                     if selfp.args.debug_ast:
-                        sys.stderr.write("%s - %s\n" % (self.__class__.__name__, type(elt)))
+                        logging.error("%s - %s" % (self.__class__.__name__, type(elt)))
 
     class ExplicitConstructorInvocation(BaseNode):
 
@@ -1109,7 +1111,7 @@ class ast:
                 selfp.This(elt, self).visit(selfp)
             else:
                 if selfp.args.debug_ast:
-                    sys.stderr.write("%s - %s\n" % (self.__class__.__name__, type(elt)))
+                    logging.error("%s - %s" % (self.__class__.__name__, type(elt)))
             #print(self.elt.__dict__, end='')
 
 

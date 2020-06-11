@@ -6,6 +6,10 @@ import json
 import re
 
 
+import subprocess
+import logging
+
+
 fg.orange = Style(RgbFg(255, 150, 50))
 fg.grey = Style(RgbFg(150, 150, 150))
 fg.blue = Style(RgbFg(54,154,205))
@@ -18,6 +22,27 @@ if not sys.stdout.isatty():
     fg.grey = ""
     fg.li_green = ""
     fg.rs = ""
+
+class extcall:
+    @classmethod
+    def external_call(cls, call):
+        if not "prevout" in cls.__dict__:
+            cls.prevout = ""
+            cls.preverr = ""
+        p = subprocess.Popen(call, stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE)
+        out, err = p.communicate()
+        if not cls.prevout == out and len(out) > 0:
+            cls.prevout = out
+            for o in out.decode().split('\n'):
+                if len(o) > 0:
+                    logging.info(o)
+        if not cls.preverr == err and len(err) > 0:
+            cls.preverr = err
+            for o in err.decode().split('\n'):
+                if len(o) > 0:
+                    logging.warning(o)
+        return p.returncode
 
 def bprint(text):
     """

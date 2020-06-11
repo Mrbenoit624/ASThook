@@ -296,11 +296,14 @@ def get_types_arguments(arguments, parent):
         if type(argument) is javalang.tree.Literal:
             types_meth_invok.append(TypeLiteral(argument.value))
         else:
-            path = revxref(JavaLang2NodeAst(argument, parent))
+            path = revxref(JavaLang2NodeAst(argument, parent), 
+                    stop=JavaLang2NodeAst(argument, parent))
             if len(path) == 0:
                 types_meth_invok.append("None") # Object but don't know witch one
                 continue
             else:
+                if type(argument) is javalang.tree.MethodInvocation:
+                    pass # TODO find func type
                 n = xref(path[:-1], path[-1])
                 if n:
                     types_meth_invok.append(get_node_typable(n).node_get().elt.type.name)
@@ -327,6 +330,15 @@ class MethodInvocationIn:
         #print(self.elt)
         path = revxref(up2Statement(self), stop=self)
         
+        #If element in current Scope
+        if len(path) == 1:
+            for i in reversed(range(len(TaintElt._ClassType))):
+                if not TaintElt._ClassType[i]:
+                    npath = TaintElt._Class[:i+1].copy()
+                    npath.append(path[-1])
+                    path = npath
+                    break
+
         # Check if path is in scope to analyse
         if len(path) == 0:
             return r
@@ -339,13 +351,6 @@ class MethodInvocationIn:
             else:
                 return r
 
-        if len(path) == 1:
-            for i in reversed(range(len(TaintElt._ClassType))):
-                if not TaintElt._ClassType[i]:
-                    npath = TaintElt._Class[:i+1].copy()
-                    npath.append(path[-1])
-                    path = npath
-                    break
         path[-1] = "$" + "|".join(str(s) for s in types_meth_invok) + "$$" + path[-1]
         TaintElt.ConstructScope(path)
 

@@ -5,6 +5,8 @@ import os
 import sys
 from subprocess import Popen, DEVNULL
 
+from utils import extcall
+
 class Frida:
     """
     Manage all interation with frida
@@ -35,6 +37,7 @@ class Frida:
         null = sys.stdout
 
         os.system('bash -c \'adb shell <<< "dalvikvm -cp /data/local/tmp/Frida.zip Frida;exit"\'')
+        #extcall.external_call(['adb', 'shell', '<<<', '"dalvikvm -cp /data/local/tmp/Frida.zip Frida;exit"'])
         #os.system('bash -c \'adb shell <<< "/data/local/tmp/frida-server&"\';exit')
         
         #self.__server = frida.get_usb_device()
@@ -43,7 +46,6 @@ class Frida:
                 self.__server = device
     
     def attach(self, pid=None):
-        print(self.__server)
         self.__session = self.__server.attach(pid if pid else self.__package)
 
     def spawn(self, arg):

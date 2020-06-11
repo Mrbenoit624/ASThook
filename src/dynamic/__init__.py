@@ -1,6 +1,7 @@
 
 import subprocess
 import threading
+import logging
 import time
 import sys
 import os
@@ -11,7 +12,7 @@ from ppadb import ClearError, InstallError
 from git import Repo
 import shutil
 
-from utils import timeout, bprint
+from utils import timeout, bprint, extcall
 from log import Log
 from dynamic.frida import Frida
 
@@ -46,8 +47,9 @@ class DynamicAnalysis:
             options.extend(["-http-proxy", proxy])
         if not no_erase:
             options.extend(["-wipe-data"])
-        print(" ".join(options))
-        subprocess.call(options, stdout=Log.STD_OUTPOUT, stderr=Log.STD_ERR)
+        logging.info(" ".join(options))
+        #subprocess.call(options, stdout=Log.STD_OUTPOUT, stderr=Log.STD_ERR)
+        extcall.external_call(options)
 
     def get_user_share(self):
         if "False" in self.__device.shell("([ -d /data/data/%s/shared_prefs/ ] && echo 'True') || echo 'False'" % self.__package):
@@ -69,7 +71,7 @@ class DynamicAnalysis:
         Install a certificate on the mobile
         """
         if not os.path.exists(proxy_cert):
-            print("[ERROR] %s file not found" % proxy_cert)
+            logging.error("%s file not found" % proxy_cert)
             sys.exit(1)
         os.system("openssl x509 -inform DER -in %s -out %s/cacert.pem" %
                 (proxy_cert, self.__tmp_dir))
@@ -77,7 +79,7 @@ class DynamicAnalysis:
             "PEM", "-subject_hash_old", "-in", "%s/cacert.pem" %
             self.__tmp_dir])
         hash_cert = hash_cert.decode().split('\n')[0]
-        print(hash_cert)
+        logging.info(f"certificate: {hash_cert} installed")
         os.system("mv %s/cacert.pem %s/%s.0" %
                 (self.__tmp_dir,
                  self.__tmp_dir,
@@ -103,7 +105,7 @@ class DynamicAnalysis:
         print ("\033[36mPackage Code path :\033[39m \t\t%s" % infos['packageCodePath'])
 
     def install_apk(self, apk):
-        print(f"install {apk}...")
+        logging.info(f"install {apk}...")
         while True:
             try:
                 if apk == self.__args.app and self.__args.config_xxhdpi:
@@ -118,20 +120,21 @@ class DynamicAnalysis:
                 if "Is the system running" in str(e):
                     continue
                 elif "[INSTALL_FAILED_TEST_ONLY]" in str(e):
-                    print("becareful install as test")
-                    subprocess.call(['adb', 'install', '-t', apk],
-                            stdout=Log.STD_OUTPOUT, stderr=Log.STD_ERR, shell=False)
+                    logging.warning("becareful install as test")
+                    #subprocess.call(['adb', 'install', '-t', apk],
+                    #        stdout=Log.STD_OUTPOUT, stderr=Log.STD_ERR, shell=False)
+                    extcall.external_call(['adb', 'install', '-t', apk])
                     break
                 elif "[INSTALL_FAILED_UPDATE_INCOMPATIBLE]" in str(e):
                     if apk == self.__args.app:
                         self.__device.uninstall(self.__package)
                     else:
-                        print(str(e))
+                       logging.warning(str(e))
                 elif "[INSTALL_FAILED_OLDER_SDK]" in str(e):
                     sys.stderr.write("APK need an Android platform more recent\n")
                     sys.exit(1)
                 else:
-                    print(str(e))
+                    logging.warning(str(e))
 
     def __init__(self, package, args, tmp_dir):
 
@@ -158,13 +161,13 @@ class DynamicAnalysis:
             self.__emulation.daemon = True
             self.__emulation.start()
         
-        print("waiting for connection device...")
+        logging.info("waiting for connection device...")
         devices = []
         try:
             with timeout(60):
                 while True:
                     if not args.no_emulation and not self.__emulation.isAlive():
-                        sys.stderr.write("Device not found\n")
+                        logging.error("Device not found\n")
                         sys.exit(1)
                     devices = self.__client.devices()
                     for device in devices:
@@ -184,7 +187,7 @@ class DynamicAnalysis:
             pass
 
         if self.__device == None:
-            print("No devices found after 60s")
+            logging.error("No devices found after 60s")
             sys.exit(1)
         else:
         
@@ -196,22 +199,18 @@ class DynamicAnalysis:
                         break
                 except:
                     if not wait_boot:
-                        print("waiting for boot device...")
+                        logging.info("waiting for boot device...")
                         wait_boot = True
                     pass
 
             #### writable system for recent version ####
             version_android = int(self.__device.shell("getprop ro.build.version.sdk"))
             if version_android >= 27:
-                os.system("adb root")
+                #os.system("adb root")
+                extcall.external_call(["adb", "root"])
                 while True:
-                    try:
-                        subprocess.check_output('adb remount',
-                                stderr=Log.STD_ERR, shell = True)
-                    except subprocess.CalledProcessError:
-                        continue
-                    #if b"remount succeeded" in ret:
-                    break
+                    if extcall.external_call(['adb', 'remount']) == 0:
+                        break
 
             if not args.noinstall:
                 self.install_apk(args.app)
@@ -237,12 +236,12 @@ class DynamicAnalysis:
             #apps = device.shell("pm list packages -f")
             self.__frida = Frida(self.__device, self.__package)
             if args.env_apks:
-                print("prepare env")
+                logging.info("prepare env")
                 for apk in args.env_apks:
                     self.install_apk(apk[0])
                     self.__device.spawn(apk[1])
                     #self.__device.shell("monkey -p %s -c android.intent.category.LAUNCHER 1" % apk[1])
-            print(self.__package)
+            logging.info(f"Spawn package: {self.__package}")
             self.__device.spawn(self.__package)
             #self.__frida.spawn(self.__package)
             #self.__device.shell("monkey -p %s -c android.intent.category.LAUNCHER 1" % self.__package)
