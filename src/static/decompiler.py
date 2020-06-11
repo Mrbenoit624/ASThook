@@ -39,5 +39,14 @@ class Decompiler:
             for path in Path(self.__dir_extract).rglob('classes*.jar'):
                 subprocess.call(["java", "-jar", "submodule/fernflower.jar",
                     "-ren=1", path, self.__dir_extract + "/src"])
+        elif self.__args.decompiler == "jadx":
+            subprocess.call(["apktool", "d", self.__app, "-o", self.__dir_extract +
+                "/apktools"])
+            subprocess.call(["cp", self.__dir_extract + "/apktools/AndroidManifest.xml",
+                self.__dir_extract])
+            subprocess.call(["src/submodule/jadx/build/jadx/bin/jadx", 
+                self.__app,
+                "-ds",
+                self.__dir_extract + "/src/"])
         else:
             apk2java.decompile(self.__app, self.__dir_extract)

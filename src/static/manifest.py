@@ -229,9 +229,13 @@ class Manifest:
         t_all = app.findall('provider')
 
         for obj in t_all:
-            if not ('exported' in obj.attrib and obj.attrib['exported'] == "true") \
-                and not len(obj.findall('intent-filter')) > 0:
+            if not (self.android('exported') in obj.attrib and \
+                    obj.attrib[self.android('exported')] == "true"):
                     continue
-            if "authorities" in obj.attrib:
-                print(obj.attrib['authorities'])
+            if self.android("authorities") in obj.attrib:
+                authorities = obj.attrib[self.android('authorities')]
+                name = obj.attrib[self.android('name')]
+                Output.add_to_store("manifest", "provider", "exported",
+                        (authorities, name))
+                print(f"authorities: {authorities} | name: {name}")
 
