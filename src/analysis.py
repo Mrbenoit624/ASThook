@@ -79,6 +79,7 @@ if __name__ == '__main__':
     if args.config:
         args = Config.load(args)
 
+
     if not os.path.exists(DIR):
         os.mkdir(DIR)
 
@@ -98,5 +99,9 @@ if __name__ == '__main__':
             #logging.basicConfig(level=logging.WARNING)
             logging.root.setLevel(logging.WARNING)
     Output.init()
+
+    if args.restore_output:
+        Output.load(args.restore_output)
+
     st_analysis = StaticAnalysis(args, DIR)
     DynamicAnalysis(st_analysis.manifest.package, args, st_analysis._StaticAnalysis__basepath)

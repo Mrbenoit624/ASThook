@@ -13,6 +13,355 @@ class ConstructorDeclarationParametersIn:
                 index=self.parent.elt.parameters.index(self.elt))
         return r
 
+@Node("ConstructorDeclaration", "in")
+class ConstructorDeclarationIn:
+    @classmethod
+    def call(cls, r, self):
+        # Add scope method
+        declaration_method(self)
+        return r
+
+@Node("ConstructorDeclaration", "out")
+class ConstructorDeclarationOut:
+    @classmethod
+    def call(cls, r, self):
+        # Add scope method
+        TaintElt._Class.pop()
+        TaintElt._ClassType.pop()
+        return r
+
+@Node("MethodDeclaration", "in")
+class MethodDeclarationIn:
+    @classmethod
+    def call(cls, r, self):
+        # Add scope method
+        declaration_method(self)
+        return r
+
+@Node("MethodDeclarationParameters", "in")
+class MethodDeclarationParametersIn:
+    @classmethod
+    def call(cls, r, self):
+        TaintElt.new(self, self.elt.name, None,
+                self.parent.elt.parameters.index(self.elt))
+        return r
+
+
+@Node("FieldDeclaration", "in")
+class FieldDeclarationIn:
+    @classmethod
+    def call(cls, r, self):
+        # Create Node for Fields
+        TaintElt.new(self, self.elt.declarators[0].name, None)
+        return r
+
+@Node("VariableDeclarator", "in")
+class VariableDeclaratorIn:
+
+    @classmethod
+    def call(cls, r, self):
+        TaintElt.new(self.parent, self.elt.name, None)
+        if self.elt.initializer == None:
+            return r
+        parent = ref_assignment(self.elt.initializer, self)
+        if len(parent) > 0:
+            n = TaintElt.get(TaintElt._Class, self.elt.name)
+            for p in parent:
+                n.parent(p)
+                p.child(n)
+        return r
+
+"""
+Add Assignment Edge with:
+    - parent reference to left expression as child
+    - parent reference to rigt expression as parent
+"""
+# TODO: Why child get and parent xref
+@Node("Assignment", "in")
+class AssignmentIn:
+    @classmethod
+    def call(cls, r, self):
+        #print(self.elt.expressionl)
+        # Seek Reference Node from left expression and store it in child
+        path = revxref(JavaLang2NodeAst(self.elt.expressionl, self))
+        if len(path) == 0:
+            return r
+        child = TaintElt.get(path[:-1], path[-1])
+        if not child:
+            return r
+        node_name = path[-1]
+
+        # Seek Reference Node from right expression and store it in parent
+        parent = ref_assignment(self.elt.value, self)
+        
+        # Create Node
+        n = Node(node_name, child, None, self)
+
+        # Add Childness
+        for p in parent:
+            p.child(n)
+            n.parent(p)
+
+        # Add Node
+        TaintElt.add_elt(
+            TaintElt.get(
+                TaintElt._Class,
+                None)["__fields__"], n)
+
+
+        # Add Parentness
+        child.parent(n)
+
+        return r
+
+
+@Node("MethodInvocation", "in")
+class MethodInvocationIn:
+    @classmethod
+    def call(cls, r, self):
+        # Add status for enumerate parameters of this function
+        # parameters_function will be use in MemberReference
+
+        # Get argument type of method Invocation
+        types_meth_invok = get_types_arguments(self.elt.arguments, self)
+        
+        # Get path to access at node of method
+        path = revxref(up2Statement(self), stop=self)
+        if path == ["None"]:
+            return r
+        
+        #If element in current Scope
+        if len(path) == 1:
+            for i in reversed(range(len(TaintElt._ClassType))):
+                if not TaintElt._ClassType[i]:
+                    npath = TaintElt._Class[:i+1].copy()
+                    npath.append(path[-1])
+                    path = npath
+                    break
+
+        # Check if path is in scope to analyse
+        if len(path) == 0:
+            return r
+        if not path[0] in TaintElt._nodes:
+            return r
+        n = TaintElt._nodes
+        for i in path[:-1]:
+            if i in n:
+                n = n[i]
+            else:
+                return r
+
+        path[-1] = "$" + "|".join(str(s) for s in types_meth_invok) + "$$" + path[-1]
+        TaintElt.ConstructScope(path)
+
+        signature = False
+        for k, v in list(TaintElt.get(path[:-1], None).items())[1:]:
+            if signature:
+                break
+            # if no begin with $ this is a subclass
+            if not k[0] == '$':
+                continue
+            # split types arguments and method
+            types, method = k[1:].split('$$')
+            if not method == self.elt.member:
+                continue
+            # split types of arguments
+            types = [] if len(types) == 0 else (types.split('|') if '|' in types else [types])
+            # If signature have not the same number of arguments skip
+            if not len(types) == len(types_meth_invok):
+                continue
+            # Check signature arguments
+            signature = True
+            for i_type in range(len(types)):
+                if not types[i_type] == types_meth_invok[i_type]:
+                    if not types_meth_invok[i_type] == None:
+                        signature = False
+            if not signature:
+                continue
+            # Replace the path by the good signature
+            path[-1] = k
+            for i in range(len(self.elt.arguments)):
+                argument = self.elt.arguments[i]
+                if len(TaintElt.get(path, None)["__fields__"][0]) == i:
+                    n = Node(None, [], [], self)
+                    TaintElt.get(path, None)["__fields__"][0].append(n)
+                if not type(argument) is javalang.tree.Literal:
+                    path_p = revxref(JavaLang2NodeAst(argument, self))
+                    if len(path_p) == 0:
+                        continue
+                    parent = xref(path_p[:-1], path_p[-1])
+                    # parent not a variable
+                    if not type(parent) is Node:
+                        continue
+
+                    child = TaintElt.get(path, None)["__fields__"][0][i]
+                    node = Node(path_p[-1], child, parent,
+                            JavaLang2NodeAst(argument, self))
+                    TaintElt.add_elt(
+                        TaintElt.get(
+                            TaintElt._Class,
+                            None)["__fields__"], node)
+                    child.parent(node)
+                    parent.child(node)
+        
+        assert signature # signature of the function not found
+        return r
+
+@Node("MethodInvocation", "out")
+class MethodInvocationOut:
+    @classmethod
+    def call(cls, r, self):
+        # Remove status for enumerate parameters of this function
+        #TaintElt.status.pop()
+        #TaintElt.scope_p[-1].pop()
+        return r
+
+@Node("ClassCreator", "in")
+class ClassCreatorIn:
+    @classmethod
+    def call(cls, r, self):
+        TaintElt.status.append(("parameters_class", self, 0))
+        if self.elt.body:
+            # Add scope for class
+            TaintElt.Class(self.elt.type.name)
+        return r
+
+@Node("ClassCreator", "out")
+class ClassDeclarationOut:
+    @classmethod
+    def call(cls, r, self):
+        TaintElt.status.pop()
+        if self.elt.body:
+            # remove last class scope
+            TaintElt.OutClass()
+        return r
+
+@Node("MemberReference", "in")
+class MemberReferenceIn:
+    @classmethod
+    def call(cls, r, self):
+        if len(TaintElt.status) > 0:
+            k, v, i = TaintElt.status[-1]
+            if k == "parameters_function":
+                child = TaintElt.get(get_type(up2Statement(v)), None)
+                if child:
+                    if len(child["__fields__"][0]) <= i:
+                        n = Node(None, [], [], self)
+                        child["__fields__"][0].append(n)
+                    child = child["__fields__"][0][i]
+                    #print(get_type(self.elt.member))
+                    #print(conv_type([], self.elt.member))
+                    parent = xref([], self.elt.member)
+                    n = Node(self.elt.member, child,parent , self)
+                    TaintElt.add_elt(
+                        TaintElt.get(
+                            TaintElt._Class,
+                            None)["__fields__"], n)
+                    parent.child(n)
+                    child.parent(n)
+        return r
+
+
+@Node("ClassDeclaration", "in")
+class ClassDeclarationIn:
+    @classmethod
+    def call(cls, r, self):
+        # Add node Class and scope Class
+        TaintElt.Class(self.elt.name)
+        return r
+
+@Node("InterfaceDeclaration", "in")
+class InterfaceDeclarationIn:
+    @classmethod
+    def call(cls, r, self):
+        # Add node Class and scope Class
+        TaintElt.Class(self.elt.name)
+        return r
+
+@Node("ClassDeclaration", "out")
+class ClassDeclarationOut:
+    @classmethod
+    def call(cls, r, self):
+        # Remove last Class scope
+        TaintElt.OutClass()
+        return r
+
+@Node("MethodDeclaration", "out")
+class MethodDeclarationOut:
+    @classmethod
+    def call(cls, r, self):
+        # Remove last Method scope
+        #TaintElt.OutMethod()
+        TaintElt.OutClass()
+        return r
+
+@Node("Init", "in")
+class Init:
+    @classmethod
+    def call(cls, r, path):
+        TaintElt.Init()
+        return r
+
+@Node("Init", "out")
+class InitOut:
+    @classmethod
+    def call(cls, r, path):
+        #TaintElt.print()
+        #info("Rendering taint analysis on pdf...")
+        TaintElt.graphiz(orphan=False)
+        return r
+
+
+
+################################################################################
+#
+#                           FUNCTIONS
+#
+################################################################################
+
+
+
+
+
+
+"""
+Convert javalang type Node in Ast Node
+"""
+def JavaLang2NodeAst(node : javalang.tree, parent : ast.BaseNode) -> Node:
+    if type(node) is javalang.tree.This:
+        return ast.This(node, parent)
+    if type(node) is javalang.tree.MemberReference:
+        return ast.MemberReference(node, parent)
+    if type(node) is javalang.tree.MethodInvocation:
+        return ast.MethodInvocation(node, parent)
+    if type(node) is javalang.tree.Cast:
+        return ast.Cast(node, parent)
+    if type(node) is javalang.tree.ClassCreator:
+        return ast.ClassCreator(node, parent)
+    if type(node) is javalang.tree.ClassReference:
+        return ast.ClassReference(node, parent)
+    if type(node) is javalang.tree.ArrayCreator:
+        return ast.ArrayCreator(node, parent)
+    if type(node) is javalang.tree.BinaryOperation:
+        return ast.BinaryOperation(node, parent)
+    if type(node) is javalang.tree.Literal:
+        return ast.Literal(node, parent)
+    if type(node) is javalang.tree.TernaryExpression:
+        return ast.TernaryExpression(node, parent)
+    if type(node) is javalang.tree.Assignment:
+        return ast.Assignment(node, parent)
+    if type(node) is javalang.tree.SuperMethodInvocation:
+        return ast.SuperMethodInvocation(node, parent)
+    if type(node) is javalang.tree.ReferenceType:
+        return ast.ReferenceType(node, parent)
+    if type(node) is javalang.tree.ArrayInitializer:
+        return ast.ArrayInitializer(node, parent)
+    if type(node) is javalang.tree.BasicType:
+        return ast.BasicType(node, parent)
+    print(node)
+    assert False # node not implemented
+
+
 def declaration_method(self):
     # Add scope method
     overloads = findOverload(TaintElt._Class, self.elt.name)
@@ -65,113 +414,6 @@ def declaration_method(self):
 
 
 
-
-@Node("ConstructorDeclaration", "in")
-class ConstructorDeclarationIn:
-    @classmethod
-    def call(cls, r, self):
-        # Add scope method
-        declaration_method(self)
-        return r
-
-@Node("ConstructorDeclaration", "out")
-class ConstructorDeclarationOut:
-    @classmethod
-    def call(cls, r, self):
-        # Add scope method
-        TaintElt._Class.pop()
-        TaintElt._ClassType.pop()
-        return r
-
-@Node("MethodDeclaration", "in")
-class MethodDeclarationIn:
-    @classmethod
-    def call(cls, r, self):
-        # Add scope method
-        declaration_method(self)
-        return r
-
-@Node("MethodDeclarationParameters", "in")
-class MethodDeclarationParametersIn:
-    @classmethod
-    def call(cls, r, self):
-        TaintElt.new(self, self.elt.name, None,
-                self.parent.elt.parameters.index(self.elt))
-        return r
-
-
-@Node("FieldDeclaration", "in")
-class FieldDeclarationIn:
-    @classmethod
-    def call(cls, r, self):
-        # Create Node for Fields
-        TaintElt.new(self, self.elt.declarators[0].name, None)
-        return r
-
-@Node("VariableDeclarator", "in")
-class VariableDeclaratorIn:
-
-    @classmethod
-    def call(cls, r, self):
-        TaintElt.new(self.parent, self.elt.name, None)
-        #if type(self.elt.initializer) is javalang.tree.Literal:
-        #    parent = None #self.elt.value
-        #else:
-        #    if not self.elt.initializer:
-        #        return r
-        #    path = revxref(JavaLang2NodeAst(self.elt.initializer, self))
-        #    # Reference not found should probably there not in the scope
-        #    if len(path) == 0:
-        #        return r # No node influence here
-        #    else:
-        #        parent = xref(path[:-1], path[-1])
-        #if parent:
-        if self.elt.initializer == None:
-            return r
-        parent = ref_assignment(self.elt.initializer, self)
-        if len(parent) > 0:
-            n = TaintElt.get(TaintElt._Class, self.elt.name)
-            for p in parent:
-                n.parent(p)
-                p.child(n)
-        return r
-"""
-Convert javalang type Node in Ast Node
-"""
-def JavaLang2NodeAst(node : javalang.tree, parent : ast.BaseNode) -> Node:
-    if type(node) is javalang.tree.This:
-        return ast.This(node, parent)
-    if type(node) is javalang.tree.MemberReference:
-        return ast.MemberReference(node, parent)
-    if type(node) is javalang.tree.MethodInvocation:
-        return ast.MethodInvocation(node, parent)
-    if type(node) is javalang.tree.Cast:
-        return ast.Cast(node, parent)
-    if type(node) is javalang.tree.ClassCreator:
-        return ast.ClassCreator(node, parent)
-    if type(node) is javalang.tree.ClassReference:
-        return ast.ClassReference(node, parent)
-    if type(node) is javalang.tree.ArrayCreator:
-        return ast.ArrayCreator(node, parent)
-    if type(node) is javalang.tree.BinaryOperation:
-        return ast.BinaryOperation(node, parent)
-    if type(node) is javalang.tree.Literal:
-        return ast.Literal(node, parent)
-    if type(node) is javalang.tree.TernaryExpression:
-        return ast.TernaryExpression(node, parent)
-    if type(node) is javalang.tree.Assignment:
-        return ast.Assignment(node, parent)
-    if type(node) is javalang.tree.SuperMethodInvocation:
-        return ast.SuperMethodInvocation(node, parent)
-    if type(node) is javalang.tree.ReferenceType:
-        return ast.ReferenceType(node, parent)
-    if type(node) is javalang.tree.ArrayInitializer:
-        return ast.ArrayInitializer(node, parent)
-    if type(node) is javalang.tree.BasicType:
-        return ast.BasicType(node, parent)
-    print(node)
-    assert False # node not implemented
-
 def ref_assignment(value, parent):
     # Remove Literral case
     ret = []
@@ -189,49 +431,6 @@ def ref_assignment(value, parent):
             if ret[-1] == None:
                 ret.pop()
     return ret
-
-"""
-Add Assignment Edge with:
-    - parent reference to left expression as child
-    - parent reference to rigt expression as parent
-"""
-# TODO: Why child get and parent xref
-@Node("Assignment", "in")
-class AssignmentIn:
-    @classmethod
-    def call(cls, r, self):
-        #print(self.elt.expressionl)
-        # Seek Reference Node from left expression and store it in child
-        path = revxref(JavaLang2NodeAst(self.elt.expressionl, self))
-        if len(path) == 0:
-            return r
-        child = TaintElt.get(path[:-1], path[-1])
-        if not child:
-            return r
-        node_name = path[-1]
-
-        # Seek Reference Node from right expression and store it in parent
-        parent = ref_assignment(self.elt.value, self)
-        
-        # Create Node
-        n = Node(node_name, child, None, self)
-
-        # Add Childness
-        for p in parent:
-            p.child(n)
-            n.parent(p)
-
-        # Add Node
-        TaintElt.add_elt(
-            TaintElt.get(
-                TaintElt._Class,
-                None)["__fields__"], n)
-
-
-        # Add Parentness
-        child.parent(n)
-
-        return r
 
 def TypeLiteral(value):
     assert type(value) is str and len(value) > 0
@@ -311,148 +510,6 @@ def get_types_arguments(arguments, parent):
                 else:
                     types_meth_invok.append("None") # path[0] is the right object
     return types_meth_invok
-
-@Node("MethodInvocation", "in")
-class MethodInvocationIn:
-    @classmethod
-    def call(cls, r, self):
-        # Add status for enumerate parameters of this function
-        # parameters_function will be use in MemberReference
-
-        #TaintElt.status.append(("parameters_functionbak", self, 0))
-
-        #print(TaintElt._Class)
-        
-        # Get argument type of method Invocation
-        types_meth_invok = get_types_arguments(self.elt.arguments, self)
-        
-        # Get path to access at node of method
-        #path = get_type(up2Statement(self), nscope=types_meth_invok, stop=self)
-        #print(self.elt)
-        path = revxref(up2Statement(self), stop=self)
-        if path == ["None"]:
-            return r
-        
-        #If element in current Scope
-        if len(path) == 1:
-            for i in reversed(range(len(TaintElt._ClassType))):
-                if not TaintElt._ClassType[i]:
-                    npath = TaintElt._Class[:i+1].copy()
-                    npath.append(path[-1])
-                    path = npath
-                    break
-
-        # Check if path is in scope to analyse
-        if len(path) == 0:
-            return r
-        if not path[0] in TaintElt._nodes:
-            return r
-        n = TaintElt._nodes
-        for i in path[:-1]:
-            if i in n:
-                n = n[i]
-            else:
-                return r
-
-        path[-1] = "$" + "|".join(str(s) for s in types_meth_invok) + "$$" + path[-1]
-        TaintElt.ConstructScope(path)
-
-        signature = False
-        for k, v in list(TaintElt.get(path[:-1], None).items())[1:]:
-            if signature:
-                break
-            # if no begin with $ this is a subclass
-            if not k[0] == '$':
-                continue
-            # split types arguments and method
-            types, method = k[1:].split('$$')
-            if not method == self.elt.member:
-                continue
-            # split types of arguments
-            types = [] if len(types) == 0 else (types.split('|') if '|' in types else [types])
-            # If signature have not the same number of arguments skip
-            if not len(types) == len(types_meth_invok):
-                continue
-            # Check signature arguments
-            signature = True
-            for i_type in range(len(types)):
-                if not types[i_type] == types_meth_invok[i_type]:
-                    if not types_meth_invok[i_type] == None:
-                        signature = False
-            if not signature:
-                continue
-            # Replace the path by the good signature
-            path[-1] = k
-            for i in range(len(self.elt.arguments)):
-                argument = self.elt.arguments[i]
-                if len(TaintElt.get(path, None)["__fields__"][0]) == i:
-                    n = Node(None, [], [], self)
-                    TaintElt.get(path, None)["__fields__"][0].append(n)
-                if not type(argument) is javalang.tree.Literal:
-                    path_p = revxref(JavaLang2NodeAst(argument, self))
-                    if len(path_p) == 0:
-                        continue
-                    parent = xref(path_p[:-1], path_p[-1])
-                    # parent not a variable
-                    if not type(parent) is Node:
-                        continue
-
-                    #if len(TaintElt.get(path, None)["__fields__"][0]) == i:
-                    #    n = Node(None, [], [], self)
-                    #    TaintElt.get(path, None)["__fields__"][0].append(n)
-                    
-                    child = TaintElt.get(path, None)["__fields__"][0][i]
-                    node = Node(path_p[-1], child, parent,
-                            JavaLang2NodeAst(argument, self))
-                    TaintElt.add_elt(
-                        TaintElt.get(
-                            TaintElt._Class,
-                            None)["__fields__"], node)
-                    child.parent(node)
-                    parent.child(node)
-        
-        assert signature # signature of the function not found
-        
-        #nodes = TaintElt.get(TaintElt._Class, None)
-        #TaintElt.add_scope(nodes["__fields__"])
-        return r
-
-@Node("MethodInvocation", "out")
-class MethodInvocationOut:
-    @classmethod
-    def call(cls, r, self):
-        # Remove status for enumerate parameters of this function
-        #TaintElt.status.pop()
-        #TaintElt.scope_p[-1].pop()
-        return r
-
-@Node("MethodInvocationParameters", "out")
-class MethodInvocationParametersOut:
-    @classmethod
-    def call(cls, r, self):
-        #k, v, i = TaintElt.status[-1]
-        #TaintElt.status[-1] = (k, v, i + 1)
-        return r
-
-@Node("ClassCreator", "in")
-class ClassCreatorIn:
-    @classmethod
-    def call(cls, r, self):
-        TaintElt.status.append(("parameters_class", self, 0))
-        if self.elt.body:
-            # Add scope for class
-            TaintElt.Class(self.elt.type.name)
-        return r
-
-@Node("ClassCreator", "out")
-class ClassDeclarationOut:
-    @classmethod
-    def call(cls, r, self):
-        TaintElt.status.pop()
-        if self.elt.body:
-            # remove last class scope
-            TaintElt.OutClass()
-        return r
 
 """
 Convert node given in Type of this node
@@ -705,84 +762,6 @@ def get_type(node, nscope=None, stop=None):
     return prev_type
 
     pass
-
-@Node("MemberReference", "in")
-class MemberReferenceIn:
-    @classmethod
-    def call(cls, r, self):
-        if len(TaintElt.status) > 0:
-            k, v, i = TaintElt.status[-1]
-            if k == "parameters_function":
-                child = TaintElt.get(get_type(up2Statement(v)), None)
-                if child:
-                    if len(child["__fields__"][0]) <= i:
-                        n = Node(None, [], [], self)
-                        child["__fields__"][0].append(n)
-                    child = child["__fields__"][0][i]
-                    #print(get_type(self.elt.member))
-                    #print(conv_type([], self.elt.member))
-                    parent = xref([], self.elt.member)
-                    n = Node(self.elt.member, child,parent , self)
-                    TaintElt.add_elt(
-                        TaintElt.get(
-                            TaintElt._Class,
-                            None)["__fields__"], n)
-                    parent.child(n)
-                    child.parent(n)
-            #elif k == "assignement_var":
-            #    parent = xref([],self.elt.member)
-                #n = Node(self.elt.member, child,parent , self)
-        return r
-
-
-@Node("ClassDeclaration", "in")
-class ClassDeclarationIn:
-    @classmethod
-    def call(cls, r, self):
-        # Add node Class and scope Class
-        TaintElt.Class(self.elt.name)
-        return r
-
-@Node("InterfaceDeclaration", "in")
-class InterfaceDeclarationIn:
-    @classmethod
-    def call(cls, r, self):
-        # Add node Class and scope Class
-        TaintElt.Class(self.elt.name)
-        return r
-
-@Node("ClassDeclaration", "out")
-class ClassDeclarationOut:
-    @classmethod
-    def call(cls, r, self):
-        # Remove last Class scope
-        TaintElt.OutClass()
-        return r
-
-@Node("MethodDeclaration", "out")
-class MethodDeclarationOut:
-    @classmethod
-    def call(cls, r, self):
-        # Remove last Method scope
-        #TaintElt.OutMethod()
-        TaintElt.OutClass()
-        return r
-
-@Node("Init", "in")
-class Init:
-    @classmethod
-    def call(cls, r, path):
-        TaintElt.Init()
-        return r
-
-@Node("Init", "out")
-class InitOut:
-    @classmethod
-    def call(cls, r, path):
-        #TaintElt.print()
-        #info("Rendering taint analysis on pdf...")
-        #TaintElt.graphiz(orphan=False)
-        return r
 
 
 class Node:

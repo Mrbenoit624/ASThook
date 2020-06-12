@@ -104,15 +104,17 @@ class Output:
     @classmethod
     def init(cls):
         cls.store = {}
-        cls.store_td = {}
         cls.store["manifest"] = {}
         cls.store["tree"] = {}
         #cls.store["dynamic"] = {}
-        cls.store_td["manifest"] = {}
-        cls.store_td["tree"] = {}
-        #cls.store_td["dynamic"] = {}
         cls.printer_callback = {"manifest": {},
                                 "tree": {}}
+
+    @classmethod
+    def load(cls, restore_outputs):
+        for restore_output in restore_outputs:
+            with open(restore_output) as f:
+                cls.store = json.loads(f.read())
 
     @classmethod
     def add_printer_callback(cls, category, module, tag, func):
@@ -133,29 +135,9 @@ class Output:
     def add_to_store(cls, category, module, tag, arg):
         if not module in cls.store[category]:
             cls.store[category][module] = {}
-            cls.store_td[category][module] = {}
         if not tag in cls.store[category][module]:
             cls.store[category][module][tag] = []
-            cls.store_td[category][module][tag] = []
         cls.store[category][module][tag].append(arg)
-        if type(arg) is str:
-            cls.store_td[category][module][tag].append(re.sub("\\u001b\[.*?m", "", arg))
-        elif type(arg) is dict:
-            tmp = {}
-            for k, v in arg.items():
-                if type(v) is str:
-                    tmp[k] = re.sub("\\u001b\[.*?m", "", v)
-                else:
-                    tmp[k] = v
-            cls.store_td[category][module][tag].append(tmp)
-        else:
-            tmp = []
-            for e in arg:
-                if type(e) is str:
-                    tmp.append(re.sub("\\u001b\[.*?m", "", e))
-                else:
-                    tmp.append(e)
-            cls.store_td[category][module][tag].append(tmp)
 
     @classmethod
     def add_tree_mod(cls, module, tag, arg):

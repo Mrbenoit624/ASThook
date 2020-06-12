@@ -33,7 +33,14 @@ def parser():
     parser.add_argument(
             '--config',
             type=str,
+            nargs="+",
             help="Load config file")
+    
+    parser.add_argument(
+            '--restore_output',
+            type=str,
+            nargs="+",
+            help="Load restore file")
 
     parser.add_argument(
             '--output',
