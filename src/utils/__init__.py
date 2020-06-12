@@ -109,12 +109,15 @@ class Output:
         #cls.store["dynamic"] = {}
         cls.printer_callback = {"manifest": {},
                                 "tree": {}}
+        cls.store_restore = {"manifest": {},
+                                "tree": {}}
 
     @classmethod
     def load(cls, restore_outputs):
         for restore_output in restore_outputs:
             with open(restore_output) as f:
-                cls.store = json.loads(f.read())
+                cls.store.update(json.loads(f.read()))
+        cls.store_restore = cls.store
 
     @classmethod
     def add_printer_callback(cls, category, module, tag, func):
@@ -130,6 +133,13 @@ class Output:
             return None
         return cls.printer_callback[category][module][tag]
 
+    @classmethod
+    def in_restore(cls, category, module, tag, arg):
+        if not module in cls.store_restore[category]:
+            return False
+        if not tag in cls.store_restore[category][module]:
+            return False
+        return arg in cls.store_restore[category][module][tag]
 
     @classmethod
     def add_to_store(cls, category, module, tag, arg):
@@ -137,7 +147,8 @@ class Output:
             cls.store[category][module] = {}
         if not tag in cls.store[category][module]:
             cls.store[category][module][tag] = []
-        cls.store[category][module][tag].append(arg)
+        if not cls.in_restore(category, module, tag, arg):
+            cls.store[category][module][tag].append(arg)
 
     @classmethod
     def add_tree_mod(cls, module, tag, arg):
