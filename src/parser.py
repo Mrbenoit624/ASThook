@@ -26,6 +26,11 @@ def parser():
             help='active verbose')
 
     parser.add_argument(
+            '--verbose_position',
+            action="store_true",
+            help='give verbose position ')
+
+    parser.add_argument(
             '--config',
             type=str,
             help="Load config file")
@@ -71,6 +76,11 @@ def parser():
             type=str,
             default="none",
             choices=["none", "jd-gui", "cfr", "procyon", "fernflower", "jadx"])
+
+    group.add_argument(
+            '--progress',
+            action="store_true",
+            help="Display percent when it analyse static code")
 
     group.add_argument(
             '--graph_ast',

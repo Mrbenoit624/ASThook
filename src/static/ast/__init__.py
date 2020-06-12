@@ -157,7 +157,8 @@ class ast:
                 self.l = tree.types
 
                 percent = int((percent_max - len(paths))/percent_max * 100)
-                print(f"\r{percent}%     ", end='')
+                if args.progress:
+                    print(f"\r{percent}%", end='')
                 for i in Register.get_node("File", "in"):
                     self.set_infos(i.call(self.get_infos(), path))
 

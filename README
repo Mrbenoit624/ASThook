@@ -80,6 +80,12 @@ that:
 tools/bin/sdkmanager "platforms;android-R" "build-tools;30.0.0-rc4" "emulator" --sdk_root=.
 ```
 
+To use jadx decompiler:
+```
+cd src/submodule/jadx
+./gradlew dist
+```
+
 
 
 ===================================== BUG ======================================
