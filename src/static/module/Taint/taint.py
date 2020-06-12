@@ -780,8 +780,8 @@ class InitOut:
     @classmethod
     def call(cls, r, path):
         #TaintElt.print()
-        info("Rendering taint analysis on pdf...")
-        TaintElt.graphiz(orphan=False)
+        #info("Rendering taint analysis on pdf...")
+        #TaintElt.graphiz(orphan=False)
         return r
 
 

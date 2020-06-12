@@ -738,10 +738,57 @@ class ast:
     class TryStatement(BaseNode):
 
         def apply(self, selfp):
-            pass
+            for elt in self.elt.block:
+                selfp.TryStatementBlock(elt, self).visit(selfp)
+            if self.elt.catches:
+                for elt in self.elt.catches:
+                    selfp.CatchClause(elt, self).visit(selfp)
+            if self.elt.finally_block:
+                for elt in self.elt.finally_block:
+                    selfp.TryStatementFinally(elt, self).visit(selfp)
             #for elt in self.elt:
             #    print("%s - %s" % (self.__class__.__name__, type(elt)))
             #print(self.elt.__dict__, end='')
+    
+    class TryStatementFinally(BaseNode):
+        
+        def apply(self, selfp):
+            elt = self.elt
+            if type(elt) is javalang.tree.LocalVariableDeclaration:
+                selfp.LocalVariableDeclaration(elt, self).visit(selfp)
+            elif selfp.args.debug_ast:
+                logging.error("%s - %s" % (self.__class__.__name__, type(elt)))
+
+    class TryStatementBlock(BaseNode):
+        
+        def apply(self, selfp):
+            elt = self.elt
+            if type(elt) is javalang.tree.LocalVariableDeclaration:
+                selfp.LocalVariableDeclaration(elt, self).visit(selfp)
+            elif type(elt) is javalang.tree.StatementExpression:
+                selfp.StatementExpression(elt, self).visit(selfp)
+            elif type(elt) is javalang.tree.TryStatement:
+                selfp.TryStatement(elt, self).visit(selfp)
+            elif type(elt) is javalang.tree.WhileStatement:
+                selfp.WhileStatement(elt, self).visit(selfp)
+            elif type(elt) is javalang.tree.ReturnStatement:
+                selfp.ReturnStatement(elt, self).visit(selfp)
+            elif type(elt) is javalang.tree.IfStatement:
+                selfp.IfStatement(elt, self).visit(selfp)
+            else:
+                if selfp.args.debug_ast:
+                    logging.error("%s - %s" % (self.__class__.__name__, type(elt)))
+
+    class CatchClause(BaseNode):
+
+        def apply(self, selfp):
+            for elt in self.elt.block:
+                if type(elt) is javalang.tree.StatementExpression:
+                    selfp.StatementExpression(elt, self).visit(selfp)
+                elif type(elt) is javalang.tree.ThrowStatement:
+                    selfp.ThrowStatement(elt, self).visit(selfp)
+                elif selfp.args.debug_ast:
+                    logging.error("%s - %s" % (self.__class__.__name__, type(elt)))
 
     class BlockStatement(BaseNode):
 
@@ -1167,6 +1214,8 @@ class ast:
                 selfp.BinaryOperation(elt, self).visit(selfp)
             elif type(elt) is javalang.tree.This:
                 selfp.This(elt, self).visit(selfp)
+            elif type(elt) is javalang.tree.ArrayCreator:
+                selfp.ArrayCreator(elt, self).visit(selfp)
             else:
                 if selfp.args.debug_ast:
                     logging.error("%s - %s" % (self.__class__.__name__, type(elt)))
