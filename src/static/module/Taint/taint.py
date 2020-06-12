@@ -1,6 +1,7 @@
 from static.ast import *
 from graphviz import Digraph
 import javalang
+from logging import debug, info
 
 # TODO: Add Interface managing
 
@@ -329,6 +330,8 @@ class MethodInvocationIn:
         #path = get_type(up2Statement(self), nscope=types_meth_invok, stop=self)
         #print(self.elt)
         path = revxref(up2Statement(self), stop=self)
+        if path == ["None"]:
+            return r
         
         #If element in current Scope
         if len(path) == 1:
@@ -587,6 +590,9 @@ def revxref(node : ast.BaseNode, stop=None) -> list:
                 prev_type = tmp_type
             else:
                 return ["None"]
+            if e.elt.selectors:
+                for sel in reversed(e.elt.selectors):
+                    root.append(JavaLang2NodeAst(sel, e))
         elif type(e) is ast.This:
             prev_type.extend(TaintElt._Class[:-1] if TaintElt._ClassType[-1] else TaintElt._Class)
             for s in reversed(e.elt.selectors):
@@ -773,7 +779,8 @@ class Init:
 class InitOut:
     @classmethod
     def call(cls, r, path):
-        TaintElt.print()
+        #TaintElt.print()
+        info("Rendering taint analysis on pdf...")
         TaintElt.graphiz(orphan=False)
         return r
 
