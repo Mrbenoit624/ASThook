@@ -146,7 +146,7 @@ class Output:
 
     @classmethod
     def get_store(cls):
-        return cls.store_td
+        return cls.store
 
     @classmethod
     def none_print(cls):
@@ -171,7 +171,7 @@ class Output:
     @classmethod
     def dump(cls, mode):
         if mode == "json":
-            return json.dumps(cls.store_td, sort_keys=True,
+            return json.dumps(cls.store, sort_keys=True,
                     indent=4,cls=cls.SpecialEncoder)
         elif mode == "none":
             return cls.none_print()
