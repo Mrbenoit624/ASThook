@@ -67,6 +67,8 @@ class StaticAnalysis:
             print(info("PATH_SRC = %s/src" % \
                     (self.__basepathdecompile)))
             ast(self.__basepath, self.__app, args)
+        if args.progress:
+            print('\r', end='')
         Output.print_static_module()
         if args.output_file:
             with open(args.output_file, 'w') as f:

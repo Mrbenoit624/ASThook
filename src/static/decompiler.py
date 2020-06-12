@@ -50,3 +50,5 @@ class Decompiler:
                 self.__dir_extract + "/src/"])
         else:
             apk2java.decompile(self.__app, self.__dir_extract)
+            subprocess.call(["cp", self.__dir_extract + "/apktools/AndroidManifest.xml",
+                self.__dir_extract])

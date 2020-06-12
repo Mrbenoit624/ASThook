@@ -11,8 +11,8 @@ class Literal:
             for name in names:
                 if re.search(name, self.elt.value):
                     self.node_graph.Color = "green"
-                    Output.add_tree_mod("seek_litteral", k,
-                            [self.elt.value + " " * (40 - len(self.elt.value)),
+                    Output.add_tree_mod("seek_literal", k,
+                            [self.elt.value,
                             r["Filename"], self.elt._position])
         return r
 

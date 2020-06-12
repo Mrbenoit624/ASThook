@@ -9,6 +9,8 @@ import logging
 
 from graphviz import Digraph
 
+import pickle
+
 
 class Register:
     """
@@ -53,6 +55,72 @@ class ast:
     Class allow to create the AST of the apk
     """
 
+    class DepNode:
+
+        def __init__(self, base_path, hascache):
+            self.hasparent = 0
+            self.childs = []
+            self.content = None
+            self.path = None
+            self.hascache = hascache
+            self.cache_path = Path(f"{base_path}/decompiled_app/cache/")
+
+        def __str__(self):
+            ret = str(self.path)
+            if len(self.childs) > 0:
+                ret += " -> " + ",".join(str(c) for c in self.childs)
+            return ret
+
+        def parse(self, path):
+            if self.content:
+                return self.content.imports
+            if not self.cache_path.is_dir():
+                self.cache_path.mkdir(parents=True)
+            self.path = path
+
+            package_name = ".".join(str(path).split("/"))
+            path_pck = Path(f"{self.cache_path}/{package_name}")
+            if path_pck.is_file() and self.hascache:
+                with open(f"{self.cache_path}/{package_name}", 'rb') as bak:
+                    self.content = pickle.load(bak)
+                if self.content:
+                    return self.content.imports
+                return []
+
+
+
+            with open(path, 'r') as file:
+                code_valid = False
+                correct = ""
+                content = file.read()
+                tree = None
+                while True:
+                    try:
+                        tree = javalang.parse.parse(content)
+                        code_valid = True
+                        break
+                    except javalang.parser.JavaSyntaxError as err:
+                        if correct == "":
+                            logging.error("%s on %s at %s" % (err.description, path, err.at))
+                        if not err.at.position:
+                            break
+                        correct = content.split('\n')
+                        correct[err.at.position.line - 1] = "//" + correct[err.at.position.line -1]
+                        content = "\n".join(correct)
+                        continue
+                    except javalang.tokenizer.LexerError:
+                        break
+                with open(f"{self.cache_path}/{package_name}", 'wb') as bak:
+                    pickle.dump(tree, bak, pickle.HIGHEST_PROTOCOL)
+                if not code_valid:
+                    return []
+                if tree.package == None:
+                    return []
+                self.content = tree
+                return tree.imports
+
+
+
     def get_tmp(self):
         return self.__basepath
 
@@ -95,69 +163,57 @@ class ast:
 
         percent_max = len(paths)
         path_circle = []
-        while len(paths) > 0:
-            path = paths.pop()
-            with open(path, 'r') as file:
-                code_valid = False
-                correct = ""
-                content = file.read()
-                while True:
-                    try:
-                        #print(content)
-                        tree = javalang.parse.parse(content)
-                        code_valid = True
-                        break
-                    except javalang.parser.JavaSyntaxError as err:
-                        if correct == "":
-                            logging.error("%s on %s at %s" % (err.description, path, err.at))
-                        if not err.at.position:
-                            break
-                        correct = content.split('\n')
-                        correct[err.at.position.line - 1] = "//" + correct[err.at.position.line -1]
-                        content = "\n".join(correct)
-                        #print(content)
-                        #sys.exit(1)
-                        #break
-                        continue
-                    except javalang.tokenizer.LexerError:
-                        break
-                        continue
-                if not code_valid:
-                    continue
-                if tree.package == None:
-                    continue
-                import_found = 0
-                for import_ in tree.imports:
-                    path_import = Path('%s/%s/src/%s%s' % \
+
+        depnodes = {}
+        for p in paths:
+            if args.progress:
+                percent = int((paths.index(p))/percent_max * 50)
+                print(f"\r{percent}%", end='')
+            if p in depnodes:
+                depnode = depnodes[p]
+            else:
+                depnode = self.DepNode(self.__basepath, not args.no_cache)
+                depnodes[p] = depnode
+            imports = depnode.parse(p)
+            for i in imports:
+                path_import = Path('%s/%s/src/%s%s' % \
                                   (self.__basepath,
                                    "decompiled_app",
-                                   "/".join(import_.path.split('.')),
+                                   "/".join(i.path.split('.')),
                                    ".java"))
-                    try:
-                        path_import_i = paths.index(path_import)
-                        if path_import_i:
-                            if path_import in path_circle:
-                                continue
-                            #print("\t%s" % path_import)
-                            import_found += 1
-                            paths.pop(path_import_i)
-                            paths.append(path_import)
-                    except ValueError as e:
-                        #print(e)
-                        continue
-                if import_found > 0:
-                    path_circle.append(path)
-                    paths.insert(len(paths) - import_found, path)
+                if path_import in paths:
+                    if path_import in depnodes:
+                        depnode_ch = depnodes[path_import]
+                    else:
+                        depnode_ch = self.DepNode(self.__basepath,
+                                not args.no_cache)
+                        depnodes[path_import] = depnode_ch
+                    depnode_ch.hasparent += 1
+                    depnode.childs.append(depnode_ch)
+
+        while len(depnodes) > 0:
+            to_remove = []
+            for k, v in depnodes.items():
+                if v.hasparent == 0:
+                    #print(v)
+                    for ch in v.childs:
+                        ch.hasparent -= 1
+                    to_remove.append(k)
+            if len(to_remove) == 0:
+                to_remove.append(next(iter(depnodes)))
+            for path in to_remove:
+                tree = depnodes[path].content
+                del depnodes[path]
+                if not tree or not tree.package:
                     continue
-                path_circle = []
 
                 #print(path)
                 self.__infos["package"] = tree.package.name
                 self.__infos["imports"] = tree.imports
                 self.l = tree.types
 
-                percent = int((percent_max - len(paths))/percent_max * 100)
                 if args.progress:
+                    percent = 50 + int((percent_max - len(depnodes))/percent_max * 50)
                     print(f"\r{percent}%", end='')
                 for i in Register.get_node("File", "in"):
                     self.set_infos(i.call(self.get_infos(), path))
@@ -176,9 +232,10 @@ class ast:
                             path.name), view=False)
                 except:
                     pass
-
         for i in Register.get_node("Init", "out"):
             self.set_infos(i.call(self.get_infos(), self))
+
+
 
     def init_graph(self, path):
         self.dot = Digraph(comment=self.__infos["package"] + "." +

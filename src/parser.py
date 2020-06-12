@@ -78,6 +78,11 @@ def parser():
             choices=["none", "jd-gui", "cfr", "procyon", "fernflower", "jadx"])
 
     group.add_argument(
+            '--no_cache',
+            action="store_true",
+            help="disable cache and reparse all files in scope")
+
+    group.add_argument(
             '--progress',
             action="store_true",
             help="Display percent when it analyse static code")
