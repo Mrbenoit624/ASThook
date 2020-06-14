@@ -19,6 +19,8 @@ class ListFuncs:
         from ..name_file import name_file_node # dependance
         from ..Typer import typer
         from . import ListFuncsCalled_node
+        if args.taint:
+            ListFuncsCalled_node.with_taint()
         ListFuncsCalled_node.Class.set_class(args.list_funcs_call[0])
         ListFuncsCalled_node.Func.set_func(args.list_funcs_call[1])
         

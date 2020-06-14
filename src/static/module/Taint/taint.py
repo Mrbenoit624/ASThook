@@ -308,7 +308,7 @@ class InitOut:
     def call(cls, r, path):
         #TaintElt.print()
         #info("Rendering taint analysis on pdf...")
-        TaintElt.graphiz(orphan=False)
+        #TaintElt.graphiz(orphan=False)
         return r
 
 
@@ -358,6 +358,8 @@ def JavaLang2NodeAst(node : javalang.tree, parent : ast.BaseNode) -> Node:
         return ast.ArrayInitializer(node, parent)
     if type(node) is javalang.tree.BasicType:
         return ast.BasicType(node, parent)
+    if type(node) is javalang.tree.ArraySelector:
+        return ast.ArraySelector(node, parent)
     print(node)
     assert False # node not implemented
 
@@ -616,7 +618,11 @@ def up2Statement(node):
     while type(root[-1].parent) in [ast.MethodInvocation,
                                     ast.MemberReference,
                                     ast.ArraySelector,
-                                    ast.This]:
+                                    ast.This,
+                                    ast.CastSelectors,
+                                    ast.Cast]:
+        if type(root[-1].parent) is ast.Cast and not type(root[-1]) is ast.CastSelectors:
+            break
         root.append(root[-1].parent)
     return root[-1]
 
@@ -631,11 +637,17 @@ def revxref(node : ast.BaseNode, stop=None) -> list:
     last = None
     while len(root) > 0:
         e = root.pop()
-        if type(e) is ast.MethodInvocation:
+        if type(e) is ast.Cast:
+            prev_type = [e.elt.type.name]
+            if "selectors" in e.elt.__dict__:
+                for sel in reversed(e.elt.selectors):
+                    root.append(JavaLang2NodeAst(sel, e))
+        elif type(e) is ast.MethodInvocation:
             if e.elt.qualifier:
                 prev_type = conv_type(prev_type, e.elt.qualifier)
-                if prev_type == None:
-                    return []
+                if prev_type == None: # Log.v 
+                    prev_type = [e.elt.qualifier]
+                    #return []
                 #prev_type.append(e.elt.qualifier)
             if stop:
                 if e.elt == stop.elt:
@@ -651,7 +663,12 @@ def revxref(node : ast.BaseNode, stop=None) -> list:
                 for sel in reversed(e.elt.selectors):
                     root.append(JavaLang2NodeAst(sel, e))
         elif type(e) is ast.This:
-            prev_type.extend(TaintElt._Class[:-1] if TaintElt._ClassType[-1] else TaintElt._Class)
+            if len(prev_type) > 0:
+                pass
+            elif e.elt.qualifier:
+                prev_type = [e.elt.qualifier]
+            else:
+                prev_type.extend(TaintElt._Class[:-1] if TaintElt._ClassType[-1] else TaintElt._Class)
             for s in reversed(e.elt.selectors):
                 if type(s) is javalang.tree.MemberReference:
                     root.append(ast.MemberReference(s, e))
