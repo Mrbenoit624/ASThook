@@ -5,7 +5,8 @@ import sys
 from utils import *
 import re
 
-import logging
+import log as logging
+
 
 from graphviz import Digraph
 

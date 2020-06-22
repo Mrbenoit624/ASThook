@@ -2,7 +2,7 @@ from static.ast import Node
 from utils import Output
 from static.generate_apk import GenerateAPK, JavaFile
 import javalang
-from logging import debug
+from log import debug
 from static.module.Taint import taint
 
 from . import mprint

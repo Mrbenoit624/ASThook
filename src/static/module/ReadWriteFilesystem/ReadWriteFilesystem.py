@@ -1,6 +1,6 @@
 from static.ast import Node, ast
 from utils import Output
-from logging import debug
+from log import debug
 
 
 

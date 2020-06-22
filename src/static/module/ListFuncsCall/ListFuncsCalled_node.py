@@ -1,7 +1,7 @@
 from static.ast import Node
 import re
 from utils import Output
-from logging import debug
+from log import debug
 #from static.module.Taint import taint
 
 from static.ast import ast

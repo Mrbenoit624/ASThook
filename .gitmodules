@@ -4,3 +4,6 @@
 [submodule "src/submodule/jadx"]
 	path = src/submodule/jadx
 	url = https://github.com/skylot/jadx.git
+[submodule "src/static/module/ApiKeyDetector/api_key_detector"]
+	path = src/static/module/ApiKeyDetector/api_key_detector
+	url = https://github.com/alessandrodd/api_key_detector.git

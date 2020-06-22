@@ -1,7 +1,12 @@
-#pure-python-adb
+pure-python-adb
 adb_shell
 pyyaml
 sty
 graphviz
 shutil
 jinja2
+sklearn
+gitpython
+javalang
+apk2java
+frida

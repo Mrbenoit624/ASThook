@@ -1,6 +1,6 @@
 
 from static.module.register import ModuleStaticCmd
-from logging import debug
+from log import debug
 from pathlib import Path
 import xml.etree.ElementTree as ET
 import requests

@@ -1,7 +1,7 @@
 
 import subprocess
 import threading
-import logging
+import log as logging
 import time
 import sys
 import os

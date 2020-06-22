@@ -7,7 +7,6 @@ import re
 
 
 import subprocess
-import logging
 
 
 fg.orange = Style(RgbFg(255, 150, 50))

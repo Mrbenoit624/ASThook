@@ -1,7 +1,7 @@
 from static.ast import *
 from graphviz import Digraph
 import javalang
-from logging import debug, info
+from log import debug, info
 
 # TODO: Add Interface managing
 
