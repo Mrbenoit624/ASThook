@@ -212,6 +212,10 @@ class DynamicAnalysis:
                     if extcall.external_call(['adb', 'remount']) == 0:
                         break
 
+            if self.__device.set_root() == 1:
+                logging.error("Phone didn't root. Please root it before")
+                sys.exit(1)
+
             if not args.noinstall:
                 self.install_apk(args.app)
 

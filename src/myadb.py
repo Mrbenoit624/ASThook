@@ -1,5 +1,6 @@
 from ppadb.client import Client as AdbClient
 #from adb_shell.adb_device import AdbDeviceTcp
+from log import debug, warning
 import subprocess
 
 class my_adb:
@@ -23,12 +24,22 @@ class my_adb:
     class device:
         
         device = None
+        need_su = False
 
         def __init__(self, device):
             self.device = device
 
         def shell(self, arg):
+            if self.need_su:
+                return self.device.shell(f"su 0 {arg}")
             return self.device.shell(arg)
+
+        def set_root(self):
+            if not self.shell("id")[4] == "0":
+                if not self.shell("su 0 id")[4] == "0":
+                    return 1
+                self.need_su = True
+            return 0
 
         def spawn(self, arg):
             return self.shell("monkey -p %s -c android.intent.category.LAUNCHER 1" %

@@ -11,7 +11,7 @@ static:
   
 dynamic:
   - sdktools: "/usr/lib/android-sdk"
-  - phone: "Pixel_3a_XL_API_22"
+  - phone: "phone_audit2"
   - proxy: "127.0.0.1:8080"
   - proxy_cert: "misc/burp.der"
 
