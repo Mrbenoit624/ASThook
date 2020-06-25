@@ -4,7 +4,7 @@ pages:
   script:
     - pip install -r docs/requirements.txt
     - cd docs/ && make html
-    - mv _build/html public
+    - mv build/html public
   artifacts:
     paths:
       - public
