@@ -2,9 +2,9 @@ image: python:latest
 
 pages:
   script:
-    - pip install -r requirements.txt
+    - pip install -r requirement.txt
     - cd docs
-    - pip install -r requirements.txt
+    - pip install -r requirement.txt
     - make html
     - mv build/html ../public
   artifacts:
