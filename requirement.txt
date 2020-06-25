@@ -3,7 +3,7 @@ adb_shell
 pyyaml
 sty
 graphviz
-shutil
+shutils
 jinja2
 sklearn
 gitpython
