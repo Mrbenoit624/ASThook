@@ -19,11 +19,21 @@ Options needed to works are:
 
 - phone: is the name given by the avdmanager when you create the virtual phone
   to list your available phone:
+
 .. code-block:: bash
 
   <sdktools>/emulator/emulator -list-avds
+
 - sdktools: the path you should specify is the same where you install the
   sdktools during the `setup </how.install.html>`_
+
+.. note::
+
+  When a emulator is already launch. His beahvior is as a material devices
+
+
+.. asciinema:: emulator_as_material.cast
+
 
 On material
 ***********
@@ -31,9 +41,11 @@ On material
 Options needed to works are:
 
 - phone: is the name of your phone you can obtain it with 
+
 .. code-block:: bash
 
   adb devices
+
 - no-emulation: no parameter only to precise to not used the emulator
 
 Analyse an apk and its environment
