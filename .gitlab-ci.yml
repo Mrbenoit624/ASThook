@@ -1,6 +1,7 @@
 image: python:latest
 
 pages:
+  stage: deploy
   script:
     - pip3 install -r requirement.txt
     - cd docs
