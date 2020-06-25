@@ -1,0 +1,13 @@
+image: python:3.6-apline
+
+pages:
+  script:
+    - pip install -r docs/requirements.txt
+    - cd docs/ && make html
+    - mv _build/html public
+  artifacts:
+    paths:
+      - public
+  only:
+    - develop
+    - master
