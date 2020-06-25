@@ -1,13 +1,14 @@
 static:
   - tree: false
-  - tree_path: "/com/example"
+  - verbose: "info"
+  - tree_path: "/"
     #  - tree_path: "/"
 
   - gen_hook:
     - "TraceEvents.nativeDisableProviders"
-      #  - list_funcs: 
-      #    - '^.*'
-      #    - '^.*'
+  - list_funcs: 
+    - '^.*'
+    - '^.*'
       #  - list_funcs_call: 
       #    - '^.*'
       #    - '^.*'
@@ -42,6 +43,6 @@ dynamic:
     #  - proxy: "127.0.0.1:8080"
     #  - proxy_cert: "misc/burp.der"
 
-  - sslpining: false
+  - sslpining: true
 
 

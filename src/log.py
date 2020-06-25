@@ -114,5 +114,8 @@ def debug(msg):
 def info(msg):
     logging.getLogger("phone_analysis").info(msg)
 
+def warning(msg):
+    logging.getLogger("phone_analysis").warning(msg)
+
 def error(msg):
     logging.getLogger("phone_analysis").error(msg)

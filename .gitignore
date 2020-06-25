@@ -4,3 +4,7 @@ __pycache__
 *.zip
 *.log
 *.class
+taint
+dot
+bordel
+temp

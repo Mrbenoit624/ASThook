@@ -1,0 +1,10 @@
+.wy-nav-content {
+  width:60%;
+  max-width:2000px;
+}
+
+@media screen and (max-width: 640px) {
+.wy-nav-content {
+  width:100%;
+}
+}
