@@ -46,6 +46,7 @@ code and create some hook on each interesting node of the APK
   com and /com/ seek directory
 
 .. asciinema:: tree_analysis.cast
+  :preload:
 
 Display AST
 ***********

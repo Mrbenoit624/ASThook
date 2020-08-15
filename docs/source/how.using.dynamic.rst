@@ -33,6 +33,7 @@ Options needed to works are:
 
 
 .. asciinema:: emulator_as_material.cast
+  :preload:
 
 
 On material
@@ -47,6 +48,37 @@ Options needed to works are:
   adb devices
 
 - no-emulation: no parameter only to precise to not used the emulator
+
+Keep your environment safe
+##########################
+
+If your environment is already setup, you can avoid to reinstall the apk with
+option `--noinstall` and if you use an emultor option `--no_erase` avoid the
+default processing which clean the environment of the phone when you launch it.
+
+.. code-block:: bash
+
+  python3 src/asthook.py --config config.yaml --no_erase --noinstall
+
+Intercep https traffic with a proxy
+###################################
+
+To intercept the https traffic you can pass the parameters:
+
+- `--proxy <address>:<port>` with address of the proxy
+- `--proxy_cert <cert.der>` with the CA certificate of the proxy with der format
+
+  For instance if you want to download your certificate and you used Burp:
+
+  - On your computer with Burp running, visit http://burpsuite and click the
+    "CA Certificate" link. Save the certificate file on your computer.
+
+  .. figure:: images/burp_cacert.png
+    :align: center
+    :alt: alternate text
+    :figclass: align-center
+
+
 
 Analyse an apk and its environment
 ##################################

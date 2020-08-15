@@ -20,7 +20,7 @@ numpydoc_class_members_toctree=True
 
 # -- Project information -----------------------------------------------------
 
-project = 'app_phone_analysis'
+project = 'Asthook'
 copyright = '2020, Forgette Benoit (MadSquirrel)'
 author = 'Forgette Benoit (MadSquirrel)'
 
@@ -58,3 +58,9 @@ html_css_files = [
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
+
+html_logo = "images/logo.png"
+html_theme_options = {
+    'logo_only': True,
+    'display_version': False,
+}

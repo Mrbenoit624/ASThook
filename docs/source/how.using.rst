@@ -6,7 +6,7 @@ Usage:
 ######
 ::
 
-  usage: analysis.py [-h] [--config_xxhdpi CONFIG_XXHDPI]
+  usage: asthook.py [-h] [--config_xxhdpi CONFIG_XXHDPI]
                      [--verbose {debug,info,warning}] [--verbose_position]
                      [--config CONFIG [CONFIG ...]]
                      [--restore_output RESTORE_OUTPUT [RESTORE_OUTPUT ...]]
@@ -172,6 +172,7 @@ If you don't specify option verbose only errors will be show to you
 - warning: show behavior no expected but with no incidence on your analyse
 
 .. asciinema:: verbose.cast
+  :preload:
 
 Export Output and reinject previous analyse
 ###########################################
@@ -183,9 +184,11 @@ precise the `--output-file <file>` to store it in a file.
 If you extract it in json is possible to reinject the previous analysis on the
 tool to speed up the new analysis thanks to `--restore_output <file>`.
 
+Output and input configuration files
+#####################################
 
-Load a config file and work in community
-########################################
+Load a config file and work with your team
+*******************************************
 
 To avoid a big command line is possible to create one or some yaml file will
 load parameters used for the analysis.
@@ -216,20 +219,39 @@ In commandline this should be:
 
 .. code-block:: bash
 
-  python3 src/analysis.py example.apk --config config.yaml
+  python3 src/asthook.py example.apk --config config.yaml
   #
   # before:
   #
-  python3 src/analysis.py example.apk --tree --tree_path /com/ --gen_hook "TraceEvents.nativeDisableProviders" --list_funcs '^.*' '^.*' --sdktools "/usr/lib/android-sdk" --phone "phone_audit2" --proxy "127.0.0.1:8080" --proxy_cert "misc/burp.der" --sslpining
+  python3 src/asthook.py example.apk --tree --tree_path /com/ --gen_hook "TraceEvents.nativeDisableProviders" --list_funcs '^.*' '^.*' --sdktools "/usr/lib/android-sdk" --phone "phone_audit2" --proxy "127.0.0.1:8080" --proxy_cert "misc/burp.der" --sslpining
 
 You can prepare different files and load it all together:
 
+
 .. code-block:: bash
   
-  python3 src/analysis.py example.apk --config config.yaml config2.yaml
+  python3 src/asthook.py example.apk --config config.yaml config2.yaml
 
 So it's possible to share a config file for an analyisis and load it with these
 personal files.
+
+Export analysis
+***************
+
+To export your analysis 
+--output {none,json}
+--output-file OUTPUT_FILE
+
+Reuse previous analysis or external information
+************************************************
+
+To reuse a previous analysis on a new analysis or if you want to inject some
+data in you can use `restore_output` option. this option will take a json file
+in output (the same structure).
+
+.. code-block:: bash
+
+  python3 src/asthook.py --restore_output myoutput.json
 
 SDKTOOLS
 ########
@@ -251,12 +273,12 @@ pass it on arguments like that:
 
 .. code-block:: bash
 
-  python3 src/analysis.py example.apk --config_xxhdpi file.xxhdpi
+  python3 src/asthook.py example.apk --config_xxhdpi file.xxhdpi
 
 
 .. code-block:: bash
 
-  python3 src/analysis.py example.apk --env_apks apk1.apk apk2.apk
+  python3 src/asthook.py example.apk --env_apks apk1.apk apk2.apk
 
 Static Mode
 ===========
