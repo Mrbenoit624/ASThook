@@ -138,13 +138,13 @@ Advise
 
 .. code-block:: bash
 
-  python3 src/analysis <apk> --decompiler <decompiler>
+  python3 src/asthook.py <apk> --decompiler <decompiler>
 
 example:
 
 .. code-block:: bash
 
-  python3 src/analysis example.apk --decompiler cfr
+  python3 src/asthook.py example.apk --decompiler cfr
 
 On this example the tool create on `temp` the directory `example.apk`:
 
@@ -162,7 +162,7 @@ Option verbose is really useful when tool didn't works as expected
 
 .. code-block:: bash
 
-  python3 src/analysis example.apk --verbose {debug, info, warning}
+  python3 src/asthook.py example.apk --verbose {debug, info, warning}
 
 If you don't specify option verbose only errors will be show to you
 
