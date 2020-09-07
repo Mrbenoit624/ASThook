@@ -9,13 +9,13 @@ Welcome to ASTHOOK's documentation!
 ==============================================
 
 
-asthook is another tools to analyze APK.
+asthook is another tools to analyze APK.  
 This tools can make a static analysis and dynamic analysis.
 
 At first to works the tools need to decompile and prepare the apk on the
 directory `temp/<apk>`. You will can found on this directory a the apk
 decompiled and some stuff put here by some plugins like wireshark trace or apk
-poc built.
+poc built.  
 
 The static analysis will transform the apk on a AST (Abstract Syntaxical Tree)
 and do a Deth-First Search to analyse all function/variables etc.

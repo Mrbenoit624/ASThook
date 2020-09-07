@@ -1,5 +1,5 @@
 ============
-How to Using
+How to Use
 ============
 
 Usage:
@@ -247,7 +247,8 @@ Reuse previous analysis or external information
 
 To reuse a previous analysis on a new analysis or if you want to inject some
 data in you can use `restore_output` option. this option will take a json file
-in output (the same structure).
+with the same structure as in output.
+
 
 .. code-block:: bash
 
