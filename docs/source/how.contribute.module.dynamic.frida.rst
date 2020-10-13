@@ -8,7 +8,7 @@ This module allow user to interact with the frida server installed on device.
 
  from dynamic.module.register import ModuleDynamicCmd
 
- @ModuleDynamicCmd("sslpining", "bypass all sslpining", bool)
+ @ModuleDynamicCmd("sslpinning", "bypass all sslpinning", bool)
  class SSLpinning:
      def __init__(self, frida, device, tmp_dir, args):
          self.__frida = frida

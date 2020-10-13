@@ -4,6 +4,7 @@ import time
 import os
 import sys
 from subprocess import Popen, DEVNULL
+from log import error
 
 from utils import extcall
 
@@ -46,7 +47,18 @@ class Frida:
                 self.__server = device
     
     def attach(self, pid=None):
-        self.__session = self.__server.attach(pid if pid else self.__package)
+        try:
+            self.__session = self.__server.attach(pid if pid else self.__package)
+        except frida.NotSupportedError as e:
+            print(str(e))
+            sys.exit(1)
+        except frida.ServerNotRunningError as e:
+            print(str(e))
+            error("Becareful you use a frida-server for the wrong architecture\n"
+                    "go to https://github.com/frida/frida/releases and download\n"
+                    "the good one and then replace the file /bin/frida-server\n"
+                    "on the Asthook folder\n")
+            sys.exit(1)
 
     def spawn(self, arg):
         self.__pid = self.__server.spawn(self.__package)

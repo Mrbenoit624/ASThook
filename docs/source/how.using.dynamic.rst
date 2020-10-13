@@ -35,6 +35,22 @@ Options needed to works are:
 .. asciinema:: emulator_as_material.cast
   :preload:
 
+.. warning::
+   Becareful when you create your virtual phone I advise to choose a phone
+   without google API to have a phone already rooted.
+
+.. warning::
+   If the device exist but the error no device found appear:
+
+   I advise you to active verbose info:
+   The following line can be display:
+
+   - emulator: ERROR: Running multiple emulators with the same AVD is an experimental feature.
+   To fix it you should probably:
+     - check if an other instance is running
+     - remove the lock file in ~/.android/avd/<avd_name>.avd/
+   
+
 
 On material
 ***********

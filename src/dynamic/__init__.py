@@ -119,7 +119,7 @@ class DynamicAnalysis:
             except InstallError as e:
                 if "Is the system running" in str(e):
                     continue
-                elif "[INSTALL_FAILED_TEST_ONLY]" in str(e):
+                elif "INSTALL_FAILED_TEST_ONLY" in str(e):
                     logging.warning("becareful install as test")
                     #subprocess.call(['adb', 'install', '-t', apk],
                     #        stdout=Log.STD_OUTPOUT, stderr=Log.STD_ERR, shell=False)
@@ -133,6 +133,15 @@ class DynamicAnalysis:
                 elif "[INSTALL_FAILED_OLDER_SDK]" in str(e):
                     sys.stderr.write("APK need an Android platform more recent\n")
                     sys.exit(1)
+                elif "[[INSTALL_FAILED_ALREADY_EXISTS:" in str(e):
+                    logging.warning("application already exist reinstallation of " + self.__package)
+                    self.__device.uninstall(self.__package)
+                elif "INSTALL_FAILED_OLDER_SDK" in str(e):
+                    logging.error("Android Phone use a too older sdk")
+                    sys.exit(2)
+                elif "INSTALL_FAILED_NO_MATCHING_ABIS" in str(e):
+                    logging.error("Android Phone run on not matching architecture (arm/x86)")
+                    sys.exit(3)
                 else:
                     logging.warning(str(e))
 

@@ -5,7 +5,7 @@ For a dynamic module you need to use the decorator `@ModuleDynamicCmd`
 
 .. code-block:: python
 
-  @ModuleDynamicCmd("sslpining", "bypass all sslpining", bool)
+  @ModuleDynamicCmd("sslpinning", "bypass all sslpinning", bool)
 
 The following example show how to make a basic module
 
@@ -13,7 +13,7 @@ The following example show how to make a basic module
 
  from dynamic.module.register import ModuleDynamicCmd
 
- @ModuleDynamicCmd("sslpining", "bypass all sslpining", bool)
+ @ModuleDynamicCmd("sslpinning", "bypass all sslpinning", bool)
  class SSLpinning:
      def __init__(self, frida, device, tmp_dir, args):
          self.__frida = frida
@@ -22,7 +22,7 @@ The following example show how to make a basic module
 
      def __del__(self):
          self.__frida.unload(self.__sc)
-         print("ssl pining unloaded")
+         print("ssl pinning unloaded")
 
 The constructor of the class give access to:
 

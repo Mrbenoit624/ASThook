@@ -898,14 +898,14 @@ class TaintElt:
             nodes = cls._nodes
         if type(nodes) is dict:
             for k, v in nodes.items():
-                print("%s%s" % ("\t"* layers, k))
+                debug("%s%s" % ("\t"* layers, k))
                 cls.print(v, layers+1)
         elif type(nodes) is str:
-            print("%s%s" % ("\t"* layers, nodes))
+            debug("%s%s" % ("\t"* layers, nodes))
         else:
             for k in reversed(nodes):
                 #print("%s%s" % ("\t"* layers, ", ".join([str(e) for e in k])))
-                print("%s%s" % ("\t"* layers, cls.scope_print(k)))
+                debug("%s%s" % ("\t"* layers, cls.scope_print(k)))
 
 
     @classmethod

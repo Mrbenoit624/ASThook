@@ -35,8 +35,8 @@ if __name__ == '__main__':
 
     banner()
     license()
-    import time
-    time.sleep(1)
+    #import time
+    #time.sleep(1)
 
     parser = parser.parser()
     args = parser.parse_args()

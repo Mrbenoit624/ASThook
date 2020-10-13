@@ -29,7 +29,7 @@ Usage:
                      [--no-emulation] [--noinstall] [--proxy PROXY]
                      [--proxy_cert PROXY_CERT] [--no_erase]
                      [--nativehook NATIVEHOOK [NATIVEHOOK ...]] [--files_store]
-                     [--quickhook [QUICKHOOK [QUICKHOOK ...]]] [--sslpining]
+                     [--quickhook [QUICKHOOK [QUICKHOOK ...]]] [--sslpinning]
                      [--files_del]
                      app
   
@@ -110,7 +110,7 @@ Usage:
     --files_store         store all files read or written by application
     --quickhook [QUICKHOOK [QUICKHOOK ...]]
                           give a list a js file to hook
-    --sslpining           bypass all sslpining
+    --sslpinning           bypass all sslpinning
     --files_del           prevent all files deleted
 
 
@@ -213,7 +213,7 @@ an example of yaml file `config.yaml`
     - proxy: "127.0.0.1:8080"
     - proxy_cert: "misc/burp.der"
   
-    - sslpining: true
+    - sslpinning: true
 
 In commandline this should be:
 
@@ -223,7 +223,7 @@ In commandline this should be:
   #
   # before:
   #
-  python3 src/asthook.py example.apk --tree --tree_path /com/ --gen_hook "TraceEvents.nativeDisableProviders" --list_funcs '^.*' '^.*' --sdktools "/usr/lib/android-sdk" --phone "phone_audit2" --proxy "127.0.0.1:8080" --proxy_cert "misc/burp.der" --sslpining
+  python3 src/asthook.py example.apk --tree --tree_path /com/ --gen_hook "TraceEvents.nativeDisableProviders" --list_funcs '^.*' '^.*' --sdktools "/usr/lib/android-sdk" --phone "phone_audit2" --proxy "127.0.0.1:8080" --proxy_cert "misc/burp.der" --sslpinning
 
 You can prepare different files and load it all together:
 

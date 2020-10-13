@@ -480,6 +480,12 @@ class ast:
             return self.__class__.__name__ + " : " + self.elt.declarators[0].name
 
         def apply(self, selfp):
+            for elt in self.elt.declarators:
+                if type(elt) is javalang.tree.VariableDeclarator:
+                    selfp.VariableDeclarator(elt, self).visit(selfp)
+                else:
+                    if selfp.args.debug_ast:
+                        logging.error("%s - %s" % (self.__class__.__name__, type(elt)))
             pass
             # No body
             #print(self.elt.__dict__)
@@ -551,6 +557,10 @@ class ast:
                     logging.error("%s - %s" % (self.__class__.__name__, type(elt)))
 
     class LocalVariableDeclaration(BaseNode):
+
+        def getName(self):
+            #print(self.elt)
+            return self.__class__.__name__ + " : " + self.elt.type.name
 
         def apply(self, selfp):
             #print(self.elt.type.name)
@@ -895,6 +905,7 @@ class ast:
             return self.__class__.__name__ + " : " + qualifier + self.elt.member
 
         def apply(self, selfp):
+            #logging.debug(self.elt)
             if self.elt.selectors:
                 for elt in self.elt.selectors:
                     if type(elt) is javalang.tree.MethodInvocation:
@@ -933,10 +944,6 @@ class ast:
                 if selfp.args.debug_ast:
                     logging.error("%s - %s" % (self.__class__.__name__, type(elt)))
 
-    class MemberReference(BaseNode):
-
-        def apply(self, selfp):
-            self = self
 
     class Assignment(BaseNode):
         
@@ -1035,16 +1042,35 @@ class ast:
             return self.__class__.__name__ + " : " +self.elt.type.name
 
         def apply(self, selfp):
-            if self.elt.body == None:
-                return # TODO: Fix bug None
-            for elt in self.elt.body:
-                if type(elt) is javalang.tree.MethodDeclaration:
-                    selfp.MethodDeclaration(elt, self).visit(selfp)
-                elif type(elt) is javalang.tree.FieldDeclaration:
-                    selfp.FieldDeclaration(elt, self).visit(selfp)
-                else:
-                    if selfp.args.debug_ast:
-                        logging.error("%s - %s" % (self.__class__.__name__, type(elt)))
+            if self.elt.body:
+                for elt in self.elt.body:
+                    if type(elt) is javalang.tree.MethodDeclaration:
+                        selfp.MethodDeclaration(elt, self).visit(selfp)
+                    elif type(elt) is javalang.tree.FieldDeclaration:
+                        selfp.FieldDeclaration(elt, self).visit(selfp)
+                    else:
+                        if selfp.args.debug_ast:
+                            logging.error("%s - %s" % (self.__class__.__name__, type(elt)))
+            for elt in self.elt.arguments:
+                selfp.ClassCreatorParameters(elt, self).visit(selfp)
+    
+    class ClassCreatorParameters(BaseNode):
+        
+        #def getName(self):
+        #    return self.__class__.__name__ + " : " +self.elt.value
+
+        def apply(self, selfp):
+            elt = self.elt
+            if type(elt) is javalang.tree.ClassCreator:
+                selfp.ClassCreator(elt, self).visit(selfp)
+            elif type(elt) is javalang.tree.BinaryOperation:
+                selfp.BinaryOperation(elt, self).visit(selfp)
+            elif type(elt) is javalang.tree.MethodInvocation:
+                selfp.MethodInvocation(elt, self).visit(selfp)
+            else:
+                if selfp.args.debug_ast:
+                    logging.error("%s - %s" % (self.__class__.__name__, type(elt)))
+
 
     class SwitchStatement(BaseNode):
 
