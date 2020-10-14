@@ -880,7 +880,7 @@ class TaintElt:
                                         f"{sc.id()}_{sc.get()}",
                                         f"{e.id()}_{e.get()}",
                                         color="blue")
-        dot.render("taint/Taint")
+        #dot.render("taint/Taint")
 
                     #print("%s%s" % ("\t"* layers, ", ".join([str(e) for e in k])))
                     #print("%s%s" % ("\t"* layers, cls.scope_print(k)))

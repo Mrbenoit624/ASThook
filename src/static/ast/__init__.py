@@ -1031,6 +1031,8 @@ class ast:
                     selfp.MethodInvocation(elt, self).visit(selfp)
                 elif type(elt) is javalang.tree.MemberReference:
                     selfp.MemberReference(elt, self).visit(selfp)
+                elif type(elt) is javalang.tree.ArraySelector:
+                    selfp.ArraySelector(elt, self).visit(selfp)
                 else:
                     if selfp.args.debug_ast:
                         logging.error("%s - %s" % (self.__class__.__name__, type(elt)))
@@ -1067,6 +1069,16 @@ class ast:
                 selfp.BinaryOperation(elt, self).visit(selfp)
             elif type(elt) is javalang.tree.MethodInvocation:
                 selfp.MethodInvocation(elt, self).visit(selfp)
+            elif type(elt) is javalang.tree.Literal:
+                selfp.Literal(elt, self).visit(selfp)
+            elif type(elt) is javalang.tree.MemberReference:
+                selfp.MemberReference(elt, self).visit(selfp)
+            elif type(elt) is javalang.tree.MemberReference:
+                selfp.MemberReference(elt, self).visit(selfp)
+            elif type(elt) is javalang.tree.This:
+                selfp.This(elt, self).visit(selfp)
+            elif type(elt) is javalang.tree.Cast:
+                selfp.Cast(elt, self).visit(selfp)
             else:
                 if selfp.args.debug_ast:
                     logging.error("%s - %s" % (self.__class__.__name__, type(elt)))
@@ -1204,6 +1216,12 @@ class ast:
     class ArrayInitializer(BaseNode):
 
         def apply(self, selfp):
+            for elt in self.elt.initializers:
+                if type(elt) is javalang.tree.Literal:
+                    selfp.Literal(elt, self).visit(selfp)
+                else:
+                    if selfp.args.debug_ast:
+                        logging.error("%s - %s" % (self.__class__.__name__, type(elt)))
             pass
 
     class ArraySelector(BaseNode):
@@ -1243,6 +1261,10 @@ class ast:
                 selfp.This(elt, self).visit(selfp)
             elif type(elt) is javalang.tree.ArrayCreator:
                 selfp.ArrayCreator(elt, self).visit(selfp)
+            elif type(elt) is javalang.tree.ArrayInitializer:
+                selfp.ArrayInitializer(elt, self).visit(selfp)
+            elif type(elt) is javalang.tree.Assignment:
+                selfp.Assignment(elt, self).visit(selfp)
             else:
                 if selfp.args.debug_ast:
                     logging.error("%s - %s" % (self.__class__.__name__, type(elt)))
