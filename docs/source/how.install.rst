@@ -25,7 +25,7 @@ that:
 .. code-block:: bash
 
   cd <sdktools>
-  tools/bin/sdkmanager "platform-tools" "platforms;android-R" "build-tools;30.0.0-rc4" "emulator" --sdk_root=.
+  tools/bin/sdkmanager "platform-tools" "platforms;android-29" "build-tools;30.0.2" "emulator" --sdk_root=.
 
 .. warning::
 

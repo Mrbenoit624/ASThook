@@ -9,8 +9,24 @@ Welcome to ASTHOOK's documentation!
 ==============================================
 
 
-asthook is another tools to analyze APK.  
-This tools can make a static analysis and dynamic analysis.
+Asthook allows to make a static analysis and a dynamic analysis of application
+content. The great advantage of this tool is its modularity and the possibility
+of teamwork. This tool brings 2 functionalities rarely highlighted is
+the automated creation of APK for POC, as well as the syntax and tint analysis
+of the source code.
+
+Many plug-ins allowing to analyze the application are already present such as :
+  - The search for literals in the source code
+  - Lists the set of read and write functions on the file system.
+  - The search for exploitable vulnerable Intent and generation of an apk poc
+  - The list of all user entry points
+  - The function search called in the apk
+  - Function search in the apk
+  - Automatic generation of a hook on a function
+  - Automatic installation of the certificate
+  - Automated bypass of SLL pinning
+  - Recovery of deleted files
+  - Etc.
 
 At first to works the tools need to decompile and prepare the apk on the
 directory `temp/<apk>`. You will can found on this directory a the apk

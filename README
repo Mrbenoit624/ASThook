@@ -7,100 +7,45 @@
 ================================= GENERAL INFO =================================
 
 
-  Project: Static and Dynamic app phone analysis
-  Contributors: MadSquirrel
+  Project: Asthook
+  Contributors: MadSquirrels
   License: GNU General Public License v3.0
   Version: v1.0
   Date: 02-16-20
 
 
-  
-
-
 ===================================== GOAL =====================================
 
-  Automatized the analysis of an application
+Asthook allows to make a static analysis and a dynamic analysis of application
+content. The great advantage of this tool is its modularity and the possibility
+of teamwork. This tool brings 2 functionalities rarely highlighted is
+the automated creation of APK for POC, as well as the syntax and tint analysis
+of the source code.
+
+Many plug-ins allowing to analyze the application are already present such as :
+  - The search for literals in the source code
+  - Lists the set of read and write functions on the file system.
+  - The search for exploitable vulnerable Intent and generation of an apk poc
+  - The list of all user entry points
+  - The function search called in the apk
+  - Function search in the apk
+  - Automatic generation of a hook on a function
+  - Automatic installation of the certificate
+  - Automated bypass of SLL pinning
+  - Recovery of deleted files
+  - Etc.
 
 
-===================================== USAGE ====================================
+================================ READ THE DOCS =================================
 
-usage: analysis.py [-h] [--emulator EMULATOR] [--phone PHONE] [--proxy PROXY]
-                   [--proxy_cert PROXY_CERT]
-                   app
+  To see how to install and how to use follow this link:
+  https://madsquirrels.gitlab.io/mobile/asthook/
 
-Analysis for smartphone
-
-positional arguments:
-  app                   app target <filename.apk>
-
-optional arguments:
-  -h, --help            show this help message and exit
-
-dynamic:
-  --emulator EMULATOR   path of the emulator if used
-  --phone PHONE         phones target emulator -list-avds
-  --proxy PROXY         setup proxy address <ip>:<port>
-  --proxy_cert PROXY_CERT
-                        setup proxy address <filename>.cer
-  --files_store         store all files read or written by application
-
-
-=================================== EXEMPLE ====================================
-
-python3 src/analysis.py <example>.apk --emulator ~/Android/Sdk/tools/ \
-        --phone Pixel_3a_XL_API_22 --proxy 127.0.0.1:8080 --proxy_cert burp.der
-
-# To list all emulator phone avaible
-emulator -list-avds
-
-================================= REQUIREMENT ==================================
-
-This project needed to use the sdktools the path is specify with the option
---sdktools <path>
-
-To install sdktools and the less extrathings you should download
-commandlinetools: https://developer.android.com/studio/index.html#command-tools
-
-```bash
-$ wget https://dl.google.com/android/repository/commandlinetools-linux-6200805_latest.zip
-$ mkdir <sdktoolspath>
-$ cd <sdktoolspath>
-$ unzip commandlinetools-linux-6200805_latest.zip
-```
-
-To list all package available:
-```bash
-$ tools/bin/sdkmanager --list --sdk_root=.
-```
-
-Install the minimum with the correct version when I written that it's look like
-that:
-
-```bash
-tools/bin/sdkmanager "platforms;android-R" "build-tools;30.0.0-rc4" "emulator" --sdk_root=.
-```
-
-To use jadx decompiler:
-```
-cd src/submodule/jadx
-./gradlew dist
-```
-
-
-
-===================================== BUG ======================================
-
-```
-  ioctl(KVM_CREATE_VM) failed: 16 Device or resource busy
-  qemu-system-i386: failed to initialize KVM: Device or resource busy
-``̀`
-This appear happend certainly because an other hypervisor is running
-
-Render in pdf complicated ``xpdf'' is a good tools to display big pdf
-
-=================================== CHANGELOG ==================================
-
-
-  ##FIXME##
+  If you want to know how to install it and use it in local follow this
+  instructions:
+    - cd docs
+    - pip3.7 install -r requirement.txt
+    - make render
+    - open your browser and go to 127.0.0.1:8000
 
 
