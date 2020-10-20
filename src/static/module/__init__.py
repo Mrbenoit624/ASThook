@@ -13,7 +13,7 @@ class ModuleStatic:
     """
     def __init__(self, package, tmp_dir, args):
         self.__package = package
-        for name, desc, func, action, nargs in get_static_modules():
+        for name, desc, func, action, nargs, choices in get_static_modules():
             if name in args.__dict__ and \
                     (args.__dict__[name] or args.__dict__[name] == []):
                 func(package, tmp_dir, args)

@@ -2,7 +2,7 @@
 from static.module.register import ModuleStaticCmd
 from utils import Output
 
-@ModuleStaticCmd("vuln_intent", "found vuln intent", str)
+@ModuleStaticCmd("vuln_intent", "found vuln intent", str, choices=["normal", "poc"])
 class Tree:
     """
     Class VulnIntent to found vulnerable intent

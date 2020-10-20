@@ -75,7 +75,7 @@ def ExtraDetect(elt, parent):
        func = None
        if elt.selectors:
            func = elt.selectors[0]
-       elif parent.elt.selectors:
+       elif "selectors" in parent.elt and parent.elt.selectors:
            i = parent.elt.selectors.index(self.elt)
            if i + 1 < len(parent.elt.selectors):
                func = parent.elt.selectors[i+1]
