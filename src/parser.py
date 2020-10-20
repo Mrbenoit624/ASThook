@@ -106,7 +106,7 @@ def parser():
 
     group = parser.add_argument_group('static')
 
-    for name, desc, func, action, nargs in get_static_modules():
+    for name, desc, func, action, nargs, choices in get_static_modules():
         if action == bool:
             group.add_argument(
                     "--%s" % name,
@@ -117,13 +117,15 @@ def parser():
                 group.add_argument(
                         "--%s" % name,
                         type=action,
-                        help=desc)
+                        help=desc,
+                        choices=choices)
             else:
                 group.add_argument(
                         "--%s" % name,
                         type=action,
                         nargs=nargs,
-                        help=desc)
+                        help=desc,
+                        choices=choices)
 
 
     group = parser.add_argument_group('core_dynamic')

@@ -63,30 +63,42 @@ class Frida:
     def spawn(self, arg):
         self.__pid = self.__server.spawn(self.__package)
         self.attach()
+        self.resume()
+        time.sleep(1)
 
     def resume(self):
         if self.__pid:
             self.__server.resume(self.__pid)
 
     def load(self, file, option, function = None):
-        try:
-            if len(file.split(" ")) > 1:
-                script = self.__session.create_script(file)
-            else:
-                f = open(file, "r")
-                script = self.__session.create_script(f.read())
-            if option == "print":
-                script.on('message', self.on_message_print)
-            if option == "store":
-                script.on('message', self.on_message_store)
-            if option == "custom":
-                script.on('message', function)
-            self.unload(file)
-            script.load()
-            self.List_files_loaded[file] = script
-        except frida.InvalidArgumentError as e:
-            print(str(e))
-            raise Exception("Your script js sucks!\n")
+        if len(file.split(" ")) > 1:
+            script = self.__session.create_script(file)
+        else:
+            f = open(file, "r")
+            script = self.__session.create_script(f.read())
+        if option == "print":
+            script.on('message', self.on_message_print)
+        if option == "store":
+            script.on('message', self.on_message_store)
+        if option == "custom":
+            script.on('message', function)
+        self.unload(file)
+        while True:
+            try:
+                script.load()
+                self.List_files_loaded[file] = script
+                break
+            except frida.InvalidArgumentError as e:
+                print(str(e))
+                raise Exception("Your script js sucks!\n")
+            except frida.TransportError as e:
+                print(str(e))
+                time.sleep(1)
+                # raise Exception("Error frida")
+            except frida.InvalidOperationError as e:
+                print(str(e))
+                time.sleep(1)
+
 
     def unload(self, file):
         if file in self.List_files_loaded:
