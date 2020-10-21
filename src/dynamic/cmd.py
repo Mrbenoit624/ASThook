@@ -5,7 +5,7 @@ from .module.register import get_dynamic_modules
 import os
 
 class DynCmd(cmd.Cmd):
-    prompt = "frida >"
+    prompt = "asthook >"
 
     def __init__(self, modules, device, frida, args):
         super().__init__()

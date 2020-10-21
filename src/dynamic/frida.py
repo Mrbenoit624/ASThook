@@ -4,7 +4,7 @@ import time
 import os
 import sys
 from subprocess import Popen, DEVNULL
-from log import error
+from log import error, info
 
 from utils import extcall
 
@@ -26,13 +26,26 @@ class Frida:
         if message['type'] == 'send':
             self.__store.append(message['payload'])
 
+    def check_abi(self):
+        abi = self.__device.shell("getprop ro.product.cpu.abi")[:-1]
+        if abi[0:3] == "arm":
+            if abi[3:5] == "64":
+                abi = "arm64"
+            else:
+                abi = "arm"
+        info(f"abi = {abi}")
+        return abi
+
+
     def __init__(self, device, package):
         self.__device = device
         self.__package = package
         self.__session = None
         self.__store = []
 
-        self.__device.push("bin/frida-server", "/data/local/tmp/frida-server")
+        self.__abi = self.check_abi()
+
+        self.__device.push(f"bin/frida-server_{self.__abi}", "/data/local/tmp/frida-server")
         self.__device.push("bin/Frida.zip", "/data/local/tmp/Frida.zip")
         self.__device.shell("chmod 700 /data/local/tmp/frida-server")
         null = sys.stdout

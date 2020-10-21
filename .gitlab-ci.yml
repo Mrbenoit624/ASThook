@@ -1,9 +1,22 @@
 image: "python:3.7"
 
+stages:
+  - setup
+  - deploy
+
+setup:
+  stage: setup
+  script:
+    - pip3 install -r requirement.txt
+    - ./bootstrap
+  only:
+    - develop
+    - master
+
+
 pages:
   stage: deploy
   script:
-    - pip3 install -r requirement.txt
     - cd docs
     - pip3 install -r requirement.txt
     - make html
@@ -11,6 +24,14 @@ pages:
   artifacts:
     paths:
       - public
+  only:
+    - develop
+    - master
+
+testsuite:
+  stage: deploy
+  script:
+    - python src/asthook.py --help
   only:
     - develop
     - master

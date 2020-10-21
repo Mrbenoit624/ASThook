@@ -8,6 +8,7 @@ To install all dependencies you should use:
    git clone --recursive -j8 https://gitlab.com/MadSquirrels/mobile/asthook.git
    cd asthook
    pip3 install -r requirement.txt
+   ./bootstrap.sh
    apt install apktool
 
 Setup sdktools:

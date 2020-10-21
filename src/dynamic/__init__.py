@@ -147,7 +147,7 @@ class DynamicAnalysis:
 
     def __init__(self, package, args, tmp_dir):
 
-        if not args.sdktools or not args.phone:
+        if ( not args.sdktools and not args.no_emulation ) or not args.phone:
             return
 
         self.__package = package
