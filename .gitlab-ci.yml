@@ -1,17 +1,13 @@
-image: "python:3.7"
+image: "debian:buster"
 
 stages:
-  - setup
   - deploy
 
-setup:
-  stage: setup
-  script:
-    - pip3 install -r requirement.txt
-    - ./bootstrap
-  only:
-    - develop
-    - master
+
+before_script:
+  - apt-get update -qq
+  - apt install -y -qq python3 python3-pip wget git
+  - pip3 install -r requirement.txt
 
 
 pages:
@@ -31,7 +27,8 @@ pages:
 testsuite:
   stage: deploy
   script:
-    - python src/asthook.py --help
+    - ./bootstrap.sh
+    - python3 src/asthook.py --help
   only:
     - develop
     - master

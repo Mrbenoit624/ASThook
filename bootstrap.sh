@@ -1,5 +1,5 @@
 # !/bin/bash
-
+set -x
 # setup frida-server
 
 VERSION_FRIDA="12.11.18"

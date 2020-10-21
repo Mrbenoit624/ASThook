@@ -10,3 +10,4 @@ gitpython
 javalang
 apk2java
 frida
+requests

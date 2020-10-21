@@ -8,3 +8,6 @@ taint
 dot
 bordel
 temp
+bin/frida-server*
+misc
+docs/build/
