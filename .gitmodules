@@ -1,6 +1,6 @@
 [submodule "src/submodule/apkx"]
 	path = src/submodule/apkx
-	url = git@github.com:b-mueller/apkx.git
+	url = https://github.com/b-mueller/apkx.git
 [submodule "src/submodule/jadx"]
 	path = src/submodule/jadx
 	url = https://github.com/skylot/jadx.git
