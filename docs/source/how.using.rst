@@ -7,32 +7,32 @@ Usage:
 ::
 
   usage: asthook.py [-h] [--config_xxhdpi CONFIG_XXHDPI]
-                     [--verbose {debug,info,warning}] [--verbose_position]
-                     [--config CONFIG [CONFIG ...]]
-                     [--restore_output RESTORE_OUTPUT [RESTORE_OUTPUT ...]]
-                     [--output {none,json}] [--output-file OUTPUT_FILE]
-                     [--sdktools SDKTOOLS] [--tree]
-                     [--tree_path TREE_PATH [TREE_PATH ...]]
-                     [--tree_exclude TREE_EXCLUDE [TREE_EXCLUDE ...]]
-                     [--decompiler {none,jd-gui,cfr,procyon,fernflower,jadx}]
-                     [--no_cache] [--progress] [--graph_ast] [--debug_ast]
-                     [--seek_literal SEEK_LITERAL [SEEK_LITERAL ...]]
-                     [--cloud_analysis] [--taint] [--list_read_write]
-                     [--vuln_intent VULN_INTENT] [--test]
-                     [--vuln_data VULN_DATA] [--simplify_graph]
-                     [--provider PROVIDER] [--api_keys]
-                     [--list_funcs LIST_FUNCS LIST_FUNCS] [--user_input]
-                     [--gen_hook GEN_HOOK [GEN_HOOK ...]]
-                     [--list_funcs_call LIST_FUNCS_CALL LIST_FUNCS_CALL]
-                     [--types] [--basic_vulns] [--name_file]
-                     [--env_apks ENV_APKS [ENV_APKS ...]] [--phone PHONE]
-                     [--no-emulation] [--noinstall] [--proxy PROXY]
-                     [--proxy_cert PROXY_CERT] [--no_erase]
-                     [--nativehook NATIVEHOOK [NATIVEHOOK ...]] [--files_store]
-                     [--quickhook [QUICKHOOK [QUICKHOOK ...]]] [--sslpinning]
-                     [--files_del]
-                     app
-  
+                  [--verbose {debug,info,warning}] [--verbose_position]
+                  [--config CONFIG [CONFIG ...]]
+                  [--restore_output RESTORE_OUTPUT [RESTORE_OUTPUT ...]]
+                  [--output {none,json}] [--output-file OUTPUT_FILE]
+                  [--sdktools SDKTOOLS] [--version_android VERSION_ANDROID]
+                  [--tree] [--tree_path TREE_PATH [TREE_PATH ...]]
+                  [--tree_exclude TREE_EXCLUDE [TREE_EXCLUDE ...]]
+                  [--decompiler {none,jd-gui,cfr,procyon,fernflower,jadx}]
+                  [--no_cache] [--progress] [--graph_ast] [--debug_ast]
+                  [--seek_literal SEEK_LITERAL [SEEK_LITERAL ...]]
+                  [--cloud_analysis] [--taint] [--list_read_write]
+                  [--vuln_intent {normal,poc}] [--test] [--PathTraversal]
+                  [--vuln_data VULN_DATA] [--simplify_graph]
+                  [--provider PROVIDER] [--api_keys]
+                  [--list_funcs LIST_FUNCS LIST_FUNCS] [--user_input]
+                  [--gen_hook GEN_HOOK [GEN_HOOK ...]]
+                  [--list_funcs_call LIST_FUNCS_CALL LIST_FUNCS_CALL]
+                  [--types] [--basic_vulns] [--name_file]
+                  [--env_apks ENV_APKS [ENV_APKS ...]] [--phone PHONE]
+                  [--no-emulation] [--noinstall] [--proxy PROXY]
+                  [--proxy_cert PROXY_CERT] [--no_erase]
+                  [--nativehook NATIVEHOOK [NATIVEHOOK ...]] [--files_store]
+                  [--quickhook [QUICKHOOK [QUICKHOOK ...]]] [--sslpinning]
+                  [--files_del]
+                  app
+
   Analysis for smartphone
   
   positional arguments:
@@ -53,6 +53,11 @@ Usage:
     --output-file OUTPUT_FILE
     --sdktools SDKTOOLS   path of the sdktools for the emulation and some
                           android sdktools like the compilation of apk
+    --version_android VERSION_ANDROID
+                          version targeted to compile poc. don't forget to
+                          install the correct one: sdkmanager
+                          "platforms;android-XX" "build-tools;XX.Y.Z" where
+                          XX.Y.Z is version targeted
   
   core_static:
     --tree                Active syntaxical analyse
@@ -72,9 +77,10 @@ Usage:
     --cloud_analysis      verify firebaseio
     --taint               taint variable node
     --list_read_write     list all read and write on filesystem
-    --vuln_intent VULN_INTENT
+    --vuln_intent {normal,poc}
                           found vuln intent
     --test                test
+    --PathTraversal       For the demo
     --vuln_data VULN_DATA
                           found vuln intent deeplink
     --simplify_graph      Simplify the graph to remove all uselessnode
@@ -110,7 +116,7 @@ Usage:
     --files_store         store all files read or written by application
     --quickhook [QUICKHOOK [QUICKHOOK ...]]
                           give a list a js file to hook
-    --sslpinning           bypass all sslpinning
+    --sslpinning          bypass all sslpinning
     --files_del           prevent all files deleted
 
 

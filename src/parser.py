@@ -59,6 +59,14 @@ def parser():
             help='path of the sdktools for the emulation and some android sdk' \
             'tools like the compilation of apk')
 
+    parser.add_argument(
+            '--version_android',
+            type=str,
+            help='version targeted to compile poc.\n'
+            'don\'t forget to install the correct one:\n'
+            'sdkmanager "platforms;android-XX" "build-tools;XX.Y.Z"\n'
+            'where XX.Y.Z is version targeted')
+
     group = parser.add_argument_group('core_static')
 
     group.add_argument(

@@ -3,6 +3,7 @@ import shutil
 import subprocess
 from jinja2 import Template
 from pathlib import Path
+from log import warning
 
 class GenerateAPK:
 
@@ -21,16 +22,20 @@ class GenerateAPK:
         with open(self.__path + manifest.get_path(), 'w') as f:
             f.write(manifest.get_content())
 
-        if args.sdktools:
+        if args.sdktools and args.version_android:
             with open(self.__path + "/log.out", "w") as out:
                 with open(self.__path + "/log.err", "w") as err:
                     environ = os.environ
                     environ["SDK_TOOLS"] = args.sdktools
+                    environ["VERSION"] = args.version_android
                     proc = subprocess.Popen(['make', '-C', self.__path],
                             env=environ,
                             stdout=out,
                             stderr=err)
                     proc.wait()
+        else:
+            warning("APK was not build without sdktools and version_android")
+
 
 
 class JavaFile:
