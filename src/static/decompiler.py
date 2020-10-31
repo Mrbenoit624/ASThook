@@ -11,6 +11,13 @@ class Decompiler:
         if self.__args.decompiler == 'none' and \
                 os.path.exists(self.__dir_extract):
             return
+        if os.path.exists(self.__dir_extract):
+            print('This application was already decompiled do you want to '
+                  'decompiled again ? (y/N)', end=' ')
+            answer = input()
+            if not (answer.lower() == "y" or answer.lower() == "yes"):
+                return
+
         subprocess.call(["rm", "-rf", self.__dir_extract])
         if self.__args.config_xxhdpi:
             subprocess.call(["unzip", "-o", self.__args.config_xxhdpi, "-d",
