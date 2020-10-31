@@ -36,6 +36,8 @@ poc built.
 The static analysis will transform the apk on a AST (Abstract Syntaxical Tree)
 and do a Deth-First Search to analyse all function/variables etc.
 
+The link of the project https://gitlab.com/MadSquirrels/mobile/asthook
+
 How to
 ======
 

@@ -71,5 +71,16 @@ all plugins available here:
   static.module.*
 
 
+FAQ
+***
 
+When you use generate APK if you have this error:
+
+.. code-block:: bash
+
+  PARSE ERROR:
+  unsupported class file version XX
+
+You version of javac is not compatible with dx follow this guide should fix
+your issue : https://www.javahelps.com/2015/03/install-oracle-jdk-in-ubuntu.html
 
