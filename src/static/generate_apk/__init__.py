@@ -68,7 +68,7 @@ class GenerateAPK:
                             stderr=err)
                     proc.wait()
         else:
-            warning("APK was not build without sdktools and version_android")
+            warning("APK was not build becaus they missed sdktools and version_android")
 
 
 
