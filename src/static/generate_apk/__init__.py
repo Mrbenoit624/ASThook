@@ -19,10 +19,12 @@ class GenerateAPK:
                                 self.__base + "Makefile",
                                 {'version' : args.version_android,
                                  'sdktools': args.sdktools})
-            with open(self.__path + "Makefile", 'w') as f:
-                f.write(makefile.get_content())
         else:
-            shutil.copy(self.__base + "Makefile", self.__path + "Makefile")
+            makefile = JavaFile("Makefile",
+                                self.__base + "Makefile",
+                                {})
+        with open(self.__path + "Makefile", 'w') as f:
+            f.write(makefile.get_content())
 
 
         for javafile in javafiles:
