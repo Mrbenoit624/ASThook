@@ -2,6 +2,11 @@
 #VERSION=29.0.3
 # To use it outside the script add the ENV variable SDK_TOOLS
 #SDK_TOOLS=/usr/lib/android-sdk/
+
+{% if version|length %}VERSION={{ version }}{% endif %}
+{% if sdktools|length %}SDK_TOOLS={{ sdktools }}{% endif %}
+
+
 APP=exploit
 
 VERSION_B=$(basename $(basename $(VERSION)))
