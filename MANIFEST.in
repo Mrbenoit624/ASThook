@@ -6,8 +6,7 @@ include api_key_detector/gibberish_detector/config.yml
 include api_key_detector/gibberish_detector/gibberish_detector.pki
 include api_key_detector/string_classifier.pki
 recursive-include api_key_detector/gibberish_detector/datasets/ *
-recursive-include api_key_detector/datasets/keys/ *
-recursive-include api_key_detector/datasets/text/ *
+recursive-include api_key_detector/datasets/ *
 
 recursive-include asthook/static/module/VulnIntent/poc/ *
 
