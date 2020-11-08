@@ -11,7 +11,7 @@ call the function GenerateAPK with:
 
 .. code-block:: python
 
-  from static.generate_apk import GenerateAPK, JavaFile
+  from asthook.static.generate_apk import GenerateAPK, JavaFile
 
   manifest = JavaFile("/AndroidManifest.xml",
            path + "AndroidManifest.xml",

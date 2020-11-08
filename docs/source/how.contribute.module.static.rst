@@ -3,9 +3,9 @@ Make a Static module
 
 .. code-block:: python
 
-  from static.module.register import ModuleStaticCmd
+  from asthook.static.module.register import ModuleStaticCmd, load_module
 
-  from utils import Output
+  from asthook.utils import Output
   
   @ModuleStaticCmd("seek_literal", "seek Literal specify with regexp", str, "+")
   class SeekLiteral:
@@ -13,8 +13,8 @@ Make a Static module
       Class Exemple of creation static module
       """
       def __init__(self, package, tmp_dir, args):
-          from ..name_file import name_file_node
-          from . import seek_literal
+          load_module("name_file", "name_file_node")
+          load_module("seekLiteral", "seek_literal")
   
           seek_literal.SeekLiteral.add("personal", args.seek_literal)
   

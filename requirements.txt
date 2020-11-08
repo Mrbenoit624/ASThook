@@ -1,0 +1,14 @@
+pure-python-adb
+adb_shell
+pyyaml
+sty
+graphviz
+shutils
+jinja2
+sklearn
+gitpython
+javalang
+apk2java
+frida==12.11.18
+requests
+Matplotlib

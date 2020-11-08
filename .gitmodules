@@ -1,9 +1,9 @@
 [submodule "src/submodule/apkx"]
-	path = src/submodule/apkx
+	path = asthook/submodule/apkx
 	url = https://github.com/b-mueller/apkx.git
 [submodule "src/submodule/jadx"]
-	path = src/submodule/jadx
+	path = asthook/submodule/jadx
 	url = https://github.com/skylot/jadx.git
 [submodule "src/static/module/ApiKeyDetector/api_key_detector"]
-	path = src/static/module/ApiKeyDetector/api_key_detector
+	path = api_key_detector
 	url = https://github.com/alessandrodd/api_key_detector.git

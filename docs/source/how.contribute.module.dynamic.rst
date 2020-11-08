@@ -11,7 +11,7 @@ The following example show how to make a basic module
 
 .. code-block:: python
 
- from dynamic.module.register import ModuleDynamicCmd
+ from asthook.dynamic.module.register import ModuleDynamicCmd
 
  @ModuleDynamicCmd("sslpinning", "bypass all sslpinning", bool)
  class SSLpinning:

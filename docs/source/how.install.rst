@@ -1,17 +1,20 @@
 How to Install
 ==============
 
-To install all dependencies you should use:
+If you want to install from source or have a clean development environment.
+I advise you to use a virtualenv_ and follow theses command:
+
+.. _virtualenv: https://python-guide-pt-br.readthedocs.io/fr/latest/dev/virtualenvs.html
 
 .. code-block:: bash
 
    git clone --recursive -j8 https://gitlab.com/MadSquirrels/mobile/asthook.git
    cd asthook
-   pip3 install -r requirement.txt
-   ./bootstrap.sh
+   python3 setup.py install
    apt install apktool
 
 Setup sdktools:
+***************
 
 .. code-block:: bash
 

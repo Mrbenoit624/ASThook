@@ -6,7 +6,7 @@ This module allow user to interact with the frida server installed on device.
 
 .. code-block:: python
 
- from dynamic.module.register import ModuleDynamicCmd
+ from asthook.dynamic.module.register import ModuleDynamicCmd
 
  @ModuleDynamicCmd("sslpinning", "bypass all sslpinning", bool)
  class SSLpinning:

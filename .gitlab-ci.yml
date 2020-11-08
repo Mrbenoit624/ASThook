@@ -21,7 +21,6 @@ pages:
     paths:
       - public
   only:
-    - develop
     - master
 
 testsuite:
@@ -30,5 +29,4 @@ testsuite:
     - ./bootstrap.sh
     - python3 src/asthook.py --help
   only:
-    - develop
     - master

@@ -1,0 +1,103 @@
+#!/usr/bin/env python3
+
+import argparse
+import sys
+import os
+import shutil
+import psutil
+from asthook.conf import DIR, PACKAGE_PATH
+import subprocess
+
+DEV=False
+pid_file="/tmp/server_asthook.pid"
+
+def list_project():
+    projects = os.listdir(DIR)
+    for project in projects:
+        print(project)
+
+def remove_project(project):
+    if not os.path.exists(f"{DIR}/{project}"):
+        print(f"project {project} doesn't exist")
+        sys.exit(1)
+    shutil.rmtree(f"{DIR}/{project}")
+
+def stop_server():
+    if not os.path.exists(pid_file):
+        sys.exit(1)
+    with open(pid_file, "r") as f:
+        try:
+            p = psutil.Process(int(f.read()))
+            p.terminate()
+        except:
+            pass
+    os.remove(pid_file)
+
+def start_server(hostname="localhost", port=6000):
+    if os.path.exists(pid_file):
+        stop_server()
+    if DEV:
+        pid = subprocess.Popen(["nohup", "python3", f"{PACKAGE_PATH}/../asthook_server_ast.py",
+            f"{hostname}", f"{port}"],
+            preexec_fn=os.setpgrp).pid
+    else:
+        pid = subprocess.Popen(["nohup", "python3", f"{PACKAGE_PATH}/asthook_server_ast.py",
+            f"{hostname}", f"{port}"],
+            preexec_fn=os.setpgrp).pid
+    with open(pid_file, "w") as f:
+        f.write(str(pid))
+
+
+
+
+
+
+def main():
+
+    main_parser = argparse.ArgumentParser(description="Asthook manager")
+    service_parsers = main_parser.add_subparsers(title="service",
+                        dest="service_command")
+
+    list_parser = service_parsers.add_parser("list", help="list project",)
+
+    remove_parser = service_parsers.add_parser("remove", help="remove project",)
+    remove_parser.add_argument(
+            'project',
+            help='project name to remove')
+
+    start_server_parser = service_parsers.add_parser("start_server",
+    help="start server")
+    start_server_parser.add_argument("--hostname",
+            type=str,
+            help="hostname",
+            default="localhost")
+    start_server_parser.add_argument("--port",
+            type=str,
+            help="port",
+            default=6000)
+    
+    stop_server_parser = service_parsers.add_parser("stop_server",
+    help="stop server")
+    
+    
+    args = main_parser.parse_args()   
+
+
+
+    arg = args.service_command
+    if arg == "list":
+        list_project()
+    elif arg == "remove":
+        remove_project(args.project)
+    elif arg == "start_server":
+        start_server(args.hostname, args.port)
+    elif arg == "stop_server":
+        stop_server()
+    else:
+        sys.exit(2)
+
+if __name__ == '__main__':
+    main()
+    #parser_ = parsing()
+    #args = parser_.parse_args()
+

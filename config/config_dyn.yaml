@@ -13,7 +13,7 @@ dynamic:
   - sdktools: "/usr/lib/android-sdk"
   - phone: "phone_audit2"
   - proxy: "127.0.0.1:8080"
-  - proxy_cert: "misc/burp.der"
+#  - proxy_cert: "misc/burp.der"
 
   - sslpinning: true
 

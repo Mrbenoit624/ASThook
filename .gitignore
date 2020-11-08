@@ -1,4 +1,5 @@
 *.swp
+*.swo
 *.pyc
 __pycache__
 *.zip
@@ -11,3 +12,4 @@ temp
 bin/frida-server*
 misc
 docs/build/
+asthook/bin/frida-server*

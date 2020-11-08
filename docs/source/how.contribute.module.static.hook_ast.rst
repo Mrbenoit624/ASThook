@@ -20,13 +20,27 @@ and load it manually only when the plugin is loaded like the following example:
         --gen_hook <class>.<func>
       """
       def __init__(self, package, tmp_dir, args):
-          from . import GenHook_node
+
+          load_module("GenHook", "GenHook_node")
+
           for arg in args.gen_hook:
               hooks = arg.split('.')
               GenHook_node.ClassToHook.add_class(hooks[0])
               GenHook_node.FuncToHook.add_func(hooks[1])
           Output.add_printer_callback("tree", "gen_hook", "hook", mprint)
-          return None 
+          return None
+          
+Function `add_printer_callback` add a custom printer to display your result.
+The function given as parameter take as argument a list of object given when
+you add a result by the function `add_tree_mod`.
+
+The following code show an exemple of custom print function:
+
+.. code-block:: python
+
+   def mprint(arg : list) -> str:
+       pad = "." * (48 - len(arg[0]))
+       return f"{arg[0]} {pad} {arg[1]} : {arg[2]}"
 
 To hook a node you should use a decorator like the following example:
 
@@ -39,4 +53,24 @@ To hook a node you should use a decorator like the following example:
            for i in range(0, len(r["gen_hook_class"])):
                if self.elt.name == ClassToHook.get_name()[i]:
                    r["gen_hook_class"][i] = True
+           return r
+
+To add a result to print use function `add_tree_mod` like the following
+example:
+
+.. code-block:: python
+
+   @Node("Literal", "in")
+   class Literal:
+       @classmethod
+       def call(cls, r, self):
+           self.node_graph.Color = "red"
+           for k, names in SeekLiteral.get():
+               for name in names:
+                   if re.search(name, self.elt.value):
+                       self.node_graph.Color = "green"
+                       Output.add_tree_mod("seek_literal", k,
+                               [self.elt.value,
+                               r["Filename"], self.elt._position],
+                               r['instance'])
            return r
