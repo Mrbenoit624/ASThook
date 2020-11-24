@@ -866,6 +866,89 @@ class ast:
         def apply(self, selfp):
             self = self
             #print(self.elt.__dict__, end='')
+            elt = self.elt.expression
+            if type(elt) is javalang.tree.StatementExpression:
+                selfp.StatementExpression(elt, self).visit(selfp)
+            elif type(elt) is javalang.tree.LocalVariableDeclaration:
+                selfp.LocalVariableDeclaration(elt, self).visit(selfp)
+            elif type(elt) is javalang.tree.BlockStatement:
+                selfp.BlockStatement(elt, self).visit(selfp)
+            elif type(elt) is javalang.tree.IfStatement:
+                selfp.IfStatement(elt, self).visit(selfp)
+            elif type(elt) is javalang.tree.TryStatement:
+                selfp.TryStatement(elt, self).visit(selfp)
+            elif type(elt) is javalang.tree.MemberReference:
+                selfp.MemberReference(elt, self).visit(selfp)
+            elif type(elt) is javalang.tree.MethodInvocation:
+                selfp.MethodInvocation(elt, self).visit(selfp)
+            elif type(elt) is javalang.tree.Assignment:
+                selfp.Assignment(elt, self).visit(selfp)
+            elif type(elt) is javalang.tree.Literal:
+                selfp.Literal(elt, self).visit(selfp)
+            elif type(elt) is list:
+                selfp.ASTList(elt, self).visit(selfp)
+            elif type(elt) is javalang.tree.This:
+                selfp.This(elt, self).visit(selfp)
+            elif type(elt) is javalang.tree.ClassCreator:
+                selfp.ClassCreator(elt, self).visit(selfp)
+            elif type(elt) is javalang.tree.Cast:
+                selfp.Cast(elt, self).visit(selfp)
+            elif type(elt) is javalang.tree.ReferenceType:
+                selfp.ReferenceType(elt, self).visit(selfp)
+            elif type(elt) is javalang.tree.ClassReference:
+                selfp.ClassReference(elt, self).visit(selfp)
+            elif type(elt) is javalang.tree.SuperMethodInvocation:
+                selfp.SuperMethodInvocation(elt, self).visit(selfp)
+            elif type(elt) is javalang.tree.BinaryOperation:
+                selfp.BinaryOperation(elt, self).visit(selfp)
+            elif type(elt) is javalang.tree.SuperConstructorInvocation:
+                selfp.SuperConstructorInvocation(elt, self).visit(selfp)
+            elif type(elt) is javalang.tree.ExplicitConstructorInvocation:
+                selfp.ExplicitConstructorInvocation(elt, self).visit(selfp)
+            elif type(elt) is javalang.tree.TypeArgument:
+                selfp.TypeArgument(elt, self).visit(selfp)
+            elif type(elt) is javalang.tree.ArraySelector:
+                selfp.ArraySelector(elt, self).visit(selfp)
+            elif type(elt) is javalang.tree.BasicType:
+                selfp.BasicType(elt, self).visit(selfp)
+            elif type(elt) is javalang.tree.ArrayInitializer:
+                selfp.ArrayInitializer(elt, self).visit(selfp)
+            elif type(elt) is javalang.tree.ArrayCreator:
+                selfp.ArrayCreator(elt, self).visit(selfp)
+            elif type(elt) is javalang.tree.ForStatement:
+                selfp.ForStatement(elt, self).visit(selfp)
+            elif type(elt) is javalang.tree.MethodDeclaration:
+                selfp.MethodDeclaration(elt, self).visit(selfp)
+            elif type(elt) is javalang.tree.EnumBody:
+                selfp.EnumBody(elt, self).visit(selfp)
+            elif type(elt) is javalang.tree.ConstructorDeclaration:
+                selfp.ConstructorDeclaration(elt, self).visit(selfp)
+            elif type(elt) is javalang.tree.EnumConstantDeclaration:
+                selfp.EnumConstantDeclaration(elt, self).visit(selfp)
+            elif type(elt) is javalang.tree.VariableDeclarator:
+                selfp.VariableDeclarator(elt, self).visit(selfp)
+            elif type(elt) is javalang.tree.FormalParameter:
+                selfp.FormalParameter(elt, self).visit(selfp)
+            elif type(elt) is javalang.tree.Annotation:
+                selfp.Annotation(elt, self).visit(selfp)
+            elif type(elt) is javalang.tree.TernaryExpression:
+                selfp.TernaryExpression(elt, self).visit(selfp)
+            elif type(elt) is javalang.tree.ThrowStatement:
+                selfp.ThrowStatement(elt, self).visit(selfp)
+            elif type(elt) is javalang.tree.WhileStatement:
+                selfp.WhileStatement(elt, self).visit(selfp)
+            elif type(elt) is javalang.tree.ContinueStatement:
+                selfp.ContinueStatement(elt, self).visit(selfp)
+            elif type(elt) is javalang.tree.BreakStatement:
+                selfp.BreakStatement(elt, self).visit(selfp)
+            elif type(elt) is javalang.tree.Statement:
+                selfp.Statement(elt, self).visit(selfp)
+            elif type(elt) is javalang.tree.SwitchStatement:
+                selfp.SwitchStatement(elt, self).visit(selfp)
+            elif type(elt) is javalang.tree.SwitchStatementCase:
+                selfp.SwitchStatementCase(elt, self).visit(selfp)
+            elif type(elt) is javalang.tree.ForControl:
+                selfp.ForControl(elt, self).visit(selfp)
 
     class ThrowStatement(BaseNode):
 
