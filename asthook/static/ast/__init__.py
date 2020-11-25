@@ -865,7 +865,6 @@ class ast:
 
         def apply(self, selfp):
             self = self
-            #print(self.elt.__dict__, end='')
             elt = self.elt.expression
             if type(elt) is javalang.tree.StatementExpression:
                 selfp.StatementExpression(elt, self).visit(selfp)
@@ -949,6 +948,9 @@ class ast:
                 selfp.SwitchStatementCase(elt, self).visit(selfp)
             elif type(elt) is javalang.tree.ForControl:
                 selfp.ForControl(elt, self).visit(selfp)
+            else:
+                if selfp.args.debug_ast:
+                    logging.error("%s - %s" % (self.__class__.__name__, type(elt)))
 
     class ThrowStatement(BaseNode):
 
