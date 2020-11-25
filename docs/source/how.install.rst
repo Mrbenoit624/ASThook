@@ -1,8 +1,25 @@
 How to Install
 ==============
 
+prerequisite
+*************
+
+You need to have on your system these package installed:
+
+* git
+* python3
+* python3-pip
+* liblzma5
+* apktool
+
+
+installation
+************
+
 If you want to install from source or have a clean development environment.
 I advise you to use a virtualenv_ and follow theses command:
+
+
 
 .. _virtualenv: https://python-guide-pt-br.readthedocs.io/fr/latest/dev/virtualenvs.html
 
@@ -10,8 +27,17 @@ I advise you to use a virtualenv_ and follow theses command:
 
    git clone --recursive -j8 https://gitlab.com/MadSquirrels/mobile/asthook.git
    cd asthook
+   pip3 install -r requirements.txt
    python3 setup.py install
-   apt install apktool
+
+If you have an easy installation use install and unistall script:
+
+.. code-block:: bash
+
+   git clone --recursive -j8 https://gitlab.com/MadSquirrels/mobile/asthook.git
+   cd asthook
+   ./install.sh
+
 
 Setup sdktools:
 ***************
