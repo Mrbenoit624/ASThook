@@ -4,7 +4,7 @@ import sys
 import signal
 import json
 import re
-import asthook.log as logging
+from asthook import log as logging
 
 
 import subprocess
