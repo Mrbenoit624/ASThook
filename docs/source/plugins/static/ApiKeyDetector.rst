@@ -17,7 +17,7 @@ Usage
 
 .. code-block:: bash
 
-  asthook <app> --api_keys
+  asthook <app> --api_keys <normal|full>
 
 .. asciinema:: ApiKeyDetector.cast
   :preload:

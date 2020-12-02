@@ -7,25 +7,33 @@ from pathlib import Path
 import re
 import xml.etree.ElementTree as ET
 
-@ModuleStaticCmd("api_keys", "find api keys", bool)
+@ModuleStaticCmd("api_keys", "find api keys", str)
 class Tree:
     """
     Find API keys in source code + a list of files
+    "normal" for basic analyse but sufficient
+    "full" to find key anywhere
     """
     def __init__(self, package, tmp_dir, args):
         from api_key_detector import detector
 
-        whitelist_extension = ['.js', '.xml', '.dex', '.properties', '.txt', '.java', '.smali']
+        whitelist_extension = ['.js', '.xml', '.properties', '.txt']
+        if args.api_keys == "full":
+            whitelist_extension.append('.smali')
 
+
+        Output.add_printer_callback("tree", "ApiKeyDetector", "source-code", mprint)
         load_module("ApiKeyDetector", "keys")
         load_module("name_file", "name_file_node")
 
-        Output.add_printer_callback("tree", "ApiKeyDetector", "source-code", mprint)
+        #return
 
         p = Path(tmp_dir + "/decompiled_app/").glob("**/*")
-        for string_file in p:            
+        for string_file in p:
             failed = True
             if not string_file.is_file():
+                continue
+            if string_file.match("**/res/drawable*/**"):
                 continue
 
             Output.add_printer_callback("tree", "ApiKeyDetector", str(string_file), mprint)
@@ -60,8 +68,6 @@ class Tree:
                             debug(f"{string_file.absolute()} : {value}")
                     except Exception as e:
                         pass
-
-        from . import keys
 
 def mprint(arg : list) -> str:
     return f"{arg[0]} : {arg[1]}"

@@ -14,7 +14,8 @@ class ClassDeclarationIn:
                     try:
                         if detector.detect_api_keys([self.elt.value[1:-1]])[0]:
                             Output.add_tree_mod("ApiKeyDetector", "source-code",
-                                    [s.get('name'), s.text], r["instance"])
+                                    [self.elt.value[1:-1],
+                                    f"{r['Filename']}:{self.elt._position}"], r["instance"])
                             debug(f"{self.elt.value} {r['Filename']}:{self.elt._position}")
                     except:
                         pass
