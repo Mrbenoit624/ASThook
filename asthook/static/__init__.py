@@ -34,13 +34,15 @@ class StaticAnalysis:
                 "decompiled_app")
         self.manifest = None
 
-        if not os.path.exists(self.__app):
+        bprint("Static Analysis")
+
+        if os.path.exists(self.__app):
+            Decompiler(self.__app, self.__basepathdecompile, args)
+        elif not os.path.exists(f"{self.__basepathdecompile}"):
+            print(f"{self.__basepathdecompile}")
             sys.stderr.write("Application doesn't exist\n")
             sys.exit(1)
 
-
-        bprint("Static Analysis")
-        Decompiler(self.__app, self.__basepathdecompile, args)
         packages = []
         if args.env_apks:
             for apk in args.env_apks:
