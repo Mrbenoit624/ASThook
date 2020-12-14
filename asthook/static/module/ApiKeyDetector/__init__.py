@@ -7,7 +7,7 @@ from pathlib import Path
 import re
 import xml.etree.ElementTree as ET
 
-@ModuleStaticCmd("api_keys", "find api keys", str)
+@ModuleStaticCmd("api_keys", "find api keys", str, choices=["normal", "full"])
 class Tree:
     """
     Find API keys in source code + a list of files
