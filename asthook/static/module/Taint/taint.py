@@ -3,6 +3,8 @@ from graphviz import Digraph
 import javalang
 from asthook.log import debug, info
 
+render = False
+
 # TODO: Add Interface managing
 
 @Node("ConstructorDeclarationParameters", "in")
@@ -76,7 +78,9 @@ Add Assignment Edge with:
     - parent reference to left expression as child
     - parent reference to rigt expression as parent
 """
+
 # TODO: Why child get and parent xref
+# TODO: check for double prent left and right expression
 @Node("Assignment", "in")
 class AssignmentIn:
     @classmethod
@@ -86,21 +90,29 @@ class AssignmentIn:
         path = revxref(JavaLang2NodeAst(self.elt.expressionl, self))
         if len(path) == 0:
             return r
-        child = TaintElt.get(path[:-1], path[-1])
-        if not child:
+        #child = TaintElt.get(path[:-1], path[-1])
+        parent = TaintElt.get(path[:-1], path[-1])
+        child = []
+        #if not child:
+        #    return r
+        if not parent:
             return r
         node_name = path[-1]
 
         # Seek Reference Node from right expression and store it in parent
-        parent = ref_assignment(self.elt.value, self)
+        parent2 = ref_assignment(self.elt.value, self)
         
+        #debug("taint : " + ",".join(parent))
         # Create Node
         n = Node(node_name, child, None, self)
 
+        parent.child(n)
+        n.parent(parent)
+
         # Add Childness
-        for p in parent:
-            p.child(n)
-            n.parent(p)
+        for p in parent2:
+            n.child(p)
+            p.parent(n)
 
         # Add Node
         TaintElt.add_elt(
@@ -110,7 +122,7 @@ class AssignmentIn:
 
 
         # Add Parentness
-        child.parent(n)
+        #child.parent(n)
 
         return r
 
@@ -161,8 +173,13 @@ class MethodInvocationIn:
             # if no begin with $ this is a subclass
             if not k[0] == '$':
                 continue
+
             # split types arguments and method
-            types, method = k[1:].split('$$')
+            types = k[1:].split('$$')[0]
+            method = k[1:].split('$$')[1]
+            # TODO: see if it is really correct why 2 time $$
+            #types, method = k[1:].split('$$')
+
             if not method == self.elt.member:
                 continue
             # split types of arguments
@@ -307,8 +324,9 @@ class InitOut:
     @classmethod
     def call(cls, r, path):
         #TaintElt.print()
-        info("Rendering taint analysis on pdf...")
-        TaintElt.graphiz(orphan=False)
+        if render:
+            info("Rendering taint analysis on pdf...")
+            TaintElt.graphiz(orphan=False)
         return r
 
 
@@ -359,6 +377,8 @@ def JavaLang2NodeAst(node : javalang.tree, parent : ast.BaseNode) -> Node:
     if type(node) is javalang.tree.BasicType:
         return ast.BasicType(node, parent)
     if type(node) is javalang.tree.ArraySelector:
+        return ast.ArraySelector(node, parent)
+    if type(node) is javalang.tree.InnerClassCreator:
         return ast.ArraySelector(node, parent)
     print(node)
     assert False # node not implemented
@@ -458,7 +478,10 @@ def findOverload(path, method_name):
         if not k[0] == '$':
             continue
         # split types arguments and method
-        types, method = k[1:].split('$$')
+        types = k[1:].split('$$')[0]
+        method = k[1:].split('$$')[1]
+        # TODO: see if it is really correct why 2 time $$
+        #types, method = k[1:].split('$$')
         if not method == method_name:
             continue
         # split types of arguments
@@ -669,15 +692,16 @@ def revxref(node : ast.BaseNode, stop=None) -> list:
                 prev_type = [e.elt.qualifier]
             else:
                 prev_type.extend(TaintElt._Class[:-1] if TaintElt._ClassType[-1] else TaintElt._Class)
-            for s in reversed(e.elt.selectors):
-                if type(s) is javalang.tree.MemberReference:
-                    root.append(ast.MemberReference(s, e))
-                elif type(s) is javalang.tree.ArraySelector:
-                    root.append(ast.ArraySelector(s, e))
-                elif type(s) is javalang.tree.MethodInvocation:
-                    root.append(ast.MethodInvocation(s, e))
-                else:
-                    root.append(JavaLang2NodeAst(s, e))
+            if e.elt.selectors:
+                for s in reversed(e.elt.selectors):
+                    if type(s) is javalang.tree.MemberReference:
+                        root.append(ast.MemberReference(s, e))
+                    elif type(s) is javalang.tree.ArraySelector:
+                        root.append(ast.ArraySelector(s, e))
+                    elif type(s) is javalang.tree.MethodInvocation:
+                        root.append(ast.MethodInvocation(s, e))
+                    else:
+                        root.append(JavaLang2NodeAst(s, e))
         elif type(e) is ast.ArraySelector:
             pass # No incidence
         elif type(e) is ast.MemberReference:
@@ -710,6 +734,17 @@ def revxref(node : ast.BaseNode, stop=None) -> list:
         if last[1] == prev_type:
             return last[0]
     return prev_type
+
+
+
+def get_Node(elt):
+    path_p = revxref(elt)
+    if len(path_p) == 0:
+        return None
+    parent = xref(path_p[:-1], path_p[-1])
+    return parent
+
+
 
 """
 Like xref but give the type at the end and not the name
@@ -880,7 +915,7 @@ class TaintElt:
                                         f"{sc.id()}_{sc.get()}",
                                         f"{e.id()}_{e.get()}",
                                         color="blue")
-        #dot.render("taint/Taint")
+        dot.render("taint/Taint")
 
                     #print("%s%s" % ("\t"* layers, ", ".join([str(e) for e in k])))
                     #print("%s%s" % ("\t"* layers, cls.scope_print(k)))

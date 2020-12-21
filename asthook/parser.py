@@ -4,6 +4,7 @@ import argparse
 from asthook.dynamic.module.register import get_dynamic_modules
 from asthook.static.module.register import get_static_modules
 
+
 def parser():
     parser = argparse.ArgumentParser(
             description='Analysis for smartphone')
@@ -12,6 +13,11 @@ def parser():
             'app',
             type=str,
             help='app target <filename.apk>')
+
+    parser.add_argument(
+            '-v', '--version',
+            action="store_true",
+            help="show version")
 
     parser.add_argument(
             '--config_xxhdpi',

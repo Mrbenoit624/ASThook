@@ -5,8 +5,8 @@
 
 .. image:: images/logo_banner.png
 
-Welcome to ASTHOOK's documentation!
-==============================================
+Welcome to ASTHOOK's documentation |version| |release|!
+========================================================
 
 
 Asthook allows to make a static analysis and a dynamic analysis of application

@@ -12,3 +12,4 @@ apk2java
 frida==12.11.18
 requests
 Matplotlib
+tabulate

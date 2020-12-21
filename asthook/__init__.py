@@ -12,7 +12,7 @@ from asthook.config import Config
 import asthook.parser
 from asthook.utils import Output
 
-from asthook.conf import DIR, PACKAGE_PATH
+from asthook.conf import DIR, PACKAGE_PATH, VERSION
 
 fg.blue = Style(RgbFg(54,154,205))
 
@@ -40,6 +40,11 @@ def main():
 
     parser_ = parser.parser()
     args = parser_.parse_args()
+
+    if args.version:
+        print(f"Version : {VERSION}")
+        sys.exit(0)
+
 
     if args.config:
         args = Config.load(args)

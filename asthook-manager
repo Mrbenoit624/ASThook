@@ -7,14 +7,111 @@ import shutil
 import psutil
 from asthook.conf import DIR, PACKAGE_PATH
 import subprocess
+import json
+from tabulate import tabulate
+from asthook.log import error
+from difflib import context_diff, unified_diff
+
+from pathlib import Path
 
 DEV=False
 pid_file="/tmp/server_asthook.pid"
 
 def list_project():
-    projects = os.listdir(DIR)
+    projects = sorted(os.listdir(DIR))
+    
+    table = []
+    
     for project in projects:
-        print(project)
+        infos = {'decompiler' : "", "prev_decompiler": []}
+        info_path = f"{DIR}/{project}/info.json"
+        if os.path.exists(info_path):
+            with open(info_path, "r") as info_file:
+                infos.update(json.loads(info_file.read()))
+        table.append([project, infos['decompiler'],
+            ','.join(infos['prev_decompiler'])])
+    print(tabulate(table, headers=["project", "decompiler", "prev decompiler"],
+        tablefmt="fancy_grid"))
+
+def diff_project(project1, project2 = None, decompiler = None,
+        decompiler2 = None, globing = "**/*"):
+
+    infos1 = {'decompiler' : "", "prev_decompiler": []}
+    infos2 = infos1
+
+    info_path = f"{DIR}/{project1}/info.json"
+    if os.path.exists(info_path):
+        with open(info_path, "r") as info_file:
+            infos1.update(json.loads(info_file.read()))
+
+    if not project2:
+        project2 = project1
+        infos2 = infos1
+    else:
+        info_path = f"{DIR}/{project2}/info.json"
+        if os.path.exists(info_path):
+            with open(info_path, "r") as info_file:
+                infos2.update(json.loads(info_file.read()))
+
+    if not decompiler or infos1['decompiler'] == decompiler:
+        project1_path = Path(f"{DIR}/{project1}/decompiled_app/")
+        decompiler = infos1['decompiler']
+    else:
+        if not decompiler in infos1['prev_decompiler']:
+            error(f"{project1} have not been decompile with {decompiler}")
+            sys.exit(1)
+        project1_path = Path(f"{DIR}/{project1}/prev_decompilation/{decompiler}")
+
+    if not decompiler2 or infos2['decompiler'] == decompiler2:
+        project2_path = Path(f"{DIR}/{project2}/decompiled_app/")
+        decompiler2 = infos2['decompiler']
+    else:
+        if not decompiler2 in infos2['prev_decompiler']:
+            error(f"{project2} have not been decompile with {decompiler2}")
+            sys.exit(1)
+        project2_path = Path(f"{DIR}/{project2}/prev_decompilation/{decompiler2}")
+
+    if project1_path == project2_path:
+        error("the project and the decompiler you ask is the same")
+        sys.exit(5)
+
+    whitelist = ['.txt', '.xml', '.java']
+    result_project1 = []
+    for i in Path(project1_path).rglob(globing):
+        if i.suffixes and i.suffixes[0] in whitelist:
+            result_project1.append(i)
+
+    result_project2 = []
+    for i in Path(project2_path).rglob(globing):
+        if i.suffixes and i.suffixes[0] in whitelist:
+            result_project2.append(i)
+
+    r_paths2 = []
+
+    for path2 in result_project2:
+        r_paths2.append(str(path2)[len(str(Path(project2_path))):])
+
+
+    for path1 in result_project1:
+        r_path1 = str(path1)[len(str(Path(project1_path))):]
+        if not r_path1 in r_paths2:
+            print(r_path1)
+            pass
+        else:
+            try:
+                text1 = open(f"{project1_path}/{r_path1}").readlines()
+                text2 = open(f"{project2_path}/{r_path1}").readlines()
+
+                for line in unified_diff(text1, text2,
+                        fromfile=f"{project1} - {decompiler} : {r_path1}",
+                        tofile=f"{project2} - {decompiler2} : {r_path1}"):
+                    print(line, end='')
+            except UnicodeDecodeError as e:
+                error(e)
+            r_paths2.remove(r_path1)
+    print('\n'.join(r_paths2))
+
+
 
 def remove_project(project):
     if not os.path.exists(f"{DIR}/{project}"):
@@ -75,9 +172,34 @@ def main():
             type=str,
             help="port",
             default=6000)
-    
+
     stop_server_parser = service_parsers.add_parser("stop_server",
     help="stop server")
+
+    diff_parser = service_parsers.add_parser("diff",
+            help="difference between 2 compilers or/and 2 projects")
+
+    diff_parser.add_argument("--project1",
+            type=str,
+            help="project1")
+
+    diff_parser.add_argument("--project2",
+            type=str,
+            help="project2")
+
+    diff_parser.add_argument("--decompiler1",
+            type=str,
+            help="decompiler1")
+
+    diff_parser.add_argument("--decompiler2",
+            type=str,
+            help="decompiler2")
+
+    diff_parser.add_argument("--globing",
+            type=str,
+            help="globing to include only certains files",
+            default="**/*")
+    
     
     
     args = main_parser.parse_args()   
@@ -93,6 +215,12 @@ def main():
         start_server(args.hostname, args.port)
     elif arg == "stop_server":
         stop_server()
+    elif arg == "diff":
+        if not args.project1:
+            error("project1 argument is mandatory")
+            sys.exit(3)
+        diff_project(args.project1, args.project2, args.decompiler1,
+                args.decompiler2, args.globing)
     else:
         sys.exit(2)
 

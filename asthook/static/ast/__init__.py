@@ -1150,6 +1150,15 @@ class ast:
                         logging.error("%s - %s" % (self.__class__.__name__, type(elt)))
             pass
 
+    class InnerClassCreator(BaseNode):
+
+        #def getName(self):
+        #    return self.__class__.__name__ + " : " +self.elt.type.name
+
+        def apply(self, selfp):
+            if selfp.args.debug_ast:
+                logging.error("%s - %s" % (self.__class__.__name__, type(elt)))
+ 
     class ClassCreator(BaseNode):
 
         def getName(self):

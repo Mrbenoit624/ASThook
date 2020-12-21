@@ -13,6 +13,7 @@
 import os
 import sys
 sys.path.insert(0, os.path.abspath('../../asthook/'))
+import conf
 
 numpydoc_class_members_toctree=True
 
@@ -24,8 +25,10 @@ project = 'Asthook'
 copyright = '2020, Forgette Benoit (MadSquirrel)'
 author = 'Forgette Benoit (MadSquirrel)'
 
+print(sys.path)
+
 # The full version, including alpha/beta/rc tags
-release = '0.0.1'
+release = conf.VERSION
 
 
 # -- General configuration ---------------------------------------------------

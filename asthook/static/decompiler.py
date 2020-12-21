@@ -3,6 +3,7 @@ import subprocess
 import apk2java
 from pathlib import Path
 import sys
+import json
 
 from asthook.conf import PACKAGE_PATH
 
@@ -22,6 +23,31 @@ class Decompiler:
             answer = input()
             if not (answer.lower() == "y" or answer.lower() == "yes"):
                 return
+        info_path = Path(f"{self.__dir_extract}").parent
+        info_path = info_path / "info.json"
+
+        is_json = False
+        if os.path.exists(info_path):
+            is_json = True
+            with open(info_path, "r") as info_file:
+                info_json = json.loads(info_file.read())
+                prev_decompiler = info_json['decompiler']
+            with open(info_path, "w") as info_file:
+                info_json['decompiler'] = self.__args.decompiler
+
+                self.move_prev_decompilation(prev_decompiler)
+                if not prev_decompiler in info_json['prev_decompiler']:
+                    info_json['prev_decompiler'].append(prev_decompiler)
+
+                info_file.write(json.dumps(info_json))
+
+        if not is_json:
+            with open(info_path, "w") as info_file:
+                info_json = {'decompiler' : self.__args.decompiler,
+                             'prev_decompiler' : []}
+                info_file.write(json.dumps(info_json, indent=2))
+
+
 
         subprocess.call(["rm", "-rf", self.__dir_extract])
         if self.__args.config_xxhdpi:
@@ -70,3 +96,13 @@ class Decompiler:
             apk2java.decompile(self.__app, self.__dir_extract)
             subprocess.call(["cp", self.__dir_extract + "/apktools/AndroidManifest.xml",
                 self.__dir_extract])
+ 
+    def move_prev_decompilation(self, prev_decompiler):
+        prev_decomp_dir = Path(self.__dir_extract).parent / "prev_decompilation"
+        if not os.path.exists(prev_decomp_dir):
+           subprocess.call(["mkdir", prev_decomp_dir ])
+        subprocess.call(["mv", f"{self.__dir_extract}", prev_decomp_dir / prev_decompiler ])
+
+
+
+

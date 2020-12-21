@@ -6,33 +6,34 @@ Usage:
 ######
 ::
 
-  usage: asthook [-h] [--config_xxhdpi CONFIG_XXHDPI]
-                 [--verbose {debug,info,warning}] [--verbose_position]
-                 [--config CONFIG [CONFIG ...]]
-                 [--restore_output RESTORE_OUTPUT [RESTORE_OUTPUT ...]]
-                 [--output {none,json}] [--output-file OUTPUT_FILE]
-                 [--sdktools SDKTOOLS] [--version_android VERSION_ANDROID]
-                 [--server SERVER] [--tree]
-                 [--tree_path TREE_PATH [TREE_PATH ...]]
-                 [--tree_exclude TREE_EXCLUDE [TREE_EXCLUDE ...]]
-                 [--decompiler {none,jd-gui,cfr,procyon,fernflower,jadx}]
-                 [--no_cache] [--progress] [--graph_ast] [--debug_ast]
-                 [--seek_literal SEEK_LITERAL [SEEK_LITERAL ...]]
-                 [--cloud_analysis] [--taint] [--list_read_write]
-                 [--vuln_intent {normal,poc}] [--test] [--PathTraversal]
-                 [--vuln_data VULN_DATA] [--simplify_graph]
-                 [--provider PROVIDER] [--api_keys]
-                 [--list_funcs LIST_FUNCS LIST_FUNCS] [--user_input]
-                 [--gen_hook GEN_HOOK [GEN_HOOK ...]]
-                 [--list_funcs_call LIST_FUNCS_CALL LIST_FUNCS_CALL] [--types]
-                 [--basic_vulns] [--name_file]
-                 [--env_apks ENV_APKS [ENV_APKS ...]] [--phone PHONE]
-                 [--no-emulation] [--noinstall] [--proxy PROXY]
-                 [--proxy_cert PROXY_CERT] [--no_erase]
-                 [--nativehook NATIVEHOOK [NATIVEHOOK ...]] [--files_store]
-                 [--quickhook [QUICKHOOK [QUICKHOOK ...]]] [--sslpinning]
-                 [--files_del]
-                 app
+  usage: asthook [-h] [-v] [--config_xxhdpi CONFIG_XXHDPI]
+                     [--verbose {debug,info,warning}] [--verbose_position]
+                     [--config CONFIG [CONFIG ...]]
+                     [--restore_output RESTORE_OUTPUT [RESTORE_OUTPUT ...]]
+                     [--output {none,json}] [--output-file OUTPUT_FILE]
+                     [--sdktools SDKTOOLS] [--version_android VERSION_ANDROID]
+                     [--server SERVER] [--tree]
+                     [--tree_path TREE_PATH [TREE_PATH ...]]
+                     [--tree_exclude TREE_EXCLUDE [TREE_EXCLUDE ...]]
+                     [--decompiler {none,jd-gui,cfr,procyon,fernflower,jadx}]
+                     [--no_cache] [--progress] [--graph_ast] [--debug_ast]
+                     [--seek_literal SEEK_LITERAL [SEEK_LITERAL ...]]
+                     [--cloud_analysis] [--taint {normal,render}]
+                     [--list_read_write] [--vuln_intent {normal,poc}]
+                     [--vuln_broadcast {normal,poc}] [--test] [--PathTraversal]
+                     [--vuln_data VULN_DATA] [--simplify_graph]
+                     [--provider PROVIDER] [--api_keys {normal,full}]
+                     [--list_funcs LIST_FUNCS LIST_FUNCS] [--user_input]
+                     [--gen_hook GEN_HOOK [GEN_HOOK ...]]
+                     [--list_funcs_call LIST_FUNCS_CALL LIST_FUNCS_CALL]
+                     [--types] [--basic_vulns] [--name_file]
+                     [--env_apks ENV_APKS [ENV_APKS ...]] [--phone PHONE]
+                     [--no-emulation] [--noinstall] [--proxy PROXY]
+                     [--proxy_cert PROXY_CERT] [--no_erase]
+                     [--nativehook NATIVEHOOK [NATIVEHOOK ...]] [--files_store]
+                     [--quickhook [QUICKHOOK [QUICKHOOK ...]]] [--sslpinning]
+                     [--files_del]
+                     app
   
   Analysis for smartphone
   
@@ -41,6 +42,7 @@ Usage:
   
   optional arguments:
     -h, --help            show this help message and exit
+    -v, --version         show version
     --config_xxhdpi CONFIG_XXHDPI
                           adding xxhdpi files from google api downloader
     --verbose {debug,info,warning}
@@ -78,17 +80,21 @@ Usage:
     --seek_literal SEEK_LITERAL [SEEK_LITERAL ...]
                           seek Literal specify wit regexp
     --cloud_analysis      verify firebaseio
-    --taint               taint variable node
+    --taint {normal,render}
+                          taint variable node
     --list_read_write     list all read and write on filesystem
     --vuln_intent {normal,poc}
                           found vuln intent
+    --vuln_broadcast {normal,poc}
+                          found potential vuln broadcast
     --test                test
     --PathTraversal       For the demo
     --vuln_data VULN_DATA
                           found vuln intent deeplink
     --simplify_graph      Simplify the graph to remove all uselessnode
     --provider PROVIDER   analyse provider
-    --api_keys            find api keys
+    --api_keys {normal,full}
+                          find api keys
     --list_funcs LIST_FUNCS LIST_FUNCS
                           list all funcs with regex as follow: --list_funcs
                           <class_regex> <function_regex>
