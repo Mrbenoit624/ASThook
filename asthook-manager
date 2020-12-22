@@ -37,7 +37,7 @@ def diff_project(project1, project2 = None, decompiler = None,
         decompiler2 = None, globing = "**/*"):
 
     infos1 = {'decompiler' : "", "prev_decompiler": []}
-    infos2 = infos1
+    infos2 = infos1.copy()
 
     info_path = f"{DIR}/{project1}/info.json"
     if os.path.exists(info_path):
@@ -46,7 +46,7 @@ def diff_project(project1, project2 = None, decompiler = None,
 
     if not project2:
         project2 = project1
-        infos2 = infos1
+        infos2 = infos1.copy()
     else:
         info_path = f"{DIR}/{project2}/info.json"
         if os.path.exists(info_path):
@@ -62,7 +62,10 @@ def diff_project(project1, project2 = None, decompiler = None,
             sys.exit(1)
         project1_path = Path(f"{DIR}/{project1}/prev_decompilation/{decompiler}")
 
-    if not decompiler2 or infos2['decompiler'] == decompiler2:
+    if not decompiler2:
+        decompiler2 = decompiler
+
+    if infos2['decompiler'] == decompiler2:
         project2_path = Path(f"{DIR}/{project2}/decompiled_app/")
         decompiler2 = infos2['decompiler']
     else:
