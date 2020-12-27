@@ -47,6 +47,10 @@ List
 ####
 
 Option `--list` basically list all project already analyse
+if you want to filter projects you can add option `--search` with a regexp
+
+.. asciinema:: asthook_manager_list_search.cast
+  :preload:
 
 Remove
 ######

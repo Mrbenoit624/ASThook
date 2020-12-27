@@ -13,16 +13,19 @@ from asthook.log import error
 from difflib import context_diff, unified_diff
 
 from pathlib import Path
+import re
 
 DEV=False
 pid_file="/tmp/server_asthook.pid"
 
-def list_project():
+def list_project(args):
     projects = sorted(os.listdir(DIR))
     
     table = []
     
     for project in projects:
+        if args.search and not re.search(args.search, project):
+            continue
         infos = {'decompiler' : "", "prev_decompiler": []}
         info_path = f"{DIR}/{project}/info.json"
         if os.path.exists(info_path):
@@ -165,6 +168,9 @@ def main():
                         dest="service_command")
 
     list_parser = service_parsers.add_parser("list", help="list project",)
+    list_parser.add_argument("--search", 
+            type=str,
+            help="project to search with a regexp")
 
     remove_parser = service_parsers.add_parser("remove", help="remove project",)
     remove_parser.add_argument(
@@ -221,7 +227,7 @@ def main():
 
     arg = args.service_command
     if arg == "list":
-        list_project()
+        list_project(args)
     elif arg == "remove":
         remove_project(args.project)
     elif arg == "start_server":

@@ -1,0 +1,5 @@
+{"version": 2, "width": 190, "height": 53, "timestamp": 1609082363, "env": {"SHELL": "/bin/bash", "TERM": "xterm-256color"}}
+[0.275048, "o", "$ "]
+[1.341993, "o", "asthook-manager list --search '^ru.*'"]
+[2.463052, "o", "\r\n"]
+[2.655961, "o", "╒═══════════════╤══════════════╤═══════════════════╕\r\n│ project       │ decompiler   │ prev decompiler   │\r\n╞═══════════════╪══════════════╪═══════════════════╡\r\n│ runkeeper.apk │ cfr          │ jadx,cfr          │\r\n╘═══════════════╧══════════════╧═══════════════════╛\r\n"]
