@@ -41,12 +41,6 @@ class Decompiler:
 
                 info_file.write(json.dumps(info_json))
 
-        if not is_json:
-            with open(info_path, "w") as info_file:
-                info_json = {'decompiler' : self.__args.decompiler,
-                             'prev_decompiler' : []}
-                info_file.write(json.dumps(info_json, indent=2))
-
 
 
         subprocess.call(["rm", "-rf", self.__dir_extract])
@@ -97,6 +91,12 @@ class Decompiler:
             subprocess.call(["cp", self.__dir_extract + "/apktools/AndroidManifest.xml",
                 self.__dir_extract])
  
+        if not is_json:
+            with open(info_path, "w") as info_file:
+                info_json = {'decompiler' : self.__args.decompiler,
+                             'prev_decompiler' : []}
+                info_file.write(json.dumps(info_json, indent=2))
+
     def move_prev_decompilation(self, prev_decompiler):
         prev_decomp_dir = Path(self.__dir_extract).parent / "prev_decompilation"
         if not os.path.exists(prev_decomp_dir):
