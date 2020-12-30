@@ -138,7 +138,8 @@ class Manifest:
             if (self.android('exported') in obj.attrib and \
                     obj.attrib[self.android('exported')] == "true") or \
                     len(actions_) > 0:
-                print('\n' + warning(obj.attrib[self.android('name')]))
+                print('\n' + warning(obj.attrib[self.android('name')]), end=' ')
+                self.check_need_permissions(obj)
                 Output.add_to_store("manifest", "activity", "exported",
                         obj.attrib[self.android('name')])
                 for action in actions_:
@@ -171,11 +172,31 @@ class Manifest:
             if (self.android('exported') in obj.attrib and \
                     obj.attrib[self.android('exported')] == "true") or \
                     len(actions_) > 0:
-                print('\n' + warning(obj.attrib[self.android('name')]))
+                print('\n' + warning(obj.attrib[self.android('name')]), end=' ')
+                self.check_need_permissions(obj)
                 Output.add_to_store("manifest", "service", "exported",
                         obj.attrib[self.android('name')])
                 for action in actions_:
                     print('\t%s' % action)
+
+    def check_need_permissions(self, obj):
+        if self.android('permission') in obj.attrib:
+            try:
+                p_c = Output.get_store()['manifest']['permissions']['create']
+            except KeyError:
+                p_c = []
+            pl_ = None
+            for p, pl in p_c:
+                if obj.attrib[self.android('permission')] == p:
+                    pl_ = pl
+            if not pl_ or pl == 'normal':
+                print('| need permission: ' + obj.attrib[self.android('permission')], end='')
+            elif pl_ == 'dangerous':
+                print('| need permission: ' + error(obj.attrib[self.android('permission')]), end='')
+            elif pl_ == 'signature':
+                print('| need permission: ' + good(obj.attrib[self.android('permission')]), end='')
+
+        print()
 
     def list_broadcasts(self):
         app = self.root.find('application')
@@ -196,9 +217,7 @@ class Manifest:
                 continue
             for intent_filter in obj.findall('intent-filter'):
                 print(obj.attrib[self.android('name')], end=' ')
-                if self.android('permission') in obj.attrib:
-                    print('need: ' + obj.attrib[self.android('permission')], end='')
-                print()
+                self.check_need_permissions(obj)
                 for action in intent_filter.findall('action'):
                     print('\t' + action.attrib[self.android('name')])
         pass
@@ -219,8 +238,12 @@ class Manifest:
         print(warning("\npermissions created:"))
         for permissions in self.root.findall('permission'):
             name = permissions.get(self.android('name'))
-            print(name)
-            Output.add_to_store("manifest", "permissions", "create", name)
+            protectionLevel = permissions.get(self.android('protectionLevel'))
+            print("%s%s%s" % (
+                error(name) if protectionLevel == 'dangerous' else good(name) if protectionLevel == 'signature' else name,
+                " " * (80 - len(name)) + "| ",
+                protectionLevel))
+            Output.add_to_store("manifest", "permissions", "create", (name, protectionLevel))
 
     def list_providers(self):
         h2("Providers")
@@ -237,5 +260,6 @@ class Manifest:
                 name = obj.attrib[self.android('name')]
                 Output.add_to_store("manifest", "provider", "exported",
                         (authorities, name))
-                print(f"authorities: {authorities} | name: {name}")
+                print(f"authorities: {authorities} | name: {name}", end=' ')
+                self.check_need_permissions(obj)
 
