@@ -385,41 +385,59 @@ Java.perform(function()
     }
     catch (e) {}
 
-/*    try
+    try
+    {
+      var TrustManagerImpl = Java.use('com.android.org.conscrypt.TrustManagerImpl');
+      var ArrayList = Java.use("java.util.ArrayList");
+      TrustManagerImpl.verifyChain.implementation = function(untrustedChain, trustAnchorChain,
+        host, clientAuth, ocspData, tlsSctData) {
+        send("Bypassing TrustManagerImpl->verifyChain()");
+        return untrustedChain;
+      };
+      TrustManagerImpl.checkTrustedRecursive.implementation = function(certs, host, clientAuth, untrustedChain, trustAnchorChain, used) {
+        send("Bypassing TrustManagerImpl->checkTrustedRecursive()");
+        return ArrayList.$new();
+      };
+      send("Found: TrustMangerImpl conscrypt");
+    }
+    catch (e) {}
+
+
+    /*    try
     {
       //var TrustManagerImpl = Java.use("com.android.org.conscrypt.TrustManagerImpl")
       var Platform = Java.use("com.android.org.conscrypt.Platform");
-      //var TrustManagerImpl = Java.use("TrustManagerImpl$ExtendedKeyUsagePKIXCertPathChecker")
+//var TrustManagerImpl = Java.use("TrustManagerImpl$ExtendedKeyUsagePKIXCertPathChecker")
       var ArrayList = Java.use("java.util.ArrayList");
 
-      //send(Object.getOwnPropertyNames(TrustManagerImpl.__proto__).join('\n\t'));
-      //var a = TrustManagerImpl.class.getDeclaredMethods();
-      //TrustManagerImpl.$dispose;
-      //a.forEach(function(s) {
-      //  send(s.toString());
-      //});
-      //send('Found: com.android.org.conscrypt.TrustManagerImpl');
+//send(Object.getOwnPropertyNames(TrustManagerImpl.__proto__).join('\n\t'));
+//var a = TrustManagerImpl.class.getDeclaredMethods();
+//TrustManagerImpl.$dispose;
+//a.forEach(function(s) {
+//  send(s.toString());
+//});
+//send('Found: com.android.org.conscrypt.TrustManagerImpl');
       Platform.checkServerTrusted.overload('javax.net.ssl.X509TrustManager', '[Ljava.security.cert.X509Certificate;', 'java.lang.String', 'com.android.org.conscrypt.AbstractConscryptSocket').implementation = function(a, b, c, d){
-      //TrustManagerImpl.verifyChain.implementation = function(a, b, c, d) {
-      //TrustManagerImpl.checkTrustedRecursive.implementation = function() {
-      //TrustManagerImpl.checkServerTrusted.implementation = function() {
+  //TrustManagerImpl.verifyChain.implementation = function(a, b, c, d) {
+  //TrustManagerImpl.checkTrustedRecursive.implementation = function() {
+  //TrustManagerImpl.checkServerTrusted.implementation = function() {
         send("[+] Bypassing TrustManagerImpl->verifyChain()");
-      //  return a;
+//  return a;
       }
-      //TrustManagerImpl.checkTrustedRecursive.implementation = function(certs, host, clientAuth, untrustedChain,
-      //  trustAnchorChain, used) {
-      //  send("[+] Bypassing TrustManagerImpl->checkTrustedRecursive()");
-      //  return ArrayList.$new();
-      //};
+//TrustManagerImpl.checkTrustedRecursive.implementation = function(certs, host, clientAuth, untrustedChain,
+//  trustAnchorChain, used) {
+//  send("[+] Bypassing TrustManagerImpl->checkTrustedRecursive()");
+//  return ArrayList.$new();
+//};
       Platform.checkServerTrusted.overload('javax.net.ssl.X509TrustManager', '[Ljava.security.cert.X509Certificate;', 'java.lang.String', 'com.android.org.conscrypt.ConscryptEngine').implementation = function(a, b, c, d){
         send("[+] Bypassing TrustManagerImpl->verifyChain()");
       }
       send('Found: com.android.org.conscrypt.TrustManagerImpl');
     }
     catch (e) {send(e.toString())}
-*/
+    */
 
-  });
+});
 //android_pinning()
 //Java.perform(function() {
 //    Java.enumerateLoadedClasses({
