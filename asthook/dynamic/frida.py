@@ -91,7 +91,13 @@ class Frida:
             script = self.__session.create_script(file)
         else:
             f = open(f"{PACKAGE_PATH}/{file}", "r")
-            script = self.__session.create_script(f.read())
+            try:
+                script = self.__session.create_script(f.read())
+            except frida.InvalidOperationError as e:
+                self.spawn("")
+                self.load(file, option, function)
+                return
+
         if option == "print":
             script.on('message', self.on_message_print)
         if option == "store":

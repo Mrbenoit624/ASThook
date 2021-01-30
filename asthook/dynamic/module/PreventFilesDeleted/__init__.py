@@ -24,5 +24,9 @@ class PreventFileDeleted:
             print("[+] file got ")
             self.__frida.post(self.__sc, {'type': 'input'})
 
-    def __del__(self):
+    def remove(self):
         self.__frida.unload(self.__sc)
+        print("files_del unloaded")
+
+    def __del__(self):
+        pass

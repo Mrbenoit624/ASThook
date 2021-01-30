@@ -104,14 +104,19 @@ class Output:
 
     @classmethod
     def init(cls):
-        cls.store = [{}]
-        cls.store[0]["manifest"] = {}
-        cls.store[0]["tree"] = {}
-        #cls.store["dynamic"] = {}
-        cls.printer_callback = {"manifest": {},
-                                "tree": {}}
-        cls.store_restore = [{"manifest": {},
-                                "tree": {}}]
+        cls.store = [{"manifest": {},
+                      "tree"    : {},
+                      "dynamic" : {}
+                    }]
+        #cls.store[0]["manifest"] = {}
+        #cls.store[0]["tree"] = {}
+        #cls.store[0]["dynamic"] = {}
+        cls.printer_callback = cls.store.copy()
+        cls.store_restore = cls.store.copy()
+        #cls.printer_callback = {"manifest": {},
+        #                        "tree": {}}
+        #cls.store_restore = [{"manifest": {},
+        #                        "tree": {}}]
 
     @classmethod
     def replace(cls, store, instance=0):
@@ -149,17 +154,32 @@ class Output:
         return arg in cls.store_restore[0][category][module][tag]
 
     @classmethod
-    def add_to_store(cls, category, module, tag, arg, instance=0):
+    def browse_to_store(cls, category, module, tag, instance=0):
         if not module in cls.store[instance][category]:
             cls.store[instance][category][module] = {}
         if not tag in cls.store[instance][category][module]:
             cls.store[instance][category][module][tag] = []
-        if not cls.in_restore(category, module, tag, arg):
-            cls.store[instance][category][module][tag].append(arg)
+        return cls.store[instance][category][module][tag]
+
+    @classmethod
+    def add_to_store(cls, category, module, tag, arg, instance=0):
+        cls.browse_to_store(category, module, tag, instance).append(arg)
+
+    @classmethod
+    def get_to_store(cls, category, module, tag, instance=0):
+        return cls.browse_to_store(category, module, tag, instance)
 
     @classmethod
     def add_tree_mod(cls, module, tag, arg, instance=0):
         cls.add_to_store("tree", module, tag, arg, instance)
+
+    @classmethod
+    def add_dynamic_mod(cls, module, tag, arg, instance=0):
+        cls.add_to_store("dynamic", module, tag, arg, instance)
+
+    @classmethod
+    def get_dynamic_mod(cls, module, tag, instance=0):
+        return cls.get_to_store("dynamic", module, tag, instance)
 
 
     @classmethod

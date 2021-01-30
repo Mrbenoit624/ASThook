@@ -60,8 +60,11 @@ class GitFilesStore:
             except:
                 continue
 
-    def __del__(self):
+    def remove(self):
         self.__stop = True
         self.__frida.unload(self.__sc)
         self.to_join.join()
         print("git files store unloaded")
+
+    def __del__(self):
+        pass

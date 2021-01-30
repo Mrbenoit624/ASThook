@@ -77,6 +77,9 @@ def main():
 
     st_analysis = StaticAnalysis(args, DIR)
     DynamicAnalysis(st_analysis.manifest.package, args, st_analysis._StaticAnalysis__basepath)
+    if args.output_file:
+        with open(args.output_file, 'w') as f:
+            f.write(Output.dump(args.output))
 
 if __name__ == '__main__':
     main()

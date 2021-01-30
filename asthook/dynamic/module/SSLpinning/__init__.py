@@ -8,6 +8,9 @@ class SSLpinning:
         self.__sc = "script_frida/sslpinning.js"
         self.__frida.load(self.__sc, "print")
 
+    def remove(self):
+        pass
+
     def __del__(self):
         self.__frida.unload(self.__sc)
         print("ssl pinning unloaded")

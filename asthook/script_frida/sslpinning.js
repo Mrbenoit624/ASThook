@@ -394,6 +394,7 @@ Java.perform(function()
         send("Bypassing TrustManagerImpl->verifyChain()");
         return untrustedChain;
       };
+
       TrustManagerImpl.checkTrustedRecursive.implementation = function(certs, host, clientAuth, untrustedChain, trustAnchorChain, used) {
         send("Bypassing TrustManagerImpl->checkTrustedRecursive()");
         return ArrayList.$new();

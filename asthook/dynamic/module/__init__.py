@@ -36,16 +36,19 @@ class ModuleDynamic:
 
     def unload(self, module):
         if module in self.__list_module_loaded:
+            self.__list_module_loaded[module].remove()
             del self.__list_module_loaded[module]
 
     def unload_all(self):
+        for module in self.__list_module_loaded:
+            self.__list_module_loaded[module].remove()
         self.__list_module_loaded.clear()
 
     def reload(self, frida = None):
         if frida:
             self.__frida = frida
         for module, func in self.__list_module_loaded.items():
-            self.unload(module)
+        #    self.unload(module)
             self.load(module)
 
     def load_module(self):

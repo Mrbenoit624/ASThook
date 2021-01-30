@@ -31,6 +31,10 @@ class QuickHook:
             print(message['payload'])
 
     
-    def __del__(self):
+    def remove(self):
         for i in self.__sc:
             self.__frida.unload(i)
+        print("quickhook unloaded")
+
+    def __del__(self):
+        pass
