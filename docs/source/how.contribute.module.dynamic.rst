@@ -20,9 +20,12 @@ The following example show how to make a basic module
          self.__sc = "script_frida/sslpinning.js"
          self.__frida.load(self.__sc, "print")
 
-     def __del__(self):
+     def remove(self):
          self.__frida.unload(self.__sc)
          print("ssl pinning unloaded")
+
+     def __del__(self):
+       pass
 
 The constructor of the class give access to:
 

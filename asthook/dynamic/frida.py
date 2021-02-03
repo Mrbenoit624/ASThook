@@ -86,11 +86,14 @@ class Frida:
         if self.__pid:
             self.__server.resume(self.__pid)
 
-    def load(self, file, option, function = None):
+    def load(self, file, option, function = None, absolute = False):
         if len(file.split(" ")) > 1:
             script = self.__session.create_script(file)
         else:
-            f = open(f"{PACKAGE_PATH}/{file}", "r")
+            if absolute:
+                f = open(f"{file}", "r")
+            else:
+                f = open(f"{PACKAGE_PATH}/{file}", "r")
             try:
                 script = self.__session.create_script(f.read())
             except frida.InvalidOperationError as e:

@@ -4,6 +4,7 @@ import sys
 import signal
 import json
 import re
+import copy
 from asthook import log as logging
 
 
@@ -111,8 +112,8 @@ class Output:
         #cls.store[0]["manifest"] = {}
         #cls.store[0]["tree"] = {}
         #cls.store[0]["dynamic"] = {}
-        cls.printer_callback = cls.store.copy()
-        cls.store_restore = cls.store.copy()
+        cls.printer_callback = copy.deepcopy(cls.store)
+        cls.store_restore = copy.deepcopy(cls.store)
         #cls.printer_callback = {"manifest": {},
         #                        "tree": {}}
         #cls.store_restore = [{"manifest": {},
@@ -132,18 +133,18 @@ class Output:
         cls.store_restore[0] = cls.store[0]
 
     @classmethod
-    def add_printer_callback(cls, category, module, tag, func):
-        if not module in cls.printer_callback[category]:
-            cls.printer_callback[category][module] = {}
-        cls.printer_callback[category][module][tag] = func
+    def add_printer_callback(cls, category, module, tag, func, instance=0):
+        if not module in cls.printer_callback[instance][category]:
+            cls.printer_callback[instance][category][module] = {}
+        cls.printer_callback[instance][category][module][tag] = func
 
     @classmethod
-    def get_printer_callback(cls, category, module, tag):
-        if not module in cls.printer_callback[category]:
+    def get_printer_callback(cls, category, module, tag, instance=0):
+        if not module in cls.printer_callback[instance][category]:
             return None
-        if not tag in cls.printer_callback[category][module]:
+        if not tag in cls.printer_callback[instance][category][module]:
             return None
-        return cls.printer_callback[category][module][tag]
+        return cls.printer_callback[instance][category][module][tag]
 
     @classmethod
     def in_restore(cls, category, module, tag, arg):

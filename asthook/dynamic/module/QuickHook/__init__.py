@@ -17,14 +17,14 @@ class QuickHook:
         self.__sc = []
         for i in args.quickhook:
             self.__sc.append(i)
-            self.__frida.load(i, "custom", self.on_message_print)
+            self.__frida.load(i, "custom", self.on_message_print, absolute=True)
         if "gen_hook" in Output.get_store()["tree"]:
             with open("/dev/shm/quickhook.js", 'w') as f:
                 for i in Output.get_store()["tree"]["gen_hook"]["hook"]:
                     f.write(i[1])
             self.__sc.append("/dev/shm/quickhook.js")
             self.__frida.load("/dev/shm/quickhook.js", "custom",
-                    self.on_message_print)
+                    self.on_message_print, absolute=True)
 
     def on_message_print(self, message, data):
         if message['type'] == 'send':
