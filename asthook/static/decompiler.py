@@ -6,6 +6,7 @@ import sys
 import json
 
 from asthook.conf import PACKAGE_PATH
+from asthook.utils.infos import Info
 
 from asthook.log import error
 
@@ -14,6 +15,14 @@ class Decompiler:
         self.__app = app
         self.__args = args
         self.__dir_extract = base_path
+        mtime_prev = Info.get('mtime_decompiler')
+        mtime = Path(app).stat().st_mtime
+        if mtime_prev:
+            if mtime_prev < mtime:
+                self.__args.decompiler = Info.get('decompiler')
+                print('The Decompilation is old!')
+        Info.set('mtime_decompiler', mtime)
+
         if self.__args.decompiler == 'none' and \
                 os.path.exists(self.__dir_extract):
             return
@@ -23,24 +32,18 @@ class Decompiler:
             answer = input()
             if not (answer.lower() == "y" or answer.lower() == "yes"):
                 return
-        info_path = Path(f"{self.__dir_extract}").parent
-        info_path = info_path / "info.json"
 
-        is_json = False
-        if os.path.exists(info_path):
-            is_json = True
-            with open(info_path, "r") as info_file:
-                info_json = json.loads(info_file.read())
-                prev_decompiler = info_json['decompiler']
-            with open(info_path, "w") as info_file:
-                info_json['decompiler'] = self.__args.decompiler
+        prev_decompiler = Info.get('decompiler')
+        Info.set('decompiler', self.__args.decompiler)
+        prev_decompilers = Info.get('prev_decompiler')
 
-                self.move_prev_decompilation(prev_decompiler)
-                if not prev_decompiler in info_json['prev_decompiler']:
-                    info_json['prev_decompiler'].append(prev_decompiler)
+        if prev_decompilers:
+            prev_decompilers.append(prev_decompiler)
+        elif prev_decompiler:
+            Info.set('prev_decompiler', [prev_decompiler])
 
-                info_file.write(json.dumps(info_json))
-
+        if prev_decompiler:
+            self.move_prev_decompilation(prev_decompiler)
 
 
         subprocess.call(["rm", "-rf", self.__dir_extract])
@@ -91,12 +94,6 @@ class Decompiler:
             subprocess.call(["cp", self.__dir_extract + "/apktools/AndroidManifest.xml",
                 self.__dir_extract])
  
-        if not is_json:
-            with open(info_path, "w") as info_file:
-                info_json = {'decompiler' : self.__args.decompiler,
-                             'prev_decompiler' : []}
-                info_file.write(json.dumps(info_json, indent=2))
-
     def move_prev_decompilation(self, prev_decompiler):
         prev_decomp_dir = Path(self.__dir_extract).parent / "prev_decompilation"
         if not os.path.exists(prev_decomp_dir):

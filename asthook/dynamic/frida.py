@@ -5,7 +5,6 @@ import os
 import sys
 from subprocess import Popen, DEVNULL
 from asthook.log import error, info
-from asthook.conf import PACKAGE_PATH
 
 from asthook.conf import DIR, PACKAGE_PATH
 

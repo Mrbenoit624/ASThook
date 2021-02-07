@@ -19,6 +19,10 @@ from asthook.utils import timeout, bprint, extcall
 from asthook.log import Log
 from asthook.dynamic.frida import Frida
 
+from asthook.utils.infos import Info
+from pathlib import Path
+import hashlib
+
 from asthook.dynamic.module import ModuleDynamic
 
 from .cmd import DynCmd
@@ -67,7 +71,7 @@ class DynamicAnalysis:
             f = f.replace('\r', '')
             if not f == "":
                 self.__device.pull("/data/data/%s/shared_prefs/%s" % (self.__package, f),
-                        "%s/user_share/%s" % (self.tmp_dir, f))
+                        "%s/user_share/%s" % (self.__tmp_dir, f))
 
     def setup_certificate(self, proxy_cert):
         """
@@ -150,13 +154,43 @@ class DynamicAnalysis:
                     logging.warning(str(e))
 
     def patch_apk(self, apk):
+
+        mtime_prev = Info.get("mtime_patched")
+        mtime = Path(apk).stat().st_mtime
+        use_prev = False
+        if mtime_prev:
+            if mtime_prev >= mtime:
+                if not self.__args.proxy_cert:
+                    use_prev = True
+                else:
+                    hash_prev = Info.get("hash_cert_proxy")
+                    with open(self.__args.proxy_cert, 'rb') as f:
+                        sha512 = hashlib.sha512(f.read())
+                        hash_ = sha512.hexdigest()
+                    Info.set("hash_cert_proxy", hash_)
+                    if hash_prev:
+                        if hash_ == hash_prev:
+                            use_prev = True
+        if use_prev:
+            logging.info("Use the previous apk patched")
+            return f"{self.__tmp_dir}/patched/apk_patched.apk"
+        Info.set("mtime_patched", mtime)
+
+
+
+        logging.info(f"The apk {apk} will be patched")
         abi = Frida.check_abi(self.__device)
         patched_apk = "/tmp/apk_patched.apk"
         patcher = apkpatcher.Patcher(apk, self.__args.sdktools, self.__args.version_android)
+
+        os.makedirs(f"{self.__tmp_dir}/patched/", exist_ok=True)
+        shutil.copyfile(patched_apk, f"{self.__tmp_dir}/patched/apk_patched.apk")
+        
         if self.__args.proxy_cert:
             patcher.add_network_certificate(self.__args.proxy_cert)
         patcher.patching(f"{PACKAGE_PATH}/bin/frida-gadget_{abi}.so", abi,
                 output_file=patched_apk, user_certificate=True)
+        logging.info(f"The apk {apk} was patched")
         return patched_apk
 
     def __init__(self, package, args, tmp_dir):
@@ -246,6 +280,8 @@ class DynamicAnalysis:
                     sys.exit(1)
                 installed_app = self.patch_apk(args.app)
                 #sys.exit(1)
+
+            Info.update()
 
             if not args.noinstall:
                 self.install_apk(installed_app)

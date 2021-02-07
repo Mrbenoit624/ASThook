@@ -4,6 +4,7 @@ import subprocess
 import os
 
 from asthook.utils import *
+from asthook.utils.infos import Info
 from asthook.log import Log
 
 from asthook.static.module import ModuleStatic
@@ -33,6 +34,7 @@ class StaticAnalysis:
                 self.__basepath,
                 "decompiled_app")
         self.manifest = None
+        Info.Init(self.__basepath)
 
         bprint("Static Analysis")
 
@@ -42,6 +44,8 @@ class StaticAnalysis:
             print(f"{self.__basepathdecompile}")
             sys.stderr.write("Application doesn't exist\n")
             sys.exit(1)
+
+        Info.update()
 
         packages = []
         if args.env_apks:
