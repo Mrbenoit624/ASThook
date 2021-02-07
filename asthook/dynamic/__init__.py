@@ -12,6 +12,9 @@ from ppadb import ClearError, InstallError
 from git import Repo
 import shutil
 
+import apkpatcher
+
+from asthook.conf import PACKAGE_PATH
 from asthook.utils import timeout, bprint, extcall
 from asthook.log import Log
 from asthook.dynamic.frida import Frida
@@ -73,6 +76,7 @@ class DynamicAnalysis:
         if not os.path.exists(proxy_cert):
             logging.error("%s file not found" % proxy_cert)
             sys.exit(1)
+        cert_path = "/system/etc/security/cacerts/"
         os.system("openssl x509 -inform DER -in %s -out %s/cacert.pem" %
                 (proxy_cert, self.__tmp_dir))
         hash_cert = subprocess.check_output(["openssl", "x509", "-inform",
@@ -86,8 +90,8 @@ class DynamicAnalysis:
                  hash_cert))
         self.__device.shell("mount -o rw,remount,rw /system")
         self.__device.push("%s/%s.0" % (self.__tmp_dir, hash_cert),
-                "/system/etc/security/cacerts/%s" % hash_cert)
-        self.__device.shell("chmod 644 /system/etc/security/cacerts/%s.0" % hash_cert)
+                f"{cert_path}{hash_cert}")
+        self.__device.shell(f"chmod 644 {cert_path}{hash_cert}.0")
         self.__device.shell("mount -o ro,remount,ro /system")
         os.system("rm %s/%s.0" % (self.__tmp_dir, hash_cert))
     
@@ -144,6 +148,16 @@ class DynamicAnalysis:
                     sys.exit(3)
                 else:
                     logging.warning(str(e))
+
+    def patch_apk(self, apk):
+        abi = Frida.check_abi(self.__device)
+        patched_apk = "/tmp/apk_patched.apk"
+        patcher = apkpatcher.Patcher(apk, self.__args.sdktools, self.__args.version_android)
+        if self.__args.proxy_cert:
+            patcher.add_network_certificate(self.__args.proxy_cert)
+        patcher.patching(f"{PACKAGE_PATH}/bin/frida-gadget_{abi}.so", abi,
+                output_file=patched_apk, user_certificate=True)
+        return patched_apk
 
     def __init__(self, package, args, tmp_dir):
 
@@ -221,12 +235,20 @@ class DynamicAnalysis:
                     if extcall.external_call(['adb', 'remount']) == 0:
                         break
 
+            installed_app = args.app
+            self.rooted = True
             if self.__device.set_root() == 1:
-                logging.error("Phone didn't root. Please root it before")
-                sys.exit(1)
+                self.rooted = False
+                #logging.error("Phone didn't root. Please root it before")
+                logging.warning("Phone didn't root. Try to patch app to injected frida")
+                if not self.__args.version_android:
+                    logging.error("You need android version targeted to patch the apk")
+                    sys.exit(1)
+                installed_app = self.patch_apk(args.app)
+                #sys.exit(1)
 
             if not args.noinstall:
-                self.install_apk(args.app)
+                self.install_apk(installed_app)
 
             if args.no_emulation:
                 if args.proxy:
@@ -244,10 +266,10 @@ class DynamicAnalysis:
 
 
             # setup certificate
-            if args.proxy_cert:
+            if args.proxy_cert and self.rooted:
                 self.setup_certificate(args.proxy_cert)
             #apps = device.shell("pm list packages -f")
-            self.__frida = Frida(self.__device, self.__package)
+            self.__frida = Frida(self.__device, self.__package, self.rooted)
             if args.env_apks:
                 logging.info("prepare env")
                 for apk in args.env_apks:

@@ -29,8 +29,9 @@ class Frida:
         if message['type'] == 'send':
             self.__store.append(message['payload'])
 
-    def check_abi(self):
-        abi = self.__device.shell("getprop ro.product.cpu.abi")[:-1]
+    @classmethod
+    def check_abi(cls, device):
+        abi = device.shell("getprop ro.product.cpu.abi")[:-1]
         if abi[0:3] == "arm":
             if abi[3:5] == "64":
                 abi = "arm64"
@@ -40,20 +41,22 @@ class Frida:
         return abi
 
 
-    def __init__(self, device, package):
+    def __init__(self, device, package, rooted):
         self.__device = device
         self.__package = package
         self.__session = None
         self.__store = []
+        self.__rooted = rooted
 
-        self.__abi = self.check_abi()
+        if rooted:
+            self.__abi = Frida.check_abi(self.__device)
 
-        self.__device.push(f"{PACKAGE_PATH}/bin/frida-server_{self.__abi}", "/data/local/tmp/frida-server")
-        self.__device.push(f"{PACKAGE_PATH}/bin/Frida.zip", "/data/local/tmp/Frida.zip")
-        self.__device.shell("chmod 700 /data/local/tmp/frida-server")
-        null = sys.stdout
+            self.__device.push(f"{PACKAGE_PATH}/bin/frida-server_{self.__abi}", "/data/local/tmp/frida-server")
+            self.__device.push(f"{PACKAGE_PATH}/bin/Frida.zip", "/data/local/tmp/Frida.zip")
+            self.__device.shell("chmod 700 /data/local/tmp/frida-server")
+            null = sys.stdout
 
-        os.system('bash -c \'adb shell <<< "dalvikvm -cp /data/local/tmp/Frida.zip Frida;exit"\'')
+            os.system('bash -c \'adb shell <<< "dalvikvm -cp /data/local/tmp/Frida.zip Frida;exit"\'')
         #extcall.external_call(['adb', 'shell', '<<<', '"dalvikvm -cp /data/local/tmp/Frida.zip Frida;exit"'])
         #os.system('bash -c \'adb shell <<< "/data/local/tmp/frida-server&"\';exit')
         
@@ -64,7 +67,10 @@ class Frida:
     
     def attach(self, pid=None):
         try:
-            self.__session = self.__server.attach(pid if pid else self.__package)
+            if self.__rooted:
+                self.__session = self.__server.attach(pid if pid else self.__package)
+            else:
+                self.__session = self.__server.attach("Gadget")
         except frida.NotSupportedError as e:
             print(str(e))
             sys.exit(1)
