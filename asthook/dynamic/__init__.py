@@ -171,26 +171,39 @@ class DynamicAnalysis:
                     if hash_prev:
                         if hash_ == hash_prev:
                             use_prev = True
+        
+        abi = Frida.check_abi(self.__device)
+        if use_prev:
+            prev_abi = Info.get('abi_patched')
+            if not prev_abi == abi:
+                use_prev = False
+
         if use_prev:
             logging.info("Use the previous apk patched")
             return f"{self.__tmp_dir}/patched/apk_patched.apk"
         Info.set("mtime_patched", mtime)
+        Info.set("abi_patched", abi)
 
 
 
         logging.info(f"The apk {apk} will be patched")
-        abi = Frida.check_abi(self.__device)
         patched_apk = "/tmp/apk_patched.apk"
         patcher = apkpatcher.Patcher(apk, self.__args.sdktools, self.__args.version_android)
+        
+        
+        abi = Frida.check_abi(self.__device)
+        patcher.set_arch(abi)
 
-        os.makedirs(f"{self.__tmp_dir}/patched/", exist_ok=True)
-        shutil.copyfile(patched_apk, f"{self.__tmp_dir}/patched/apk_patched.apk")
         
         if self.__args.proxy_cert:
             patcher.add_network_certificate(self.__args.proxy_cert)
-        patcher.patching(f"{PACKAGE_PATH}/bin/frida-gadget_{abi}.so", abi,
+        #patcher.patching(f"{PACKAGE_PATH}/bin/frida-gadget",
+        patcher.patching(f"{PACKAGE_PATH}/bin/frida-gadget_{abi}.so",
                 output_file=patched_apk, user_certificate=True)
         logging.info(f"The apk {apk} was patched")
+        
+        os.makedirs(f"{self.__tmp_dir}/patched/", exist_ok=True)
+        shutil.copyfile(patched_apk, f"{self.__tmp_dir}/patched/apk_patched.apk")
         return patched_apk
 
     def __init__(self, package, args, tmp_dir):

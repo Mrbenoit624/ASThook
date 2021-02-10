@@ -47,8 +47,8 @@ class ModuleDynamic:
     def reload(self, frida = None):
         if frida:
             self.__frida = frida
-        for module, func in self.__list_module_loaded.items():
-        #    self.unload(module)
+        modules = self.__list_module_loaded.copy().items()
+        for module, func in modules:
             self.load(module)
 
     def load_module(self):

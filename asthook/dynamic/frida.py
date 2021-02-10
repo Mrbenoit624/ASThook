@@ -10,6 +10,7 @@ from asthook.conf import DIR, PACKAGE_PATH
 
 from asthook.utils import extcall
 
+
 class Frida:
     """
     Manage all interation with frida
@@ -82,13 +83,17 @@ class Frida:
             sys.exit(1)
 
     def spawn(self, arg):
-        self.__pid = self.__server.spawn(self.__package)
+        if self.__rooted:
+            self.__pid = self.__server.spawn(self.__package)
+        else:
+            self.__device.spawn(self.__package)
+            time.sleep(.2)
         self.attach()
         self.resume()
         time.sleep(1)
 
     def resume(self):
-        if self.__pid:
+        if self.__rooted and self.__pid:
             self.__server.resume(self.__pid)
 
     def load(self, file, option, function = None, absolute = False):
