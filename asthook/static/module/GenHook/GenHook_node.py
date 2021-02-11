@@ -73,7 +73,7 @@ class MethodDeclaration:
 %s\
         var ret = this.%s(%s);\n\
 %s\
-        return ret\n\
+        return ret;\n\
     };\n\
 });" % (
                 r["package"], class_name,
@@ -121,7 +121,7 @@ class ConstructorDeclarationIn:
             Output.add_tree_mod("gen_hook", "hook", ["%s.%s" % (class_name,func_name),
 "Java.perform(function()\n\
 {\n\
-    var class_hook = Java.use('%s.%s')\n\
+    var class_hook = Java.use('%s.%s');\n\
     class_hook.$init.implementation = function (%s) {\n\
         send('[+] %s.%s hooked');\n\
 %s\
