@@ -66,7 +66,7 @@ class MethodDeclaration:
             Output.add_tree_mod("gen_hook", "hook", ["%s.%s" % (class_name,func_name),
 "Java.perform(function()\n\
 {\n\
-    var class_hook = Java.use('%s.%s')\n\
+    var class_hook = Java.use('%s%s')\n\
     //TODO:%s\n\
     class_hook.%s.implementation = function (%s) {\n\
         send('[+] %s.%s hooked');\n\
@@ -76,7 +76,7 @@ class MethodDeclaration:
         return ret;\n\
     };\n\
 });" % (
-                r["package"], class_name,
+                f"{r['package']}." if r['package'] else "" , class_name,
                 overload,
                 func_name, ",".join(k for j,k in args),
                 class_name, func_name,

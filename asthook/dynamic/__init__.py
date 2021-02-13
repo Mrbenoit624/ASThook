@@ -351,4 +351,8 @@ class DynamicAnalysis:
 
             self.__frida.detach()
 
+            if args.no_emulation and args.proxy and not proxy_set:
+                self.__device.shell("settings put global http_proxy :0")
+
+
 

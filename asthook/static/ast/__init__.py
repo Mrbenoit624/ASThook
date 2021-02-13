@@ -227,11 +227,13 @@ class ast:
             for path in to_remove:
                 tree = depnodes[path].content
                 del depnodes[path]
-                if not tree or not tree.package:
+                if not tree:
                     continue
 
-                #print(path)
-                self.__infos["package"] = tree.package.name
+                if not tree.package:
+                    self.__infos["package"] = None
+                else:
+                    self.__infos["package"] = tree.package.name
                 self.__infos["imports"] = tree.imports
                 self.l = tree.types
 
@@ -265,8 +267,8 @@ class ast:
 
 
     def init_graph(self, path):
-        self.dot = Digraph(comment=self.__infos["package"] + "." +
-                path.name)
+        package = f"{self.__infos['package']}." if self.__infos["package"] else ""
+        self.dot = Digraph(comment=package + path.name)
         self.dot.attr('node', shape='box')
         self.dot.attr('graph', splines='ortho')
         self.count_node = 0
@@ -769,6 +771,8 @@ class ast:
                 selfp.MemberReference(elt, self).visit(selfp)
             elif type(elt) is javalang.tree.Literal:
                 selfp.Literal(elt, self).visit(selfp)
+            elif type(elt) is javalang.tree.Assignment:
+                selfp.Assignment(elt, self).visit(selfp)
             else:
                 if selfp.args.debug_ast:
                     logging.error("%s - %s" % (self.__class__.__name__, type(elt)))
@@ -813,6 +817,8 @@ class ast:
                 selfp.ReturnStatement(elt, self).visit(selfp)
             elif type(elt) is javalang.tree.IfStatement:
                 selfp.IfStatement(elt, self).visit(selfp)
+            elif type(elt) is javalang.tree.ForStatement:
+                selfp.ForStatement(elt, self).visit(selfp)
             else:
                 if selfp.args.debug_ast:
                     logging.error("%s - %s" % (self.__class__.__name__, type(elt)))
@@ -844,6 +850,12 @@ class ast:
                     selfp.ReturnStatement(elt, self).visit(selfp)
                 elif type(elt) is javalang.tree.TryStatement:
                     selfp.TryStatement(elt, self).visit(selfp)
+                elif type(elt) is javalang.tree.SynchronizedStatement:
+                    selfp.SynchronizedStatement(elt, self).visit(selfp)
+                elif type(elt) is javalang.tree.WhileStatement:
+                    selfp.WhileStatement(elt, self).visit(selfp)
+                elif type(elt) is javalang.tree.ContinueStatement:
+                    selfp.ContinueStatement(elt, self).visit(selfp)
                 else:
                     if selfp.args.debug_ast:
                         logging.error("%s - %s" % (self.__class__.__name__, type(elt)))
@@ -948,6 +960,8 @@ class ast:
                 selfp.SwitchStatementCase(elt, self).visit(selfp)
             elif type(elt) is javalang.tree.ForControl:
                 selfp.ForControl(elt, self).visit(selfp)
+            elif type(elt) is type(None):
+                pass
             else:
                 if selfp.args.debug_ast:
                     logging.error("%s - %s" % (self.__class__.__name__, type(elt)))
@@ -961,8 +975,13 @@ class ast:
     class SynchronizedStatement(BaseNode):
 
         def apply(self, selfp):
-            self = self
-            #print(self.elt.__dict__, end='')
+            for elt in self.elt.block:
+                if type(elt) is javalang.tree.IfStatement:
+                    selfp.IfStatement(elt, self).visit(selfp)
+                elif type(elt) is javalang.tree.ReturnStatement:
+                    selfp.ReturnStatement(elt, self).visit(selfp)
+                elif selfp.args.debug_ast:
+                    logging.error("%s - %s" % (self.__class__.__name__, type(elt)))
 
     class ForStatement(BaseNode):
 
@@ -1251,6 +1270,8 @@ class ast:
                     selfp.MemberReference(elt, self).visit(selfp)
                 elif type(elt) is javalang.tree.ClassCreator:
                     selfp.ClassCreator(elt, self).visit(selfp)
+                elif type(elt) is javalang.tree.BinaryOperation:
+                    selfp.BinaryOperation(elt, self).visit(selfp)
                 else:
                     if selfp.args.debug_ast:
                         logging.error("%s - %s" % (self.__class__.__name__, type(elt)))
@@ -1310,6 +1331,12 @@ class ast:
                     selfp.MethodInvocation(elt, self).visit(selfp)
                 elif type(elt) is javalang.tree.This:
                     selfp.This(elt, self).visit(selfp)
+                elif type(elt) is javalang.tree.Cast:
+                    selfp.Cast(elt, self).visit(selfp)
+                elif type(elt) is javalang.tree.Assignment:
+                    selfp.Assignment(elt, self).visit(selfp)
+                elif type(elt) is javalang.tree.ClassCreator:
+                    selfp.ClassCreator(elt, self).visit(selfp)
                 else:
                     if selfp.args.debug_ast:
                         logging.error("%s - %s" % (self.__class__.__name__, type(elt)))
