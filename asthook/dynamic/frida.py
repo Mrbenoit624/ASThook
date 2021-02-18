@@ -56,7 +56,7 @@ class Frida:
             self.__device.shell("chmod 700 /data/local/tmp/frida-server")
             null = sys.stdout
 
-            os.system('bash -c \'adb shell <<< "dalvikvm -cp /data/local/tmp/Frida.zip Frida;exit"\'')
+            os.system(f'bash -c \'adb -s {self.__device.device.serial} shell <<< "dalvikvm -cp /data/local/tmp/Frida.zip Frida;exit"\'')
         #extcall.external_call(['adb', 'shell', '<<<', '"dalvikvm -cp /data/local/tmp/Frida.zip Frida;exit"'])
         #os.system('bash -c \'adb shell <<< "/data/local/tmp/frida-server&"\';exit')
         
@@ -70,7 +70,9 @@ class Frida:
             if self.__rooted:
                 self.__session = self.__server.attach(pid if pid else self.__package)
             else:
-                self.__session = self.__server.attach("Gadget")
+                if not pid:
+                    pid=int(self.__device.shell(f"pidof {self.__package}")[:-1])
+                self.__session = self.__server.attach(pid)
         except frida.NotSupportedError as e:
             print(str(e))
             sys.exit(1)
@@ -87,7 +89,7 @@ class Frida:
             self.__pid = self.__server.spawn(self.__package)
         else:
             self.__device.spawn(self.__package)
-            time.sleep(.2)
+            time.sleep(.5)
         self.attach()
         self.resume()
         time.sleep(1)

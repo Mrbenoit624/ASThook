@@ -117,8 +117,8 @@ class DynamicAnalysis:
         while True:
             try:
                 if apk == self.__args.app and self.__args.config_xxhdpi:
-                    subprocess.call(['adb', 'install-multiple', apk,
-                        self.__args.config_xxhdpi] )
+                    self.__device.install_multiple(apk,
+                            self.__args.config_xxhdpi)
                 else:
                     self.__device.install(apk)
                 break
@@ -131,7 +131,7 @@ class DynamicAnalysis:
                     logging.warning("becareful install as test")
                     #subprocess.call(['adb', 'install', '-t', apk],
                     #        stdout=Log.STD_OUTPOUT, stderr=Log.STD_ERR, shell=False)
-                    extcall.external_call(['adb', 'install', '-t', apk])
+                    self.__device.install(apk, test=True)
                     break
                 elif "[INSTALL_FAILED_UPDATE_INCOMPATIBLE]" in str(e):
                     if apk == self.__args.app:
@@ -220,7 +220,7 @@ class DynamicAnalysis:
 
 
         bprint("Dynamic analysis")
-        subprocess.call(["adb", "start-server"])
+        self.__client.start_server()
         if not args.no_emulation:
             self.__emulation = threading.Thread(target=self.emulation_f,
                     args=(args.sdktools, 
@@ -277,9 +277,11 @@ class DynamicAnalysis:
             version_android = int(self.__device.shell("getprop ro.build.version.sdk"))
             if version_android >= 27:
                 #os.system("adb root")
-                extcall.external_call(["adb", "root"])
+                #extcall.external_call(["adb", "root"])
+                self.__device.root()
                 while True:
-                    if extcall.external_call(['adb', 'remount']) == 0:
+                    #if extcall.external_call(['adb', 'remount']) == 0:
+                    if self.__device.remount() == 0:
                         break
 
             installed_app = args.app
@@ -288,10 +290,11 @@ class DynamicAnalysis:
                 self.rooted = False
                 #logging.error("Phone didn't root. Please root it before")
                 logging.warning("Phone didn't root. Try to patch app to injected frida")
-                if not self.__args.version_android:
-                    logging.error("You need android version targeted to patch the apk")
-                    sys.exit(1)
-                installed_app = self.patch_apk(args.app)
+                if not self.__args.noinstall:
+                    if not self.__args.version_android:
+                        logging.error("You need android version targeted to patch the apk")
+                        sys.exit(1)
+                    installed_app = self.patch_apk(args.app)
                 #sys.exit(1)
 
             Info.update()

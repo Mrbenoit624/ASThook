@@ -11,15 +11,13 @@ class my_adb:
     client = None
 
     def __init__(self, host="127.0.0.1", port=5037):
-        #self.client = AdbDeviceTcp(host, port, default_timeout_s=9.)
         self.client = AdbClient(host=host, port=port)
 
     def devices(self):
         return [ self.device(dev) for dev in self.client.devices()]
-        #self.client.connect(auth_timeout_s=20)
-        #ret = []
-        #ret.append(self.device(self.client))
-        #return ret
+
+    def start_server(self):
+        subprocess.call(["adb", "start-server"])
 
     class device:
         
@@ -33,6 +31,23 @@ class my_adb:
             if self.need_su:
                 return self.device.shell(f"su 0 {arg}")
             return self.device.shell(arg)
+
+        def root(self):
+            return subprocess.call(["adb", "-s", self.device.serial, "root"],
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL)
+
+        def remount(self):
+            return subprocess.call(["adb", "-s", self.device.serial, "remount"],
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL)
+
+        def install_multiple(apk, xxhdpi):
+            return subprocess.call(["adb", "-s", self.device.serial,
+                "install-multiple", apk, xxhdpi],
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL)
+
 
         def set_root(self):
             if not self.shell("id")[4] == "0":
@@ -51,7 +66,12 @@ class my_adb:
         def pull(self, src, dst):
             return self.device.pull(src, dst)
 
-        def install(self, app):
+        def install(self, app, test=False):
+            if test:
+                return subprocess.call(["adb", "-s", self.device.serial,
+                "install", "-t", apk],
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL)
             return self.device.install(app)
             #return subprocess.call(["adb", "install", app])
 
