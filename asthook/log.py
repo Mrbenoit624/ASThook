@@ -87,9 +87,9 @@ def setup_logger(args):
     fmt = MyFormatter(args.verbose_position)
     hdlr = SplitStreamHandler()
     hdlr.setFormatter(fmt)
-    hdlr.setLevel(logging.ERROR)
+    hdlr.setLevel(logging.INFO)
     logger = logging.getLogger("phone_analysis")
-    logger.setLevel(logging.ERROR)
+    logger.setLevel(logging.INFO)
     logger.propagate = 0
     if args.verbose:
         if args.verbose == "debug":

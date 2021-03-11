@@ -1,9 +1,10 @@
 
-from asthook.dynamic.module.register import ModuleDynamicCmd
+from asthook.dynamic.module.register import ModuleDynamicCmd, BaseModuleDynamic
 from asthook.utils import Output
+from asthook.conf import PACKAGE_PATH
 
 @ModuleDynamicCmd("nativehook", "hook native hook", str, "+")
-class QuickHook:
+class NativeHook(BaseModuleDynamic):
     """
     Class to load QuickHook
 
@@ -11,29 +12,18 @@ class QuickHook:
       --nativehook <name_hook> ...
       load all js scripts
     """
-    def __init__(self, frida, device, tmp_dir, args):
-        self.__frida = frida
-        self.__sc = []
-        for i in args.nativehook:
-            self.__sc.append(i)
-            with open("script_frida/hooknative.js") as f:
+    def _init(self):
+        for i in self.args.nativehook:
+            self.sc.append("nativehook")
+            with open(f"{PACKAGE_PATH}/script_frida/hooknative.js") as f:
                 test = f.read()
                 test += "\nJava.perform(function() {\n" \
                         "  trace(\"%s*\");\n" \
                         "});\n" % i
-                self.__frida.load(test, "custom", self.on_message_print)
+                self.frida.load(self.sc[-1], "custom", self.on_message_print, script=test)
 
-
-            #self.__frida.load(test, "custom", self.on_message_print)
 
     def on_message_print(self, message, data):
         if message['type'] == 'send':
             print(message['payload'])
 
-    
-    def remove(self):
-        for i in self.__sc:
-            self.__frida.unload(i)
-
-    def __del__(self):
-        pass

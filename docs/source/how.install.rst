@@ -69,12 +69,6 @@ that:
 .. asciinema:: sdkmanager.cast
   :preload:
 
-Setup decompiler Jadx:
-
-.. code-block:: bash
-
-   cd src/submodule/jadx
-   ./gradlew dist
 
 
 Documuentation

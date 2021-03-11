@@ -111,9 +111,9 @@ def parser():
             help="disable cache and reparse all files in scope")
 
     group.add_argument(
-            '--progress',
+            '--no-progress',
             action="store_true",
-            help="Display percent when it analyse static code")
+            help="Disable display percent when it analyse static code")
 
     group.add_argument(
             '--graph_ast',

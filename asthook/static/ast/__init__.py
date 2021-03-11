@@ -181,7 +181,7 @@ class ast:
 
         depnodes = {}
         for p in paths:
-            if args.progress:
+            if not args.no_progress:
                 percent = int((paths.index(p))/percent_max * 50)
                 if conn:
                     conn.send("progress")
@@ -237,7 +237,7 @@ class ast:
                 self.__infos["imports"] = tree.imports
                 self.l = tree.types
 
-                if args.progress:
+                if not args.no_progress:
                     percent = 50 + int((percent_max - len(depnodes))/percent_max * 50)
                     if conn:
                         conn.send("progress")

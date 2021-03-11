@@ -11,10 +11,12 @@ static:
   
 dynamic:
   - sdktools: "/usr/lib/android-sdk"
-  - phone: "phone_audit2"
+  - version_android: "30.0.2"
+    #  - phone: "phone_audit2"
+  - phone: "phone_audit_play_store"
   - proxy: "127.0.0.1:8080"
-#  - proxy_cert: "misc/burp.der"
-
-  - sslpinning: true
+  - proxy_cert: "misc/burp.der"
+ 
+    #  - sslpinning: true
 
 

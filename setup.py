@@ -12,7 +12,7 @@ import os, stat
 class pre_install(install):
     def run(self):
         #subprocess.run(["./asthook/bootstrap.sh"])
-        bootstrap.main()
+        #bootstrap.main()
         install.run(self)
         for filepath in self.get_outputs():
             if "api_key_detector/gibberish_detector/gibberish_detector.pki" in filepath:

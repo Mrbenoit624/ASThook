@@ -209,6 +209,10 @@ class DynamicAnalysis:
     def __init__(self, package, args, tmp_dir):
 
         if ( not args.sdktools and not args.no_emulation ) or not args.phone:
+            for km, vm in ModuleDynamic.check_module_loaded(args).items():
+                logging.error(f"options {km} couldn't be used without options: \n"
+                               " - phone and no-emulation to use physical phone\n"
+                               " - phone and sdktools to use an emulator")
             return
 
         self.__package = package
@@ -340,7 +344,7 @@ class DynamicAnalysis:
             modules = ModuleDynamic(self.__frida, self.__device, self.__tmp_dir,
                     args)
 
-            #self.__frida.resume()
+            self.__frida.resume()
 
             #self.__frida.load("script_frida/socket.js", "print")
 
@@ -354,7 +358,8 @@ class DynamicAnalysis:
 
             self.__frida.detach()
 
-            if args.no_emulation and args.proxy and not proxy_set:
+            if "proxy_set" in locals() and args.no_emulation and args.proxy \
+                    and not proxy_set:
                 self.__device.shell("settings put global http_proxy :0")
 
 

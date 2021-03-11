@@ -10,7 +10,9 @@ def check_print(type_, name):
                 type_ == "'%s'" % check:
             return "%ssend('%s: ' + %s);\n" % (" "*8, name, name)
     else:
-        return "%ssend('%s: ' + %s.value);\n" % (" "*8, name, name)
+        return f"{' '*8}if ({name} != null)\n" \
+               f"{' '*12}send('{name}: ' + {name}.toString());\n"
+
 
 
 @Node("MethodDeclaration", "in")
@@ -58,7 +60,7 @@ class MethodDeclaration:
             #### Return Type ####
             ret_print = ""
             if self.elt.return_type:
-                ret_print = "\tsend('ret = ' + ret.value);\n"
+                ret_print = check_print("", "ret")#"\tsend('ret = ' + ret.value);\n"
             
             for j, k in args:
                 prints += check_print(j, k)

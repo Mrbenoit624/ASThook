@@ -3,7 +3,8 @@ import frida
 import time
 import os
 import sys
-from subprocess import Popen, DEVNULL
+import threading
+from subprocess import Popen, DEVNULL, PIPE
 from asthook.log import error, info
 
 from asthook.conf import DIR, PACKAGE_PATH
@@ -56,28 +57,64 @@ class Frida:
             self.__device.shell("chmod 700 /data/local/tmp/frida-server")
             null = sys.stdout
 
-            os.system(f'bash -c \'adb -s {self.__device.device.serial} shell <<< "dalvikvm -cp /data/local/tmp/Frida.zip Frida;exit"\'')
-        #extcall.external_call(['adb', 'shell', '<<<', '"dalvikvm -cp /data/local/tmp/Frida.zip Frida;exit"'])
-        #os.system('bash -c \'adb shell <<< "/data/local/tmp/frida-server&"\';exit')
+            self.__frida_launch = threading.Thread(target=self.launch_frida,
+                    args=())
+            self.__frida_launch.start()
         
-        #self.__server = frida.get_usb_device()
         for device in frida.enumerate_devices():
             if device.id == self.__device.device.serial:
                 self.__server = device
-    
-    def attach(self, pid=None):
+
+    def launch_frida(self):
+        if self.__device.need_su:
+            p = Popen(["adb", "-s", self.__device.device.serial, "shell",
+                "su", "-c",
+                "dalvikvm\ -cp\ /data/local/tmp/Frida.zip\ Frida"],
+                stdin  = PIPE, 
+                stdout = PIPE)
+        else:
+            p = Popen(["adb", "-s", self.__device.device.serial, "shell",
+                "dalvikvm", "-cp", "/data/local/tmp/Frida.zip", "Frida"],
+                stdin  = PIPE, 
+                stdout = PIPE)
+
+    def check_frida_server(self):
+        if not self.__frida_launch.is_alive():
+            self.__frida_launch.start()
+
+
+    def _attach(self, pid=None):
         try:
             if self.__rooted:
                 self.__session = self.__server.attach(pid if pid else self.__package)
             else:
                 if not pid:
-                    pid=int(self.__device.shell(f"pidof {self.__package}")[:-1])
-                self.__session = self.__server.attach(pid)
+                    try:
+                        pid=int(self.__device.shell(f"pidof {self.__package}")[:-1])
+                        self.__session = self.__server.attach(pid)
+                    except ValueError as e:
+                        return 3
         except frida.NotSupportedError as e:
             print(str(e))
             sys.exit(1)
         except frida.ServerNotRunningError as e:
-            print(str(e))
+            return 1
+        except frida.ProcessNotFoundError as e:
+            return 2
+        return 0
+
+    def attach(self, pid=None):
+        if not self.__rooted:
+            for i in range(0, 10):
+                if self._attach(pid) == 0:
+                    return
+                time.sleep(.1)
+        ret = self._attach(pid)
+        if ret == 2:
+            while True:
+                time.sleep(.1)
+                self.attach(pid)
+        if ret == 1:
             error("Becareful you use a frida-server for the wrong architecture\n"
                     "go to https://github.com/frida/frida/releases and download\n"
                     "the good one and then replace the file /bin/frida-server\n"
@@ -89,41 +126,53 @@ class Frida:
             self.__pid = self.__server.spawn(self.__package)
         else:
             self.__device.spawn(self.__package)
-            time.sleep(.5)
         self.attach()
-        self.resume()
-        time.sleep(1)
+        #self.resume()
+        #time.sleep(1)
 
     def resume(self):
         if self.__rooted and self.__pid:
+            debug("resume application")
             self.__server.resume(self.__pid)
 
-    def load(self, file, option, function = None, absolute = False):
-        if len(file.split(" ")) > 1:
-            script = self.__session.create_script(file)
+    def load(self, file, option, function = None, absolute = False, script=None):
+        if script != None:
+            script_ = self.__session.create_script(script)
         else:
-            if absolute:
-                f = open(f"{file}", "r")
-            else:
-                f = open(f"{PACKAGE_PATH}/{file}", "r")
             try:
-                script = self.__session.create_script(f.read())
+                if absolute:
+                    f = open(f"{file}", "r")
+                else:
+                    f = open(f"{PACKAGE_PATH}/{file}", "r")
+            except FileNotFoundError as e:
+                return 1, e
+            except IsADirectoryError as e:
+                return 2, e
+            try:
+                script_ = self.__session.create_script(f.read())
             except frida.InvalidOperationError as e:
                 self.spawn("")
-                self.load(file, option, function)
-                return
+                self.load(file, option, function, absolute)
+                return 0, ""
+            except frida.InvalidArgumentError as e:
+                return 3, e
 
         if option == "print":
-            script.on('message', self.on_message_print)
+            script_.on('message', self.on_message_print)
         if option == "store":
-            script.on('message', self.on_message_store)
+            script_.on('message', self.on_message_store)
         if option == "custom":
-            script.on('message', function)
+            script_.on('message', function)
         self.unload(file)
         while True:
             try:
-                script.load()
-                self.List_files_loaded[file] = script
+                script_.load()
+                self.List_files_loaded[file] = {
+                        "script": script_,
+                        "option": option,
+                        "function": function,
+                        "absolute": absolute}
+
                 break
             except frida.InvalidArgumentError as e:
                 print(str(e))
@@ -135,19 +184,20 @@ class Frida:
             except frida.InvalidOperationError as e:
                 print(str(e))
                 time.sleep(1)
+        return 0, ""
 
 
     def unload(self, file):
         if file in self.List_files_loaded:
             try:
-                self.List_files_loaded[file].unload()
+                self.List_files_loaded[file]["script"].unload()
             except frida.InvalidOperationError:
                 pass
             del self.List_files_loaded[file]
 
     def reload(self):
         for k, v in self.List_files_loaded:
-            self.load(k)
+            self.load(k, v["option"], v["function"], v["absolute"], script=v["script"])
 
     def get_store(self):
         while len(self.__store) == 0:
@@ -156,7 +206,7 @@ class Frida:
 
     def post(self, script, message):
         if script in self.List_files_loaded:
-            self.List_files_loaded[script].post(message)
+            self.List_files_loaded[script]["script"].post(message)
 
 
     def detach(self):
@@ -164,7 +214,7 @@ class Frida:
 
 
         #os.system('frida -D emulator-5554 -l test.js -f %s --no-pause' % \
-        #        self.__package)
+                #        self.__package)
         #myPopen = Popen(['frida', '-D', 'emulator-5554', 'l',
         #            'test.js', '-f', self.__package, '--no-pause'],
         #            stdin = sys.stdin,

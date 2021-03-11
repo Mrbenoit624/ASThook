@@ -2,6 +2,7 @@ import cmd
 
 from asthook.dynamic.frida import Frida
 from .module.register import get_dynamic_modules
+import time
 import os
 
 class DynCmd(cmd.Cmd):
@@ -25,9 +26,10 @@ class DynCmd(cmd.Cmd):
     def complete_load(self, text, line, begidx, endidx):
         self.__modules.load_module()
         complete = [ name for name, desc, func, action, nargs in get_dynamic_modules() ]
-        if (len(line.split()) > 2):
-            print(os.listdir(text))
-            return os.listdir(text)
+        line_array = line.split()
+        if (len(line_array) > 2) or (len(line_array) > 1 and line_array[1] in complete):
+            #print(os.listdir(text))
+            return self.__modules.complete_module(line_array[1], line_array[2:])
         if not text:
             completions = complete
         else:
@@ -43,6 +45,20 @@ class DynCmd(cmd.Cmd):
             self.__modules.load(args[0], args[1:])
         else:
             self.__modules.load(arg)
+
+    def complete_call(self, text, line, begidx, endidx):
+        return self.complete_load(text, line, begidx, endidx)
+        
+    def do_call(self, arg):
+        args = arg.split()
+        if len(args) > 0:
+            self.__modules.load(args[0], args[1:])
+            time.sleep(.5)
+            self.__modules.unload(args[0])
+        else:
+            self.__modules.load(arg)
+            time.sleep(.5)
+            self.__modules.unload(args[0])
 
     def do_reload(self, arg):
         self.__modules.reload()

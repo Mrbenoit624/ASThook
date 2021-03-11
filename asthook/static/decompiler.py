@@ -76,7 +76,15 @@ class Decompiler:
                     "-ren=1", path, self.__dir_extract + "/src"])
         elif self.__args.decompiler == "jadx":
             if not os.path.exists(f"{PACKAGE_PATH}/submodule/jadx/build/jadx/bin/jadx"):
-                error("Jadx is not installed\n"
+                error("If jadx is alreasy Installed on your system you can " \
+                      "specify the path of binary jadx:")
+                path = input()
+                if os.access(path, os.X_OK):
+                    error("To setup it execute the commands follow:\n" \
+                         f"mkdir -p {PACKAGE_PATH}/submodule/jadx/build/jadx/bin/\n" \
+                         f"ln -s {path} {PACKAGE_PATH}/submodule/jadx/build/jadx/bin/jadx")
+                else:
+                    error("Jadx is not installed\n"
                       "If you want to install it go to:\n"
                       f"\t{PACKAGE_PATH}/submodule/jadx/\n"
                       "execute ./gradlew dist")

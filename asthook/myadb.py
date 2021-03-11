@@ -29,7 +29,12 @@ class my_adb:
 
         def shell(self, arg):
             if self.need_su:
-                return self.device.shell(f"su 0 {arg}")
+                p = subprocess.Popen(["adb", "-s", self.device.serial, "shell", "su"],
+                        stdin  = subprocess.PIPE, 
+                        stdout = subprocess.PIPE)
+                p.stdin.write(arg.encode() + b"\n")
+                return p.stdout.read()
+                #return self.device.shell(f"su 0 -c '{arg}'")
             return self.device.shell(arg)
 
         def root(self):
@@ -38,6 +43,8 @@ class my_adb:
                     stderr=subprocess.DEVNULL)
 
         def remount(self):
+            import asthook.log as logging
+            logging.debug("Try to remount android partition on rw")
             return subprocess.call(["adb", "-s", self.device.serial, "remount"],
                     stdout=subprocess.DEVNULL,
                     stderr=subprocess.DEVNULL)
@@ -51,7 +58,7 @@ class my_adb:
 
         def set_root(self):
             if not self.shell("id")[4] == "0":
-                if not self.shell("su 0 id")[4] == "0":
+                if not self.shell("su 0 -c id")[4] == "0":
                     return 1
                 self.need_su = True
             return 0
@@ -61,7 +68,11 @@ class my_adb:
                     arg)
 
         def push(self, src, dst):
-            return self.device.push(src, dst)
+            try:
+                return self.device.push(src, dst)
+            except RuntimeError as e:
+                print(e)
+                return 1
 
         def pull(self, src, dst):
             return self.device.pull(src, dst)

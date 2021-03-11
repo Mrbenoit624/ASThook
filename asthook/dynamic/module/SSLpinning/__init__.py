@@ -1,16 +1,12 @@
 
-from asthook.dynamic.module.register import ModuleDynamicCmd
+from asthook.dynamic.module.register import ModuleDynamicCmd, BaseModuleDynamic
 
 @ModuleDynamicCmd("sslpinning", "bypass all sslpinning", bool)
-class SSLpinning:
-    def __init__(self, frida, device, tmp_dir, args):
-        self.__frida = frida
-        self.__sc = "script_frida/sslpinning.js"
-        self.__frida.load(self.__sc, "print")
+class SSLpinning(BaseModuleDynamic):
+    def _init(self):
+        self.sc.append("script_frida/sslpinning.js")
+        self.frida.load(self.sc[-1], "print")
 
-    def remove(self):
-        pass
-
-    def __del__(self):
-        self.__frida.unload(self.__sc)
-        print("ssl pinning unloaded")
+    @classmethod
+    def auto_complete(cls, args):
+        return []

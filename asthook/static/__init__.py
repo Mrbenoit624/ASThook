@@ -76,7 +76,7 @@ class StaticAnalysis:
                 self.parse_server(args)
             else:
                 ast(self.__basepath, self.__app, args)
-        if args.progress:
+        if not args.no_progress:
             print('\r', end='')
         Output.print_static_module()
         #UserInput(app)

@@ -403,6 +403,16 @@ Java.perform(function()
     }
     catch (e) {}
 
+    try
+    {
+      var custom_ssl_pinning = Java.use('p.h');
+      custom_ssl_pinning.a.implementation = function(a, b)
+      {
+      };
+      //void a(java.lang.String r18, o.t.b.a<? extends java.util.List<? extends java.security.cert.X509Certificate>> r19) {
+    }
+    catch (e) {}
+
 
     /*    try
     {

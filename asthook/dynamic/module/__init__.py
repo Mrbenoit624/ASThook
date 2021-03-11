@@ -18,7 +18,17 @@ class ModuleDynamic:
             #if args.__dict__[name] or args.__dict__[name] == []:
             if name in args.__dict__ and \
                     (args.__dict__[name] or args.__dict__[name] == []):
-                self.__list_module_loaded[name] = func(frida, device, tmp_dir, args)
+                self.__list_module_loaded[name] = func(frida, device, tmp_dir, args, name)
+
+    @classmethod
+    def check_module_loaded(cls, args):
+        module_loaded = {}
+        for name, desc, func, action, nargs in get_dynamic_modules():
+            if name in args.__dict__ and \
+                    (args.__dict__[name] or args.__dict__[name] == []):
+                module_loaded[name] = func
+        return module_loaded
+
 
     def load(self, module, args=None):
         self.load_module()
@@ -32,7 +42,13 @@ class ModuleDynamic:
                 self.__list_module_loaded[name] = func(self.__frida,
                                                        self.__device,
                                                        self.__tmp_dir,
-                                                       self.__args)
+                                                       self.__args,
+                                                       name)
+    def complete_module(self, module, args):
+        self.load_module()
+        for name, desc, func, action, nargs in get_dynamic_modules():
+            if name == module:
+                return func.auto_complete(args)
 
     def unload(self, module):
         if module in self.__list_module_loaded:
@@ -47,9 +63,11 @@ class ModuleDynamic:
     def reload(self, frida = None):
         if frida:
             self.__frida = frida
-        modules = self.__list_module_loaded.copy().items()
-        for module, func in modules:
+        #modules = self.__list_module_loaded.copy().items()
+        modules = self.get_modules_list()
+        for module in modules:
             self.load(module)
+        self.__frida.resume()
 
     def load_module(self):
         for i in Path(__file__).parent.absolute().glob('*.py'):
@@ -57,8 +75,10 @@ class ModuleDynamic:
                 __import__("dynamic.module.%s" % i.stem)
 
     def get_modules_list(self):
-        return [ module for module, func in self.__list_module_loaded.items()]
-
-
-
-
+        modules = []
+        for module, func in self.__list_module_loaded.copy().items():
+            if not func.is_alive:
+                self.unload(module)
+            else:
+                modules.append(module)
+        return modules
