@@ -40,12 +40,16 @@ class DynamicAnalysis:
     """
 
     @staticmethod
-    def emulation_f(path, phone, proxy, tmp_dir, no_erase):
+    def emulation_f(path, phone, proxy, tmp_dir, no_erase, version_android):
         """
         Launch the emulator
         """
+        selinux = "disabled"
+        if version_android and int(version_android.split('.')[0]) > 23:
+            selinux = "permissive"
+
         options = ["%s/emulator/emulator" % path, "@%s" % phone, "-selinux",
-                "disabled", "-memory", "3192", "-no-boot-anim", "-no-snapshot", "-tcpdump",
+                selinux, "-memory", "3192", "-no-boot-anim", "-no-snapshot", "-tcpdump",
                 "%s/dumpfile.pcap" % tmp_dir, "-writable-system"]
         #options = ["%s/emulator/emulator" % path, "@%s" % phone,
         #        "-no-snapshot", "-tcpdump",
@@ -231,7 +235,8 @@ class DynamicAnalysis:
                           args.phone,
                           args.proxy,
                           self.__tmp_dir,
-                          args.no_erase))
+                          args.no_erase,
+                          args.version_android))
             self.__emulation.daemon = True
             self.__emulation.start()
         

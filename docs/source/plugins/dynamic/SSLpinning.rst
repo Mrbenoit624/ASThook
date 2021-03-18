@@ -15,5 +15,5 @@ Usage
   asthook <app> --sslpinning
 
 ..
-.. asciinema:: Provider.cast
+.. asciinema:: source/plugins/dynamic/Provider.cast
   :preload:

@@ -11,8 +11,7 @@ import os, stat
  
 class pre_install(install):
     def run(self):
-        #subprocess.run(["./asthook/bootstrap.sh"])
-        #bootstrap.main()
+        bootstrap.main()
         install.run(self)
         for filepath in self.get_outputs():
             if "api_key_detector/gibberish_detector/gibberish_detector.pki" in filepath:
@@ -26,12 +25,9 @@ with open('requirements.txt') as f:
 setup(
     name='asthook',
     version='1.1.0',
-    #packages=['asthook'],
     packages=find_packages() + \
             ['api_key_detector/my_tools',
              'api_key_detector/gibberish_detector'],
-    #data_files=[('apk2java/java', ['java/Class2Java.jar'])],
-    #package_data={'asthook': ['logo.ans', 'bin/*',]},
     include_package_data = True,
     author="MadSquirrel",
     author_email="benoit.forgette@ci-yow.com",

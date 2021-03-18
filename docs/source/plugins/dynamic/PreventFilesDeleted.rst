@@ -15,5 +15,5 @@ Usage
   asthook <app> --files_del
 
 ..
-.. asciinema:: Provider.cast
+.. asciinema:: source/plugins/dynamic/Provider.cast
   :preload:

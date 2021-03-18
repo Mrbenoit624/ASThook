@@ -5,7 +5,7 @@ import os
 import sys
 import threading
 from subprocess import Popen, DEVNULL, PIPE
-from asthook.log import error, info
+from asthook.log import error, info, debug
 
 from asthook.conf import DIR, PACKAGE_PATH
 
@@ -48,6 +48,7 @@ class Frida:
         self.__session = None
         self.__store = []
         self.__rooted = rooted
+        self.__pid = None
 
         if rooted:
             self.__abi = Frida.check_abi(self.__device)
@@ -90,7 +91,10 @@ class Frida:
             else:
                 if not pid:
                     try:
-                        pid=int(self.__device.shell(f"pidof {self.__package}")[:-1])
+                        debug(f"pidof {self.__package}")
+                        package = self.__device.shell(f"ps {self.__package}").split('\n')[1].split()[1]
+                        #pid=int(self.__device.shell(f"pidof {self.__package}")[:-1])
+                        pid=int(package)
                         self.__session = self.__server.attach(pid)
                     except ValueError as e:
                         return 3
@@ -120,12 +124,17 @@ class Frida:
                     "the good one and then replace the file /bin/frida-server\n"
                     "on the Asthook folder\n")
             sys.exit(1)
+        if ret == 3:
+            error("Command to get pid of process failed\n")
+            sys.exit(1)
 
     def spawn(self, arg):
+        print(self.__rooted)
         if self.__rooted:
             self.__pid = self.__server.spawn(self.__package)
         else:
             self.__device.spawn(self.__package)
+        time.sleep(1)
         self.attach()
         #self.resume()
         #time.sleep(1)

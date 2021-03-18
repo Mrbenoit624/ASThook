@@ -16,5 +16,5 @@ Usage
   asthook <app> --nativehook <hook>
 
 ..
-.. asciinema:: Provider.cast
+.. asciinema:: source/plugins/dynamic/Provider.cast
   :preload:

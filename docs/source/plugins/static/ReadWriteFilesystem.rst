@@ -14,5 +14,5 @@ Usage
   asthook <app> --list_read_write
 
 ..
-.. asciinema:: ReadWriteFilesystem.cast
+.. asciinema:: source/plugins/static/ReadWriteFilesystem.cast
   :preload:

@@ -19,5 +19,5 @@ Usage
 
   asthook <app> --api_keys <normal|full>
 
-.. asciinema:: ApiKeyDetector.cast
+.. asciinema:: source/plugins/static/ApiKeyDetector.cast
   :preload:
