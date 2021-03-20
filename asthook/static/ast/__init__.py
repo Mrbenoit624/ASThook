@@ -136,6 +136,23 @@ class ast:
     def get_tmp(self):
         return self.__basepath
 
+    def check_import(self, paths, imports, depnodes, depnode):
+        for i in imports:
+            path_import = Path('%s/%s/src/%s%s' % \
+                              (self.__basepath,
+                               "decompiled_app",
+                               "/".join(i.path.split('.')),
+                               ".java"))
+            if path_import in paths:
+                if path_import in depnodes:
+                    depnode_ch = depnodes[path_import]
+                else:
+                    depnode_ch = self.DepNode(self.__basepath,
+                            not self.args.no_cache)
+                    depnodes[path_import] = depnode_ch
+                depnode_ch.hasparent += 1
+                depnode.childs.append(depnode_ch)
+
     def __init__(self, base_path, app, args, instance=0, conn=None):
         self.__basepath = base_path
         self.__app = app
@@ -150,6 +167,8 @@ class ast:
         path_app_base = '%s/%s/src' % \
                     (self.__basepath,
                      "decompiled_app")
+
+        ReadJavaFile.init(path_app_base)
         #for action in Output.get_store(instance)["manifest"]["activity"]["action"]:
         #    if action['action'] == "android.intent.action.MAIN":
         #        self.main = action['action']
@@ -198,21 +217,7 @@ class ast:
                 depnodes[p] = depnode
                 AstInRam.addpath(args.app, p, depnode)
             imports = depnode.parse(p)
-            for i in imports:
-                path_import = Path('%s/%s/src/%s%s' % \
-                                  (self.__basepath,
-                                   "decompiled_app",
-                                   "/".join(i.path.split('.')),
-                                   ".java"))
-                if path_import in paths:
-                    if path_import in depnodes:
-                        depnode_ch = depnodes[path_import]
-                    else:
-                        depnode_ch = self.DepNode(self.__basepath,
-                                not args.no_cache)
-                        depnodes[path_import] = depnode_ch
-                    depnode_ch.hasparent += 1
-                    depnode.childs.append(depnode_ch)
+            self.check_import(paths, imports, depnodes, depnode)
 
         while len(depnodes) > 0:
             to_remove = []
@@ -386,6 +391,12 @@ class ast:
             return self.__class__.__name__ + " : " +self.elt.name
 
         def apply(self, selfp):
+            for elt in self.elt.annotations:
+                if type(elt) is javalang.tree.Annotation:
+                    selfp.Annotation(elt, self).visit(selfp)
+                else:
+                    if selfp.args.debug_ast:
+                        logging.error("%s - %s" % (self.__class__.__name__, type(elt)))
             for elt in self.elt.body:
                 if type(elt) is javalang.tree.MethodDeclaration:
                     selfp.MethodDeclaration(elt, self).visit(selfp)
@@ -428,13 +439,26 @@ class ast:
     class EnumDeclaration(BaseNode):
 
         def apply(self, selfp):
-            for elt in self.elt.body:
-                #if type(elt) is tuple:
-                #    selfp.ASTList(elt, self).visit(selfp)
-                #else:
-                if selfp.args.debug_ast:
-                    logging.error("%s - %s" % (self.__class__.__name__, type(elt)))
-            #print(self.elt.__dict__, end='')
+            elt_ = []
+            body = []
+            if type(self.elt.body) is tuple:
+                body = list(self.elt.body.copy())
+            while body != []:
+                elt_t = body.pop()
+                if type(elt_t) is tuple:
+                    body.append(elt)
+                else:
+                    elt_.append(elt)
+                for elt in elt_:
+                    if type(elt) is javalang.tree.EnumBody:
+                        selfp.EnumBody(elt, self).visit(selfp)
+                    elif type(elt) is javalang.tree.EnumConstantDeclaration:
+                        selfp.EnumConstantDeclaration(elt, self).visit(selfp)
+                    #if type(elt) is tuple:
+                    #    selfp.ASTList(elt, self).visit(selfp)
+                    #else:
+                    if selfp.args.debug_ast:
+                        logging.error("%s - %s" % (self.__class__.__name__, type(elt)))
 
     class InterfaceDeclaration(BaseNode):
 
@@ -463,6 +487,12 @@ class ast:
         def apply(self, selfp):
             if self.elt.body == None:
                 return # TODO: Fix bug None
+            for elt in self.elt.annotations:
+                if type(elt) is javalang.tree.Annotation:
+                    selfp.Annotation(elt, self).visit(selfp)
+                else:
+                    if selfp.args.debug_ast:
+                        logging.error("%s - %s" % (self.__class__.__name__, type(elt)))
             for elt in self.elt.parameters:
                 selfp.MethodDeclarationParameters(elt, self).visit(selfp)
             for elt in self.elt.body:
@@ -509,6 +539,12 @@ class ast:
             return self.__class__.__name__ + " : " + self.elt.declarators[0].name
 
         def apply(self, selfp):
+            for elt in self.elt.annotations:
+                if type(elt) is javalang.tree.Annotation:
+                    selfp.Annotation(elt, self).visit(selfp)
+                else:
+                    if selfp.args.debug_ast:
+                        logging.error("%s - %s" % (self.__class__.__name__, type(elt)))
             for elt in self.elt.declarators:
                 if type(elt) is javalang.tree.VariableDeclarator:
                     selfp.VariableDeclarator(elt, self).visit(selfp)
@@ -856,6 +892,8 @@ class ast:
                     selfp.WhileStatement(elt, self).visit(selfp)
                 elif type(elt) is javalang.tree.ContinueStatement:
                     selfp.ContinueStatement(elt, self).visit(selfp)
+                elif type(elt) is javalang.tree.BreakStatement:
+                    selfp.BreakStatement(elt, self).visit(selfp)
                 else:
                     if selfp.args.debug_ast:
                         logging.error("%s - %s" % (self.__class__.__name__, type(elt)))
@@ -864,13 +902,18 @@ class ast:
     class AnnotationMethod(BaseNode):
 
         def apply(self, selfp):
-            self = self
+            elt = self.elt
+            if selfp.args.debug_ast:
+                logging.error("%s - %s" % (self.__class__.__name__, type(elt)))
+                logging.error("%s - %s" % (self.__class__.__name__, elt))
             #print(self.elt.__dict__, end='')
 
     class ConstantDeclaration(BaseNode):
 
         def apply(self, selfp):
-            self = self
+            elt = self.elt
+            if selfp.args.debug_ast:
+                logging.error("%s - %s" % (self.__class__.__name__, type(elt)))
             #print(self.elt.__dict__, end='')
 
     class ReturnStatement(BaseNode):
@@ -1286,6 +1329,8 @@ class ast:
             for elt in self.elt:
                 if type(elt) is javalang.tree.MethodInvocation:
                     selfp.MethodInvocation(elt, self).visit(selfp)
+                elif type(elt) is javalang.tree.MemberReference:
+                    selfp.MemberReference(elt, self).visit(selfp)
                 else:
                     if selfp.args.debug_ast:
                         logging.error("%s - %s" % (self.__class__.__name__, type(elt)))
@@ -1344,21 +1389,33 @@ class ast:
     class ExplicitConstructorInvocation(BaseNode):
 
         def apply(self, selfp):
+            elt = self.elt
+            if selfp.args.debug_ast:
+                logging.error("%s - %s" % (self.__class__.__name__, type(elt)))
             pass
 
     class TypeArgument(BaseNode):
 
         def apply(self, selfp):
+            elt = self.elt
+            if selfp.args.debug_ast:
+                logging.error("%s - %s" % (self.__class__.__name__, type(elt)))
             pass
 
     class BasicType(BaseNode):
 
         def apply(self, selfp):
+            elt = self.elt
+            if selfp.args.debug_ast:
+                logging.error("%s - %s" % (self.__class__.__name__, type(elt)))
             pass
 
     class ArrayCreator(BaseNode):
 
         def apply(self, selfp):
+            elt = self.elt
+            if selfp.args.debug_ast:
+                logging.error("%s - %s" % (self.__class__.__name__, type(elt)))
             pass
 
     class ArrayInitializer(BaseNode):
@@ -1375,11 +1432,17 @@ class ast:
     class ArraySelector(BaseNode):
 
         def apply(self, selfp):
+            elt = self.elt
+            if selfp.args.debug_ast:
+                logging.error("%s - %s" % (self.__class__.__name__, type(elt)))
             pass
 
     class EnumBody(BaseNode):
 
         def apply(self, selfp):
+            elt = self.elt
+            if selfp.args.debug_ast:
+                logging.error("%s - %s" % (self.__class__.__name__, type(elt)))
             pass
 
     class VariableDeclarator(BaseNode):
@@ -1422,45 +1485,81 @@ class ast:
     class EnumConstantDeclaration(BaseNode):
 
         def apply(self, selfp):
+            elt = self.elt
+            if selfp.args.debug_ast:
+                logging.error("%s - %s" % (self.__class__.__name__, type(elt)))
             pass
 
     class Annotation(BaseNode):
 
+        def getName(self):
+            return self.__class__.__name__ + " : " + self.elt.name
+
         def apply(self, selfp):
-            pass
+            elt = self.elt.element
+            if not elt:
+                return
+            if type(elt) is javalang.tree.MemberReference:
+                selfp.MemberReference(elt, self).visit(selfp)
+            elif type(elt) is javalang.tree.Literal:
+                selfp.Literal(elt, self).visit(selfp)
+            else:
+                if selfp.args.debug_ast:
+                    logging.error("%s - %s" % (self.__class__.__name__, type(elt)))
 
     class FormalParameter(BaseNode):
 
         def apply(self, selfp):
+            elt = self.elt
+            if selfp.args.debug_ast:
+                logging.error("%s - %s" % (self.__class__.__name__, type(elt)))
             pass
 
     class TernaryExpression(BaseNode):
 
         def apply(self, selfp):
+            elt = self.elt
+            if selfp.args.debug_ast:
+                logging.error("%s - %s" % (self.__class__.__name__, type(elt)))
             pass
 
     class ContinueStatement(BaseNode):
 
         def apply(self, selfp):
+            elt = self.elt
+            if selfp.args.debug_ast:
+                logging.error("%s - %s" % (self.__class__.__name__, type(elt)))
             pass
 
     class BreakStatement(BaseNode):
 
         def apply(self, selfp):
+            elt = self.elt
+            if selfp.args.debug_ast:
+                logging.error("%s - %s" % (self.__class__.__name__, type(elt)))
             pass
 
     class Statement(BaseNode):
 
         def apply(self, selfp):
+            elt = self.elt
+            if selfp.args.debug_ast:
+                logging.error("%s - %s" % (self.__class__.__name__, type(elt)))
             pass
 
     class SwitchStatementCase(BaseNode):
 
         def apply(self, selfp):
+            elt = self.elt
+            if selfp.args.debug_ast:
+                logging.error("%s - %s" % (self.__class__.__name__, type(elt)))
             pass
 
     class ForControl(BaseNode):
 
         def apply(self, selfp):
+            elt = self.elt
+            if selfp.args.debug_ast:
+                logging.error("%s - %s" % (self.__class__.__name__, type(elt)))
             pass
 

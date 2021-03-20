@@ -4,7 +4,7 @@ seek_literal
 Descrition
 ##########
 
-TODO
+List all litteral which match with regex given
 
 Usage
 #####
@@ -15,3 +15,8 @@ Usage
 
 .. asciinema:: seekLiteral.cast
   :preload:
+
+Option needed
+#############
+
+- --tree

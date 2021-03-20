@@ -5,6 +5,7 @@ import signal
 import json
 import re
 import copy
+import linecache
 from asthook import log as logging
 
 
@@ -100,6 +101,16 @@ def timeout(time):
 
 def raise_timeout(signum, frame):
     raise TimeoutError
+
+class ReadJavaFile:
+    @classmethod
+    def init(cls, path):
+        cls.path = path
+
+    @classmethod
+    def readline(cls, path, line):
+        return linecache.getline(cls.path + path, line).strip()
+
 
 class Output:
 

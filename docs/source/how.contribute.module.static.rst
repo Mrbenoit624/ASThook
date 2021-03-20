@@ -33,6 +33,8 @@ The constructor of the class give access to:
 
 You need to create a class with the decorator appropriate
 
+Static module give access to some methods as:
+
 .. toctree::
   :maxdepth: 1
   :titlesonly:
