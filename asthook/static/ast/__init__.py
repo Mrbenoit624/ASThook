@@ -122,6 +122,8 @@ class ast:
                         continue
                     except javalang.tokenizer.LexerError:
                         break
+                    except TypeError:
+                        break
                 with open(f"{self.cache_path}/{package_name}", 'wb') as bak:
                     pickle.dump(tree, bak, pickle.HIGHEST_PROTOCOL)
                 if not code_valid:
@@ -159,6 +161,8 @@ class ast:
         self.__infos = {'instance': instance}
         self.args = args
         self.instance = instance
+
+        sys.setrecursionlimit(10**7)
 
 
         for i in Register.get_node("Init", "in", self.instance):
@@ -252,7 +256,6 @@ class ast:
                 for i in Register.get_node("File", "in", self.instance):
                     self.set_infos(i.call(self.get_infos(), path))
 
-                sys.setrecursionlimit(10**7)
 
                 if args.graph_ast:
                     self.init_graph(path)

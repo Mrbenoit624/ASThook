@@ -70,6 +70,8 @@ class StaticAnalysis:
 
         if args.tree:
             bprint("Tree analysis")
+            print(info("PATH_APP = %s/" % \
+                    (self.__basepathdecompile)))
             print(info("PATH_SRC = %s/src" % \
                     (self.__basepathdecompile)))
             if args.server:

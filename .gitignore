@@ -13,3 +13,10 @@ bin/frida-server*
 misc
 docs/build/
 asthook/bin/frida-server*
+*.so
+*.pdf
+*.json
+*.apk
+*.md
+build/
+*.egg-info
