@@ -24,7 +24,7 @@ Many plug-ins allowing to analyze the application are already present such as :
   - Function search in the apk
   - Automatic generation of a hook on a function
   - Automatic installation of the certificate
-  - Automated bypass of SLL pinning
+  - Automated bypass of SSL pinning
   - Recovery of deleted files
   - Etc.
 
