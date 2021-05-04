@@ -14,3 +14,4 @@ requests
 Matplotlib
 tabulate
 apkpatcher>=0.0.8
+wheel

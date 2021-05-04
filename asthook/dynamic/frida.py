@@ -92,9 +92,11 @@ class Frida:
                 if not pid:
                     try:
                         debug(f"pidof {self.__package}")
-                        package = self.__device.shell(f"ps {self.__package}").split('\n')[1].split()[1]
-                        #pid=int(self.__device.shell(f"pidof {self.__package}")[:-1])
-                        pid=int(package)
+                        try:
+                            package = self.__device.shell(f"ps {self.__package}").split('\n')[1].split()[1]
+                            pid=int(package)
+                        except IndexError:
+                            pid=int(self.__device.shell(f"pidof {self.__package}")[:-1])
                         self.__session = self.__server.attach(pid)
                     except ValueError as e:
                         return 3

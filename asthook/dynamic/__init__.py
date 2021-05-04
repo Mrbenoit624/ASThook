@@ -137,8 +137,9 @@ class DynamicAnalysis:
                     #        stdout=Log.STD_OUTPOUT, stderr=Log.STD_ERR, shell=False)
                     self.__device.install(apk, test=True)
                     break
-                elif "[INSTALL_FAILED_UPDATE_INCOMPATIBLE]" in str(e):
+                elif "[INSTALL_FAILED_UPDATE_INCOMPATIBLE" in str(e):
                     if apk == self.__args.app:
+                        logging.warning(f"{self.__package} have not matched signature. ASThook try to reinstall it")
                         self.__device.uninstall(self.__package)
                     else:
                        logging.warning(str(e))
@@ -284,10 +285,10 @@ class DynamicAnalysis:
 
             #### writable system for recent version ####
             version_android = int(self.__device.shell("getprop ro.build.version.sdk"))
-            if version_android >= 27:
-                #os.system("adb root")
-                #extcall.external_call(["adb", "root"])
-                self.__device.root()
+            #if version_android >= 24:
+            #os.system("adb root")
+            #extcall.external_call(["adb", "root"])
+            if not self.__device.root() == 2:
                 while True:
                     #if extcall.external_call(['adb', 'remount']) == 0:
                     if self.__device.remount() == 0:

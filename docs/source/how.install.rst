@@ -11,7 +11,7 @@ You need to have on your system these package installed:
 * python3-pip
 * liblzma5
 * apktool
-
+* adb
 
 installation
 ************
@@ -49,6 +49,28 @@ Setup sdktools:
    cd <sdktoolspath>
    unzip commandlinetools-linux-6200805_latest.zip
 
+You should add ANDROID_SDK_ROOT environment variable with <sdktoolspath>
+
+For bash:
+
+.. code-block:: bash
+
+  echo 'export ANDROID_SDK_ROOT=<sdktoolspath>' >> ~/.bashrc
+
+For Fish:
+
+.. code-block:: fish
+
+  echo "set -x ANDROID_SDK_ROOT <sdktoolspath>" >> ~/.config/fish/config.fish
+
+I advise you to update your sdkmanager environment and accept licenses with
+theses commands:
+
+.. code-block:: bash
+
+  sdkmanager --update
+  sdkmanager --licenses
+
 Install the minimum with the correct version when I written that it's look like
 that:
 
@@ -68,6 +90,28 @@ that:
 
 .. asciinema:: sdkmanager.cast
   :preload:
+
+To create an virtual phone without android studio you can use avdmanager
+command. Becareful, if you wanted a rooted phone you should not use a phone
+with google api.
+
+Examples:
+
+.. code-block:: bash
+
+  # Not rooted phone with android 25
+  sdkmanager 'system-images;android-25;google_apis;x86_64'
+  avdmanager create avd --force --name not_rooted_phone --abi google_apis/x86_64 --package 'system-images;android-25;google_apis;x86_64'
+
+  # Rooted phone with android 25
+  sdkmanager 'system-images;android-25;default;x86_64'
+  avdmanager create avd --force --name rooted_phone --abi default/x86_64 --package 'system-images;android-25;default;x86_64'
+
+You can now list your virtual phone:
+
+.. code-block:: bash
+
+  avdmanager list avd
 
 
 

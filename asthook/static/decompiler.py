@@ -5,6 +5,8 @@ from pathlib import Path
 import sys
 import json
 
+import zipfile
+
 from asthook.conf import PACKAGE_PATH
 from asthook.utils.infos import Info
 
@@ -15,6 +17,19 @@ class Decompiler:
         self.__app = app
         self.__args = args
         self.__dir_extract = base_path
+
+        try:
+            zf = zipfile.ZipFile(app)
+            for zinfo in zf.infolist():
+                is_encrypted = zinfo.flag_bits & 0x1
+                if is_encrypted:
+                    error('%s is a APK but it is encrypted!' % zinfo.filename)
+                    sys.exit(1)
+        except zipfile.BadZipFile:
+            error(f'{app} is not an APK')
+            sys.exit(1)
+
+
         mtime_prev = Info.get('mtime_decompiler')
         mtime = Path(app).stat().st_mtime
         if mtime_prev:

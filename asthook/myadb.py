@@ -38,9 +38,12 @@ class my_adb:
             return self.device.shell(arg)
 
         def root(self):
-            return subprocess.call(["adb", "-s", self.device.serial, "root"],
-                    stdout=subprocess.DEVNULL,
-                    stderr=subprocess.DEVNULL)
+            if not self.shell("id")[4] == "0":
+                return subprocess.call(["adb", "-s", self.device.serial, "root"],
+                        stdout=subprocess.DEVNULL,
+                        stderr=subprocess.DEVNULL)
+            else:
+                return 2
 
         def remount(self):
             import asthook.log as logging
