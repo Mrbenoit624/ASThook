@@ -44,6 +44,14 @@ class DynamicAnalysis:
         """
         Launch the emulator
         """
+        
+        lock_files = list(Path(f"{Path.home()}/.android/avd/{phone}.avd/").glob("*.lock"))
+        if len(lock_files) > 0:
+            logging.error("Lock files present on this avd please check if an " \
+                          "emulator is not already running or removed these "  \
+                          "files:\n" + "\n".join(map(lambda x : f"\t- {str(x)}", lock_files)))
+            sys.exit(1)
+
         selinux = "disabled"
         if version_android and int(version_android.split('.')[0]) > 23:
             selinux = "permissive"
@@ -211,6 +219,16 @@ class DynamicAnalysis:
         shutil.copyfile(patched_apk, f"{self.__tmp_dir}/patched/apk_patched.apk")
         return patched_apk
 
+    def emulation_is_alive(self, emulation):
+        if sys.version_info[1] > 8:
+            return emulation.is_alive()
+        return self.__emulation.isAlive()
+
+    def clean_lock_file(self, phone):
+        lock_files = list(Path(f"{Path.home()}/.android/avd/{phone}.avd/").glob("*.lock"))
+        for lf in lock_files:
+            os.remove(lf)
+
     def __init__(self, package, args, tmp_dir):
 
         if ( not args.sdktools and not args.no_emulation ) or not args.phone:
@@ -246,7 +264,7 @@ class DynamicAnalysis:
         try:
             with timeout(60):
                 while True:
-                    if not args.no_emulation and not self.__emulation.isAlive():
+                    if not args.no_emulation and not self.emulation_is_alive(self.__emulation):
                         logging.error("Device not found\n")
                         sys.exit(1)
                     devices = self.__client.devices()
@@ -361,6 +379,7 @@ class DynamicAnalysis:
             #sys.stdin.read()
             if not self.__args.no_emulation:
                 self.__emulation.join()
+                self.clean_lock_file(args.phone)
 
             self.__frida.detach()
 
