@@ -144,7 +144,11 @@ class Frida:
     def resume(self):
         if self.__rooted and self.__pid:
             debug("resume application")
-            self.__server.resume(self.__pid)
+            try:
+                self.__server.resume(self.__pid)
+            except frida.NotSupportedError as e:
+                time.sleep(1)
+                self.resume()
 
     def load(self, file, option, function = None, absolute = False, script=None):
         if script != None:
@@ -167,6 +171,8 @@ class Frida:
                 return 0, ""
             except frida.InvalidArgumentError as e:
                 return 3, e
+            except UnicodeDecodeError as e:
+                return 4, e
 
         if option == "print":
             script_.on('message', self.on_message_print)

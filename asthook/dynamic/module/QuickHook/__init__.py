@@ -24,6 +24,8 @@ class QuickHook(BaseModuleDynamic):
                 error(f"[quickhook] is not a file")
             elif ret == 3:
                 error(f"[quickhook] {e}")
+            elif ret == 4:
+                error(f"[quickhook] file not valid")
 
 
         if "gen_hook" in Output.get_store()["tree"]:
