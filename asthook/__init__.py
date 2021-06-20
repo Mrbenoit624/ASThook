@@ -47,7 +47,7 @@ def main():
 
 
     if args.config:
-        args = Config.load(args)
+        args = Config.load_file(args)
 
     
 
