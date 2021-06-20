@@ -18,6 +18,14 @@ class Manifest:
     def android(self, name):
         return "%s%s" % (self.CONST_ANDROID, name)
 
+    @classmethod
+    def convertA2path(cls, name):
+        if not name:
+            return name
+        ret = name.replace("@drawable", "res/drawable*/")
+        ret = ret.replace("@mipmap", "res/mipmap-*/")
+        return ret
+
     def __init__(self, path):
         self.__path = path
         tree = ET.parse(path)
@@ -36,8 +44,12 @@ class Manifest:
         else:
             self.version = '? latest ?'
         print('Build: ' + self.version)
-        Output.add_to_store("manifest", "general", "verison", self.version)
-        
+        Output.add_to_store("manifest", "general", "version", self.version)
+        logo = Manifest.convertA2path(
+                    self.root.find('application').get(f"{self.CONST_ANDROID}icon"))
+        if logo:
+            Output.add_to_store("manifest", "general", "logo", logo)
+
         self.dangerous_functionality()
         self.list_permissions()
         self.list_activities()
@@ -121,7 +133,7 @@ class Manifest:
         t_all = app.findall('activity')
         t_all = t_all + app.findall('activity-alias')
         h2("Activities  Exported")
-        print("All theses activities can be launch externaly as follow:")
+        print("All these activities can be launch externaly as follow:")
         print("adb shell am start -S -n %s/%s" % (self.package, "<activity>"),
                 end='\n')
         for obj in t_all:
@@ -162,7 +174,7 @@ class Manifest:
         app = self.root.find('application')
         t_all = app.findall('service')
         h2("Services  Exported")
-        print("All theses services can be launch externaly as follow:")
+        print("All these services can be launch externaly as follow:")
         print("adb shell am startservice -S -n %s/%s" % (self.package, "<service>"),
                 end='\n')
         for obj in t_all:
@@ -206,7 +218,7 @@ class Manifest:
         # android:protectionLevel=signature" />
         h2("Receiver Exported")
         
-        print("All theses broadcast can be launch externaly as follow:")
+        print("All these broadcasts can be launch externaly as follow:")
         print("adb shell am broadcast -a <action> --receiver-permission"\
                 " <permission-needed>", end='\n\n')
         
