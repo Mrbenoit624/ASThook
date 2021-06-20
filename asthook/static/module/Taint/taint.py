@@ -133,9 +133,11 @@ class MethodInvocationIn:
     def call(cls, r, self):
         # Add status for enumerate parameters of this function
         # parameters_function will be use in MemberReference
+        TaintElt.status.append(("parameters_function", self, 0))
 
         # Get argument type of method Invocation
         types_meth_invok = get_types_arguments(self.elt.arguments, self)
+
         
         # Get path to access at node of method
         path = revxref(up2Statement(self), stop=self)
@@ -231,6 +233,7 @@ class MethodInvocationOut:
         # Remove status for enumerate parameters of this function
         #TaintElt.status.pop()
         #TaintElt.scope_p[-1].pop()
+        TaintElt.status.pop()
         return r
 
 @Node("ClassCreator", "in")
@@ -259,23 +262,24 @@ class MemberReferenceIn:
     def call(cls, r, self):
         if len(TaintElt.status) > 0:
             k, v, i = TaintElt.status[-1]
-            if k == "parameters_function":
-                child = TaintElt.get(get_type(up2Statement(v)), None)
-                if child:
-                    if len(child["__fields__"][0]) <= i:
-                        n = Node(None, [], [], self)
-                        child["__fields__"][0].append(n)
-                    child = child["__fields__"][0][i]
-                    #print(get_type(self.elt.member))
-                    #print(conv_type([], self.elt.member))
-                    parent = xref([], self.elt.member)
-                    n = Node(self.elt.member, child,parent , self)
-                    TaintElt.add_elt(
-                        TaintElt.get(
-                            TaintElt._Class,
-                            None)["__fields__"], n)
-                    parent.child(n)
-                    child.parent(n)
+            #if k == "parameters_function":
+            #    print(f"\n{self.elt}\n\n{v.elt}\n\n")
+            #    child = TaintElt.get(get_type(up2Statement(v)), None)
+            #    if child:
+            #        if len(child["__fields__"][0]) <= i:
+            #            n = Node(None, [], [], self)
+            #            child["__fields__"][0].append(n)
+            #        child = child["__fields__"][0][i]
+            #        #print(get_type(self.elt.member))
+            #        #print(conv_type([], self.elt.member))
+            #        parent = xref([], self.elt.member)
+            #        n = Node(self.elt.member, child,parent , self)
+            #        TaintElt.add_elt(
+            #            TaintElt.get(
+            #                TaintElt._Class,
+            #                None)["__fields__"], n)
+            #        parent.child(n)
+            #        child.parent(n)
         return r
 
 
@@ -323,8 +327,8 @@ class Init:
 class InitOut:
     @classmethod
     def call(cls, r, path):
-        #TaintElt.print()
         if render:
+            TaintElt.print()
             info("Rendering taint analysis on pdf...")
             TaintElt.graphiz(orphan=False)
         return r
