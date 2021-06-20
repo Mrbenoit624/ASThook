@@ -18,6 +18,9 @@ class Decompiler:
         self.__args = args
         self.__dir_extract = base_path
 
+        if app == "test":
+            return
+
         try:
             zf = zipfile.ZipFile(app)
             for zinfo in zf.infolist():
@@ -27,6 +30,9 @@ class Decompiler:
                     sys.exit(1)
         except zipfile.BadZipFile:
             error(f'{app} is not an APK')
+            sys.exit(1)
+        except IsADirectoryError:
+            error(f'{app} is a directory not an APK')
             sys.exit(1)
 
 
