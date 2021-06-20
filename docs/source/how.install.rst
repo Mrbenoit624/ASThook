@@ -48,6 +48,9 @@ Setup sdktools:
    mkdir <sdktoolspath>
    cd <sdktoolspath>
    unzip commandlinetools-linux-6200805_latest.zip
+   mv cmdline-tools/ tools
+   mkdir cmdline-tools
+   mv tools/ cmdline-tools/
 
 You should add ANDROID_SDK_ROOT environment variable with <sdktoolspath>
 
@@ -63,21 +66,27 @@ For Fish:
 
   echo "set -x ANDROID_SDK_ROOT <sdktoolspath>" >> ~/.config/fish/config.fish
 
+
+To use directly android command you need to update $PATH environment variable
+
+.. code-block:: bash
+
+  echo 'PATH="$PATH:<sdktoolspath>/cmdline-tools/tools/bin"'
+
 I advise you to update your sdkmanager environment and accept licenses with
 theses commands:
 
 .. code-block:: bash
 
   sdkmanager --update
-  sdkmanager --licenses
+  yes | sdkmanager --licenses
 
 Install the minimum with the correct version when I written that it's look like
 that:
 
 .. code-block:: bash
 
-  cd <sdktools>
-  tools/bin/sdkmanager "platform-tools" "platforms;android-30" "build-tools;30.0.2" "emulator" --sdk_root=.
+  <sdktools>/tools/bin/sdkmanager "platform-tools" "platforms;android-30" "build-tools;30.0.2" "emulator"
 
 .. warning::
 
@@ -85,11 +94,11 @@ that:
 
 .. code-block:: bash
   
-  cd <sdktools>
-  tools/bin/sdkmanager --list --sdk_root=.
+  <sdktools>/tools/bin/sdkmanager --list
 
 .. asciinema:: sdkmanager.cast
   :preload:
+
 
 To create an virtual phone without android studio you can use avdmanager
 command. Becareful, if you wanted a rooted phone you should not use a phone

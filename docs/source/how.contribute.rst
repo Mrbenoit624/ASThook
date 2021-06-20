@@ -16,7 +16,7 @@ module folder with __init__.py file inside
 
 .. code-block:: bash
 
-  src/static/module/seekLiteral/
+  asthook/static/module/seekLiteral/
   ├── __init__.py
   └── seek_literal.py
 
