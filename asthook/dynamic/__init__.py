@@ -46,6 +46,7 @@ class DynamicAnalysis:
         """
         
         lock_files = list(Path(f"{Path.home()}/.android/avd/{phone}.avd/").glob("*.lock"))
+        lock_files = [ i for i in lock_files if not i.name == "multiinstance.lock"]
         if len(lock_files) > 0:
             logging.error("Lock files present on this avd please check if an " \
                           "emulator is not already running or removed these "  \
@@ -306,15 +307,20 @@ class DynamicAnalysis:
             #if version_android >= 24:
             #os.system("adb root")
             #extcall.external_call(["adb", "root"])
+            patch = False
             if not self.__device.root() == 2:
                 while True:
                     #if extcall.external_call(['adb', 'remount']) == 0:
-                    if self.__device.remount() == 0:
+                    ret = self.__device.remount()
+                    if ret == 0:
+                        break
+                    elif not ret == 1:
+                        patch = True
                         break
 
             installed_app = args.app
             self.rooted = True
-            if self.__device.set_root() == 1:
+            if self.__device.set_root() == 1 or patch:
                 self.rooted = False
                 #logging.error("Phone didn't root. Please root it before")
                 logging.warning("Phone didn't root. Try to patch app to injected frida")
